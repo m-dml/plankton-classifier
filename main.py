@@ -1,3 +1,3 @@
 
 if __name__ == '__main__':
-    raise NotImplemented
+    raise NotImplementedError
