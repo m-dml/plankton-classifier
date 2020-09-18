@@ -3,14 +3,18 @@ from torch.utils.data import random_split
 
 from torch.utils.data import DataLoader
 import pytorch_lightning
-from src.utils.Dataset import PlanktonDataset
+from src.utils.DataModule import PlanktonDataModule
 from src.utils.Model import LitModel
+from pytorch_lightning.loggers import TensorBoardLogger
 
 if __name__ == '__main__':
-    transform = transforms.Compose([transforms.ToTensor()])
-    dataset = PlanktonDataset('data/plankton_dataset/Training3_0', transform=transform)
-    train_dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    valid_dataloader = DataLoader(dataset, batch_size=4, shuffle=False)
-    trainer = pytorch_lightning.Trainer(gpus=1, max_epochs=5)
+    logger = TensorBoardLogger(save_dir="tb_logs")
+    transform = transforms.Compose([transforms.RandomVerticalFlip(), transforms.RandomRotation(degrees=180),
+                                    transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.5, 0.5, 0.5),
+                                    transforms.ToTensor()])
+    datamodule = PlanktonDataModule(data_path='data/plankton_dataset/Training3_0', transform=transform, batch_size=8)
+
+    trainer = pytorch_lightning.Trainer(gpus=1, max_epochs=20, logger=logger)
     model = LitModel()
-    trainer.fit(model, train_dataloader, valid_dataloader)
+
+    trainer.fit(model, datamodule)

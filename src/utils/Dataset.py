@@ -23,13 +23,21 @@ class PlanktonDataset(Dataset):
         self.images, self.labels = self._load_images_into_memory()
 
     def __getitem__(self, item):
+
         image = self.images[item]
         label = self.labels[item]
 
-        # if self.transform:
-        #     image = self.transform(image)
+        if self.transform:
+            image = np.moveaxis(image, 0, -1)
+            image = Image.fromarray(image.astype('uint8'), "RGB")
+            image = self.transform(image)
 
-        return torch.from_numpy(image).float(), torch.from_numpy(np.array(label)).long()
+        image = image / 255
+
+        if isinstance(image, np.ndarray):
+            return torch.from_numpy(image).float(), torch.from_numpy(np.array(label)).long()
+        else:
+            return image.float(), torch.from_numpy(np.array(label)).long()
 
     def __len__(self) -> int:
         return self.labels.shape[0]
@@ -77,7 +85,6 @@ class PlanktonDataset(Dataset):
 
                 counter += 1
 
-        image_array = image_array / 255
         image_array = np.moveaxis(image_array, -1, 1)
 
         print("Image array shape:", image_array.shape)

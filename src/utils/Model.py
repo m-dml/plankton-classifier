@@ -3,6 +3,8 @@ import torch
 import torchvision.models as models
 import torch.nn as nn
 from torch.nn import functional as F
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class LitModel(LightningModule):
@@ -30,13 +32,107 @@ class LitModel(LightningModule):
         x, y = batch
         y_hat = self(x)
         loss = F.nll_loss(y_hat, y)
-        return loss
+
+        # identifying number of correct predections in a given batch
+        correct = y_hat.argmax(dim=1).eq(y).sum().item()
+        total = len(y)
+
+        # logs- a dictionary
+        logs = {"train_loss": loss}
+
+        batch_dictionary = {
+            # REQUIRED: It ie required for us to return "loss"
+            "loss": loss,
+
+            # optional for batch logging purposes
+            "log": logs,
+
+            # info to be used at epoch end
+            "correct": correct,
+            "total": total
+        }
+
+        return batch_dictionary
+
+    def training_epoch_end(self, outputs):
+        #  the function is called after every epoch is completed
+
+        if self.current_epoch == 1:
+            sample_img = torch.rand((1, 3, 500, 500))
+            self.logger.experiment.add_graph(LitModel(), sample_img)
+
+        # calculating average loss
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+
+        # calculating correect and total predictions
+        correct = sum([x["correct"] for x in outputs])
+        total = sum([x["total"] for x in outputs])
+
+        # logging using tensorboard logger
+        self.logger.experiment.add_scalar("Loss/Train",
+                                          avg_loss,
+                                          self.current_epoch)
+
+        self.logger.experiment.add_scalar("Accuracy/Train",
+                                          correct / total,
+                                          self.current_epoch)
+
+        epoch_dictionary = {
+            # required
+            'loss': avg_loss}
+
+        return epoch_dictionary
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         val_loss = F.nll_loss(y_hat, y)
-        return val_loss
+
+        # identifying number of correct predections in a given batch
+        correct = y_hat.argmax(dim=1).eq(y).sum().item()
+        total = len(y)
+
+        # logs- a dictionary
+        logs = {"val_loss": val_loss}
+
+        batch_dictionary = {
+            # REQUIRED: It ie required for us to return "loss"
+            "loss": val_loss,
+
+            # optional for batch logging purposes
+            "log": logs,
+
+            # info to be used at epoch end
+            "correct": correct,
+            "total": total
+        }
+
+        return batch_dictionary
+
+    def validation_epoch_end(self, outputs):
+        #  the function is called after every epoch is completed
+
+        # calculating average loss
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+
+        # calculating correect and total predictions
+        correct = sum([x["correct"] for x in outputs])
+        total = sum([x["total"] for x in outputs])
+
+        # logging using tensorboard logger
+        self.logger.experiment.add_scalar("Loss/Validation",
+                                          avg_loss,
+                                          self.current_epoch)
+
+        self.logger.experiment.add_scalar("Accuracy/Validation",
+                                          correct / total,
+                                          self.current_epoch)
+
+        epoch_dictionary = {
+            # required
+            'loss': avg_loss}
+
+        return epoch_dictionary
 
     def test_step(self, batch, batch_idx):
         x, y = batch
