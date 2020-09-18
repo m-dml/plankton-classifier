@@ -29,7 +29,7 @@ class PlanktonDataset(Dataset):
         # if self.transform:
         #     image = self.transform(image)
 
-        return torch.from_numpy(image).double(), torch.from_numpy(np.array(label)).double()
+        return torch.from_numpy(image).float(), torch.from_numpy(np.array(label)).long()
 
     def __len__(self) -> int:
         return self.labels.shape[0]
@@ -68,7 +68,7 @@ class PlanktonDataset(Dataset):
             path_to_images_of_class = os.path.join(self.data_path, class_name)
             images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*.png"))
 
-            for i, image_file in enumerate(images_of_class[:20]):
+            for i, image_file in enumerate(images_of_class):
                 image = Image.open(image_file)
                 image = ImageOps.pad(image, size=(self.final_image_size, self.final_image_size))
                 image_as_array = np.array(image)
@@ -78,6 +78,8 @@ class PlanktonDataset(Dataset):
                 counter += 1
 
         image_array = image_array / 255
+        image_array = np.moveaxis(image_array, -1, 1)
+
         print("Image array shape:", image_array.shape)
 
         return image_array, label_array
