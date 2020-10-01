@@ -2,6 +2,7 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import random_split, DataLoader
 
 from .Dataset import PlanktonDataset
+from argparse import ArgumentParser
 
 
 class PlanktonDataModule(LightningDataModule):
@@ -46,3 +47,11 @@ class PlanktonDataModule(LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test, batch_size=self.batch_size, shuffle=False)
+
+    @staticmethod
+    def add_argparse_args(parent_parser):
+
+        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument('--batch_size', type=int, default=12)
+
+        return parser

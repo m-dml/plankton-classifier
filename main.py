@@ -12,8 +12,6 @@ def main(args=None):
     datamodule_class = PlanktonDataModule
 
     parser = ArgumentParser()
-    # parser.add_argument('--learning_rate', type=float, default=0.002)
-    parser.add_argument('--batch_size', type=int, default=12)
 
     script_args, _ = parser.parse_known_args(args)
     parser = datamodule_class.add_argparse_args(parser)
@@ -38,4 +36,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
