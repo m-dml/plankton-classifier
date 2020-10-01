@@ -6,11 +6,12 @@ import os
 import numpy as np
 from tqdm import tqdm
 import torch
+import logging
 
 
 class PlanktonDataset(Dataset):
 
-    def __init__(self, data_path, transform=None, final_image_size=500, stage=None):
+    def __init__(self, data_path, transform=None, final_image_size=500, stage=None, data_is_grouped=False):
         """
         Initialization of the Dataset.
         Args:
@@ -20,6 +21,7 @@ class PlanktonDataset(Dataset):
         self.final_image_size = final_image_size
         self.transform = transform
         self.stage = stage
+        self.data_is_grouped = data_is_grouped
 
         self.images, self.labels = self._load_images_into_memory()
 
@@ -58,9 +60,13 @@ class PlanktonDataset(Dataset):
 
     def _count_all_images(self, class_names):
         counter = 0
+        logging.debug(f"data is grouped: {self.data_is_grouped}")
         for class_name in class_names:
             path_to_images_of_class = os.path.join(self.data_path, class_name)
-            images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*.png"))
+            if self.data_is_grouped:
+                images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*/*.tif"))
+            else:
+                images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*.png"))
             for _ in images_of_class:
                 counter += 1
         return counter
@@ -75,7 +81,12 @@ class PlanktonDataset(Dataset):
 
         for c, class_name in enumerate(tqdm(class_names, desc="loading")):
             path_to_images_of_class = os.path.join(self.data_path, class_name)
-            images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*.png"))
+            if self.data_is_grouped:
+                logging.info(f'Looking for images at: {os.path.join(path_to_images_of_class, "*/*.tif")}')
+                images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*/*.tif"))
+                logging.info(f"Found {len(images_of_class)} images.")
+            else:
+                images_of_class = glob.glob(os.path.join(path_to_images_of_class, "*.png"))
 
             for i, image_file in enumerate(images_of_class):
                 image = Image.open(image_file)
@@ -88,6 +99,6 @@ class PlanktonDataset(Dataset):
 
         image_array = np.moveaxis(image_array, -1, 1)
 
-        print("Image array shape:", image_array.shape)
+        logging.info(f"Image array shape: {image_array.shape}")
 
         return image_array, label_array

@@ -10,11 +10,11 @@ from argparse import ArgumentParser
 
 class PlanktonCLF(LightningModule):
 
-    def __init__(self, **kwargs):
+    def __init__(self, num_classes, **kwargs):
         super().__init__()
 
         self.save_hyperparameters()
-        num_target_classes = 5
+        num_target_classes = num_classes
         self.feature_extractor = models.resnet18(
             pretrained=False,
             num_classes=num_target_classes)
