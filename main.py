@@ -12,6 +12,9 @@ def main(args=None):
     datamodule_class = PlanktonDataModule
 
     parser = ArgumentParser()
+    # parser.add_argument('--learning_rate', type=float, default=0.002)
+    parser.add_argument('--batch_size', type=int, default=12)
+
     script_args, _ = parser.parse_known_args(args)
     parser = datamodule_class.add_argparse_args(parser)
     parser = PlanktonCLF.add_model_specific_args(parser)
@@ -22,7 +25,7 @@ def main(args=None):
                                     transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.5, 0.5, 0.5),
                                     transforms.ToTensor()])
 
-    datamodule = datamodule_class.from_argparse_args(transforms=transform, **vars(args))
+    datamodule = datamodule_class.from_argparse_args(args, transform=transform)
     model = PlanktonCLF(**vars(args))
 
     trainer = pl.Trainer.from_argparse_args(args, progress_bar_refresh_rate=20, gpus=1,
@@ -34,19 +37,5 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    # args = dict(
-    #     batch_size=12,
-    #     learning_rate=0.0002,
-    #     log_gpu_memory=True
-    # )
     main()
-    # logger = TensorBoardLogger(save_dir="tb_logs")
-    # transform = transforms.Compose([transforms.RandomVerticalFlip(), transforms.RandomRotation(degrees=180),
-    #                                 transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.5, 0.5, 0.5),
-    #                                 transforms.ToTensor()])
-    # datamodule = PlanktonDataModule(data_path='data/plankton_dataset/Training3_0', transform=transform, batch_size=8)
-    #
-    # trainer = pl.Trainer(gpus=1, max_epochs=20, logger=logger)
-    # model = LitModel()
-    #
-    # trainer.fit(model, datamodule)
+
