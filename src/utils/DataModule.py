@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 class PlanktonDataModule(LightningDataModule):
 
     def __init__(self, data_path='data/plankton_dataset/Training3_0', final_image_size=500, train_test_split=0.9,
-                 train_valid_split=0.9, batch_size=8, transform=None):
+                 train_valid_split=0.9, batch_size=8, transform=None, **kwargs):
         super().__init__()
 
         self.data_path = data_path
@@ -53,5 +53,5 @@ class PlanktonDataModule(LightningDataModule):
 
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--batch_size', type=int, default=12)
-
+        parser.add_argument('--data_path', type=str, default='data/plankton_dataset/Training3_0')
         return parser

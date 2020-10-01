@@ -23,15 +23,15 @@ def main(args=None):
                                     transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.2, 0.2, 0.2),
                                     transforms.ToTensor()])
 
-    datamodule = datamodule_class.from_argparse_args(args, transform=transform, num_workers=8)
+    datamodule = datamodule_class.from_argparse_args(args, transform=transform)
     model = PlanktonCLF(**vars(args))
+    model.load_from_checkpoint(checkpoint_path="lightning_logs/version_")
 
     trainer = pl.Trainer.from_argparse_args(args, progress_bar_refresh_rate=20, gpus=1,
-                                            max_epochs=50,
-                                            # distributed_backend='ddp', num_nodes=3
+                                            max_epochs=1,
+                                            distributed_backend='ddp', num_nodes=3
                                             )
-    trainer.fit(model, datamodule)
-    # trainer.test(model)
+    trainer.test(model, )
 
 
 if __name__ == '__main__':

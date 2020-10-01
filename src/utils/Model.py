@@ -63,7 +63,7 @@ class PlanktonCLF(LightningModule):
 
         if self.current_epoch == 1:
             sample_img = torch.rand((1, 3, 500, 500))
-            self.logger.experiment.add_graph(PlanktonCLF(), sample_img)
+            # self.logger.experiment.add_graph(PlanktonCLF(), sample_img)
 
         # calculating average loss
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
@@ -142,6 +142,18 @@ class PlanktonCLF(LightningModule):
         x, y = batch
         y_hat = self(x)
         loss = F.nll_loss(y_hat, y)
+        total = len(y)
+        correct = y_hat.argmax(dim=1).eq(y).sum().item()
+
+        # logging using tensorboard logger
+        self.logger.experiment.add_scalar("Loss/Test",
+                                          loss,
+                                          self.current_epoch)
+
+        self.logger.experiment.add_scalar("Accuracy/Test",
+                                          correct / total,
+                                          self.current_epoch)
+
         return loss
 
     @staticmethod
