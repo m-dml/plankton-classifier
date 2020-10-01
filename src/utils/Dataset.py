@@ -10,7 +10,7 @@ import torch
 
 class PlanktonDataset(Dataset):
 
-    def __init__(self, data_path, transform=None, final_image_size=500):
+    def __init__(self, data_path, transform=None, final_image_size=500, stage=None):
         """
         Initialization of the Dataset.
         Args:
@@ -19,6 +19,7 @@ class PlanktonDataset(Dataset):
         self.data_path = data_path
         self.final_image_size = final_image_size
         self.transform = transform
+        self.stage = stage
 
         self.images, self.labels = self._load_images_into_memory()
 
@@ -27,7 +28,7 @@ class PlanktonDataset(Dataset):
         image = self.images[item]
         label = self.labels[item]
 
-        if self.transform:
+        if self.transform and (self.stage=="fit"):
             image = np.moveaxis(image, 0, -1)
             image = Image.fromarray(image.astype('uint8'), "RGB")
             image = self.transform(image)

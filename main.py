@@ -1,20 +1,52 @@
-from torchvision import datasets, transforms
-from torch.utils.data import random_split
-
-from torch.utils.data import DataLoader
-import pytorch_lightning
+from torchvision import transforms
+import pytorch_lightning as pl
 from src.utils.DataModule import PlanktonDataModule
-from src.utils.Model import LitModel
+from src.utils.Model import PlanktonCLF
 from pytorch_lightning.loggers import TensorBoardLogger
+from argparse import ArgumentParser
 
-if __name__ == '__main__':
-    logger = TensorBoardLogger(save_dir="tb_logs")
+
+def main(args=None):
+    pl.seed_everything(42)
+
+    datamodule_class = PlanktonDataModule
+
+    parser = ArgumentParser()
+    script_args, _ = parser.parse_known_args(args)
+    parser = datamodule_class.add_argparse_args(parser)
+    parser = PlanktonCLF.add_model_specific_args(parser)
+    parser = pl.Trainer.add_argparse_args(parser)
+    args = parser.parse_args(args)
+
     transform = transforms.Compose([transforms.RandomVerticalFlip(), transforms.RandomRotation(degrees=180),
                                     transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.5, 0.5, 0.5),
                                     transforms.ToTensor()])
-    datamodule = PlanktonDataModule(data_path='data/plankton_dataset/Training3_0', transform=transform, batch_size=8)
 
-    trainer = pytorch_lightning.Trainer(gpus=1, max_epochs=20, logger=logger)
-    model = LitModel()
+    datamodule = datamodule_class.from_argparse_args(transforms=transform, **vars(args))
+    model = PlanktonCLF(**vars(args))
 
+    trainer = pl.Trainer.from_argparse_args(args, progress_bar_refresh_rate=20, gpus=1,
+                                            max_epochs=20,
+                                            # distributed_backend='ddp', num_nodes=1
+                                            )
     trainer.fit(model, datamodule)
+    trainer.test(model)
+
+
+if __name__ == '__main__':
+    # args = dict(
+    #     batch_size=12,
+    #     learning_rate=0.0002,
+    #     log_gpu_memory=True
+    # )
+    main()
+    # logger = TensorBoardLogger(save_dir="tb_logs")
+    # transform = transforms.Compose([transforms.RandomVerticalFlip(), transforms.RandomRotation(degrees=180),
+    #                                 transforms.RandomHorizontalFlip(p=0.5), transforms.ColorJitter(0.5, 0.5, 0.5),
+    #                                 transforms.ToTensor()])
+    # datamodule = PlanktonDataModule(data_path='data/plankton_dataset/Training3_0', transform=transform, batch_size=8)
+    #
+    # trainer = pl.Trainer(gpus=1, max_epochs=20, logger=logger)
+    # model = LitModel()
+    #
+    # trainer.fit(model, datamodule)

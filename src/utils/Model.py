@@ -5,12 +5,15 @@ import torch.nn as nn
 from torch.nn import functional as F
 import matplotlib.pyplot as plt
 import numpy as np
+from argparse import ArgumentParser
 
 
-class LitModel(LightningModule):
+class PlanktonCLF(LightningModule):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
+
+        self.save_hyperparameters()
         num_target_classes = 5
         self.feature_extractor = models.resnet18(
             pretrained=False,
@@ -25,7 +28,8 @@ class LitModel(LightningModule):
         return x
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        lr = self.hparams.learning_rate
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         return optimizer
 
     def training_step(self, batch, batch_idx):
@@ -59,7 +63,7 @@ class LitModel(LightningModule):
 
         if self.current_epoch == 1:
             sample_img = torch.rand((1, 3, 500, 500))
-            self.logger.experiment.add_graph(LitModel(), sample_img)
+            self.logger.experiment.add_graph(PlanktonCLF(), sample_img)
 
         # calculating average loss
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
@@ -139,3 +143,10 @@ class LitModel(LightningModule):
         y_hat = self(x)
         loss = F.nll_loss(y_hat, y)
         return loss
+
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument('--learning_rate', type=float, default=0.0002, help="adam: learning rate")
+
+        return parser

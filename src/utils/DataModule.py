@@ -6,8 +6,8 @@ from .Dataset import PlanktonDataset
 
 class PlanktonDataModule(LightningDataModule):
 
-    def __init__(self, data_path, final_image_size=500, train_test_split=0.9, train_valid_split=0.9, batch_size=1,
-                 transform=None):
+    def __init__(self, data_path='data/plankton_dataset/Training3_0', final_image_size=500, train_test_split=0.9,
+                 train_valid_split=0.9, batch_size=8, transform=None):
         super().__init__()
 
         self.data_path = data_path
