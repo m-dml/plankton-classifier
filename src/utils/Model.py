@@ -3,23 +3,29 @@ import torch
 import torchvision.models as models
 import torch.nn as nn
 from torch.nn import functional as F
-import matplotlib.pyplot as plt
 import numpy as np
 from argparse import ArgumentParser
+
+from pytorch_lightning.metrics.functional import confusion_matrix
 
 
 class PlanktonCLF(LightningModule):
 
-    def __init__(self, num_classes, **kwargs):
+    def __init__(self, num_classes, labels, **kwargs):
         super().__init__()
 
         self.save_hyperparameters()
-        num_target_classes = num_classes
+
+        self.num_classes = num_classes
         self.feature_extractor = models.resnet18(
             pretrained=False,
-            num_classes=num_target_classes)
+            num_classes=num_classes)
         self.feature_extractor.eval()
-        self.classifier = nn.Linear(in_features=num_target_classes, out_features=num_target_classes)
+        self.classifier = nn.Linear(in_features=num_classes, out_features=num_classes)
+        self.labels = labels
+
+    def setup(self, *args, **kwargs):
+        self.logger.experiment.log_parameters(self.hparams)
 
     def forward(self, x):
         representations = self.feature_extractor(x)
@@ -72,14 +78,10 @@ class PlanktonCLF(LightningModule):
         correct = sum([x["correct"] for x in outputs])
         total = sum([x["total"] for x in outputs])
 
-        # logging using tensorboard logger
-        self.logger.experiment.add_scalar("Loss/Train",
-                                          avg_loss,
-                                          self.current_epoch)
+        # logging using comet logger
+        self.logger.experiment.log_metric("Loss/Train", avg_loss)
 
-        self.logger.experiment.add_scalar("Accuracy/Train",
-                                          correct / total,
-                                          self.current_epoch)
+        self.logger.experiment.log_metric("Accuracy/Train", correct / total)
 
         epoch_dictionary = {
             # required
@@ -91,6 +93,8 @@ class PlanktonCLF(LightningModule):
         x, y = batch
         y_hat = self(x)
         val_loss = F.nll_loss(y_hat, y)
+        y_hat_classes = y_hat.argmax(dim=1)
+
 
         # identifying number of correct predections in a given batch
         correct = y_hat.argmax(dim=1).eq(y).sum().item()
@@ -98,6 +102,7 @@ class PlanktonCLF(LightningModule):
 
         # logs- a dictionary
         logs = {"val_loss": val_loss}
+        cm = confusion_matrix(target=y, pred=y_hat_classes, num_classes=self.num_classes)
 
         batch_dictionary = {
             # REQUIRED: It ie required for us to return "loss"
@@ -108,14 +113,19 @@ class PlanktonCLF(LightningModule):
 
             # info to be used at epoch end
             "correct": correct,
-            "total": total
+            "total": total,
+            "cm": cm.cpu().numpy()
         }
 
         return batch_dictionary
 
     def validation_epoch_end(self, outputs):
-        #  the function is called after every epoch is completed
 
+        cms = np.array([x['cm'] for x in outputs])
+        cm = torch.sum(torch.from_numpy(cms), axis=0)
+
+        self.logger.experiment.log_confusion_matrix(matrix=cm, labels=self.labels,
+                                                    file_name=f"confusion_matrix_{self.current_epoch}.json")
         # calculating average loss
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
 
@@ -123,14 +133,9 @@ class PlanktonCLF(LightningModule):
         correct = sum([x["correct"] for x in outputs])
         total = sum([x["total"] for x in outputs])
 
-        # logging using tensorboard logger
-        self.logger.experiment.add_scalar("Loss/Validation",
-                                          avg_loss,
-                                          self.current_epoch)
-
-        self.logger.experiment.add_scalar("Accuracy/Validation",
-                                          correct / total,
-                                          self.current_epoch)
+        # logging using comet logger
+        self.logger.experiment.log_metric("Loss/Validation", avg_loss)
+        self.logger.experiment.log_metric("Accuracy/Validation", correct / total)
 
         epoch_dictionary = {
             # required
@@ -145,16 +150,31 @@ class PlanktonCLF(LightningModule):
         total = len(y)
         correct = y_hat.argmax(dim=1).eq(y).sum().item()
 
-        # logging using tensorboard logger
-        self.logger.experiment.add_scalar("Loss/Test",
-                                          loss,
-                                          self.current_epoch)
+        y_hat_classes = y_hat.argmax(dim=1)
 
-        self.logger.experiment.add_scalar("Accuracy/Test",
-                                          correct / total,
-                                          self.current_epoch)
+        cm = confusion_matrix(target=y, pred=y_hat_classes, num_classes=self.num_classes)
 
-        return loss
+        self.logger.experiment.log_metric("Loss/Test", loss)
+        self.logger.experiment.log_metric("Accuracy/Test", correct / total)
+
+        batch_dictionary = {
+            # REQUIRED: It ie required for us to return "loss"
+            "loss": loss,
+
+            # info to be used at epoch end
+            "correct": correct,
+            "total": total,
+            "cm": cm.cpu().numpy()
+        }
+
+        return batch_dictionary
+
+    def test_epoch_end(self, outputs) -> None:
+
+        cms = np.array([x['cm'] for x in outputs[:-1]])
+        cm = torch.sum(torch.from_numpy(cms), axis=0)
+
+        self.logger.experiment.log_confusion_matrix(matrix=cm, labels=self.labels, file_name=f"confusion_matrix_testing.json")
 
     @staticmethod
     def add_model_specific_args(parent_parser):

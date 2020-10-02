@@ -600,3 +600,7 @@ notebooks/tb_logs/
 notebooks/lightning_logs/
 lightning_logs/
 *lightning_logs/
+comet_logs/
+*comet_logs/
+
+.comet.config

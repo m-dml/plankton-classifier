@@ -23,7 +23,9 @@ class PlanktonDataset(Dataset):
         self.stage = stage
         self.data_is_grouped = data_is_grouped
 
+        self.class_labels = self._get_class_labels()
         self.images, self.labels = self._load_images_into_memory()
+
 
     def __getitem__(self, item):
 
@@ -72,14 +74,14 @@ class PlanktonDataset(Dataset):
         return counter
 
     def _load_images_into_memory(self):
-        class_names = self._get_class_labels()
-        n_images = self._count_all_images(class_names=class_names)
+        self.class_labels = self._get_class_labels()
+        n_images = self._count_all_images(class_names=self.class_labels)
 
         image_array = np.empty([n_images, self.final_image_size, self.final_image_size, 3])
         label_array = np.empty([n_images]).astype(int)
         counter = 0
 
-        for c, class_name in enumerate(tqdm(class_names, desc="loading")):
+        for c, class_name in enumerate(tqdm(self.class_labels, desc="loading")):
             path_to_images_of_class = os.path.join(self.data_path, class_name)
             if self.data_is_grouped:
                 logging.info(f'Looking for images at: {os.path.join(path_to_images_of_class, "*/*.tif")}')

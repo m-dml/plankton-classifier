@@ -22,12 +22,14 @@ class PlanktonDataModule(LightningDataModule):
         self.train = None
         self.val = None
         self.test = None
+        self.labels = None
 
     def setup(self, stage=None):
         # called on every GPU
 
         dataset = PlanktonDataset(data_path=self.data_path, transform=self.transform,
                                   final_image_size=self.final_image_size, data_is_grouped=self.data_is_grouped)
+        self.labels = dataset.class_labels
         train_valid_split = int(len(dataset) * self.train_test_split)
         test_split = len(dataset) - train_valid_split
         train_valid_dataset, test_dataset = random_split(dataset, [train_valid_split, test_split])
