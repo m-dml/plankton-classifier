@@ -15,34 +15,25 @@ class PlanktonDataSet(Dataset):
         self.files = files
 
         self.transform = transform
-
-        if len(self.files) > 0:
-            self.example_x = self.load_and_transform_file(self.files[0][0])
-        else:
-            self.example_x = None
+        self.preload_dataset = CONFIG.preload_dataset
 
     def __getitem__(self, item):
-        # todo: write data fetching (make it possible to preload and to load lazy!)
-        return
-
-    def load_and_transform_file(self, file):
-        # todo: write data loading
+        image, label = self.files[item]
+        if not self.preload_dataset:
+            image = self.load_file(image)
 
         if self.transform:
-            tensor = self.transform(tensor)
-        return tensor
+            image = self.transform(image)
 
-    def get_input_channel_size(self) -> int:
-        # todo: return right channel size
-        raise NotImplementedError
+        return image, label
 
-    def get_output_channel_size(self) -> int:
-        # todo: return right channel size
-        raise NotImplementedError
+    @staticmethod
+    def load_file(file):
+        this_image = Image.open(file)
+        return torchvision.transforms.ToTensor()(this_image)
 
     def __len__(self):
-        # todo: return right length for 1. lazy loading 2. preloaded data
-        raise NotImplementedError
+        return len(self.files)
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
@@ -114,19 +105,19 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 if not self.use_only_subclasses_of_old_data:
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
-                        files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                        files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
 
                 else:
                     for sub_folder in glob.glob(os.path.join(folder, "*")):
                         raw_file_paths = glob.glob(sub_folder + "*/*.tif")
                         for file in raw_file_paths:
-                            files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                            files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
 
         if self.use_new_data:
             for folder in glob.glob(os.path.join(self.new_data_path, "*")):
-                raw_file_paths = glob.glob(folder + "*/*/*.tif")
+                raw_file_paths = glob.glob(folder + "*/*/*.png")
                 for file in raw_file_paths:
-                    files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                    files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
         return files
 
     def train_dataloader(self):
@@ -141,10 +132,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
         return DataLoader(self.test_data, batch_size=self.batch_size, num_workers=self.num_workers,
                           shuffle=self.shuffle_test_dataset, pin_memory=True)
 
-
-def load_image(image_file, preload):
-    if preload:
-        this_image = Image.open(image_file)
-        return torchvision.transforms.ToTensor()(this_image)
-    else:
-        return image_file
+    @staticmethod
+    def load_image(image_file, preload):
+        if preload:
+            this_image = Image.open(image_file)
+            return torchvision.transforms.ToTensor()(this_image)
+        else:
+            return image_file
