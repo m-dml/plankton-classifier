@@ -43,7 +43,7 @@ def main():
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
     transform = transforms.Compose([
-        transforms.CenterCrop(8),
+        transforms.Resize([512, 512]),
         transforms.ToTensor(),
     ])
 
@@ -63,7 +63,7 @@ def main():
                                                  log_graph=True)
 
     # initializes a callback to save the 5 best model weights measured by the lowest loss:
-    checkpoint_callback = ModelCheckpoint(monitor="MSE Validation",
+    checkpoint_callback = ModelCheckpoint(monitor="NLL Validation",
                                           save_top_k=5,
                                           mode='min',
                                           save_last=True,

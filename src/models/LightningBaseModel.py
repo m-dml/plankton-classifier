@@ -5,6 +5,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
 from torchvision.models import resnet18
 
@@ -24,7 +25,7 @@ class LightningModel(pl.LightningModule):
 
     def forward(self, images,  *args, **kwargs):
         predictions = self.model(images)
-        return predictions
+        return F.log_softmax(predictions, dim=1)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.hparams.learning_rate)
@@ -38,11 +39,11 @@ class LightningModel(pl.LightningModule):
         logging.debug(f"labels have the shape: {labels.shape}")
         logging.debug(f"predictions have the shape: {predictions.shape}")
 
-        loss_function = nn.MSELoss()
-        loss = loss_function(input=predictions, target=labels.unsqueeze(-1))
+        loss_func = nn.NLLLoss()
+        loss = loss_func(predictions, labels.view(-1).long())
 
         # lets log some values for inspection (for example in tensorboard):
-        self.log("MSE Training", loss)
+        self.log("NLL Training", loss)
 
         return loss
 
@@ -52,11 +53,11 @@ class LightningModel(pl.LightningModule):
         # for the toy example we will not use the meta_data and only the images to make a prediction.
         predictions = self(images)
 
-        loss_function = nn.MSELoss()
-        loss = loss_function(input=predictions, target=labels.unsqueeze(-1))
+        loss_func = nn.NLLLoss()
+        loss = loss_func(predictions, labels.view(-1).long())
 
         # lets log some values for inspection (for example in tensorboard):
-        self.log("MSE Validation", loss)
+        self.log("NLL Validation", loss)
 
         if batch_idx == 0:
             self.log_confusion_matrix(predictions, labels)
@@ -69,11 +70,11 @@ class LightningModel(pl.LightningModule):
         # for the toy example we will not use the meta_data and only the images to make a prediction.
         predictions = self(images)
 
-        loss_function = nn.MSELoss()
-        loss = loss_function(input=predictions, target=labels.unsqueeze(-1))
+        loss_func = nn.NLLLoss()
+        loss = loss_func(predictions, labels.view(-1).long())
 
         # lets log some values for inspection (for example in tensorboard):
-        self.log("MSE Test", loss)
+        self.log("NLL Test", loss)
 
         return loss
 
