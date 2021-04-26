@@ -8,9 +8,12 @@ this_config_file: "default_config.yaml"
 # ==================
 # technical:
 # ==================
+
+experiment_name: Resnet_classifier_plankton
 batch_size: 8
 min_epochs: 5
 max_epochs: 20
+learning_rate: 0.002
 
 # makes the model completely reproducible but slower:
 deterministic_trainer: false
@@ -18,7 +21,7 @@ deterministic_trainer: false
 random_seed: 42
 
 # For debugging and developing:
-debug_mode: false
+debug_mode: true
 fast_dev_run: false
 
 # if precision=16 then mixed precision is used:
@@ -39,6 +42,9 @@ gpus: 1
 
 # When this is changed, the the slurm script has to be adjusted as well:
 num_nodes: 1
+
+# interval for logging metrices:
+log_interval: 10
 
 # --------------------------------------------------------------------------------------
 # ==================
@@ -87,4 +93,7 @@ validation_split: 0.2
 shuffle_train_dataset: true
 shuffle_validation_dataset: false
 shuffle_test_dataset: false
+
+tensorboard_logger_logdir: "logs/tb_logs/"
+checkpoint_file_path: "logs/checkpoints"
 

@@ -1,9 +1,7 @@
 import unittest
 
-import torch
-
 from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataSet, PlanktonDataLoader
+from src.utils.DataLoader import PlanktonDataLoader
 
 
 class TestPlanktonDataLoader(unittest.TestCase):

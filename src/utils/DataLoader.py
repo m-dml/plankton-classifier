@@ -2,35 +2,38 @@ import glob
 import logging
 import os
 
-from PIL import Image
 import pytorch_lightning as pl
+from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-import torchvision
+import torch
 
 from src.utils import CONFIG
 
 
 class PlanktonDataSet(Dataset):
-    def __init__(self, files, transform=None):
+    def __init__(self, files, integer_labels, transform=None):
         self.files = files
+        self.integer_labels = integer_labels
 
         self.transform = transform
         self.preload_dataset = CONFIG.preload_dataset
 
     def __getitem__(self, item):
-        image, label = self.files[item]
+        image, label_name = self.files[item]
         if not self.preload_dataset:
             image = self.load_file(image)
 
         if self.transform:
             image = self.transform(image)
 
-        return image, label
+        label = torch.Tensor([self.integer_labels[label_name]])
+
+        return image, label, label_name
 
     @staticmethod
     def load_file(file):
         this_image = Image.open(file)
-        return torchvision.transforms.ToTensor()(this_image)
+        return this_image
 
     def __len__(self):
         return len(self.files)
@@ -47,6 +50,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.test_data = None
         self.input_channels = None
         self.output_channels = None
+        self.unique_labels = []
+        self.integer_class_labels = dict()
 
         self.batch_size = CONFIG.batch_size
         self.num_workers = CONFIG.num_workers
@@ -66,6 +71,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
+        self.integer_class_labels = self.set_up_integer_class_labels()
 
         if len(training_pairs) == 0:
             raise FileNotFoundError(f"Did not find any files")
@@ -86,17 +92,16 @@ class PlanktonDataLoader(pl.LightningDataModule):
         test_subset = training_pairs[test_split_start: test_split_end]
 
         if stage == 'fit' or stage is None:
-            self.train_data = PlanktonDataSet(train_subset, transform=self.transform)
-            self.input_channels = self.train_data.get_input_channel_size()
-            self.output_channels = self.train_data.get_output_channel_size()
+            self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
+                                              integer_labels=self.integer_class_labels)
             logging.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform)
+            self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform,
+                                              integer_labels=self.integer_class_labels)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == 'test' or stage is None:
-            self.test_data = PlanktonDataSet(test_subset, transform=self.transform)
-            self.input_channels = self.train_data.get_input_channel_size()
-            self.output_channels = self.train_data.get_output_channel_size()
+            self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
+                                             integer_labels=self.integer_class_labels)
 
     def prepare_data_setup(self):
         files = []
@@ -105,19 +110,28 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 if not self.use_subclasses:
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
-                        files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                        label = os.path.split(folder)[-1]
+                        files.append((self.load_image(file, self.preload_dataset),label))
+                        if label not in self.unique_labels:
+                            self.unique_labels.append(label)
 
                 else:
                     for sub_folder in glob.glob(os.path.join(folder, "*")):
                         raw_file_paths = glob.glob(sub_folder + "*/*.tif")
                         for file in raw_file_paths:
-                            files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                            label = os.path.split(folder)[-1]
+                            files.append((self.load_image(file, self.preload_dataset), label))
+                            if label not in self.unique_labels:
+                                self.unique_labels.append(label)
 
         if self.use_new_data:
             for folder in glob.glob(os.path.join(self.new_data_path, "*")):
                 raw_file_paths = glob.glob(folder + "*/*/*.png")
                 for file in raw_file_paths:
-                    files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+                    label = os.path.split(folder)[-1]
+                    files.append((self.load_image(file, self.preload_dataset), label))
+                    if label not in self.unique_labels:
+                        self.unique_labels.append(label)
         return files
 
     def train_dataloader(self):
@@ -136,6 +150,12 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def load_image(image_file, preload):
         if preload:
             this_image = Image.open(image_file)
-            return torchvision.transforms.ToTensor()(this_image)
+            return this_image
         else:
             return image_file
+
+    def set_up_integer_class_labels(self):
+        integer_class_labels = dict()
+        for i, label in enumerate(self.unique_labels):
+            integer_class_labels[label] = i
+        return integer_class_labels
