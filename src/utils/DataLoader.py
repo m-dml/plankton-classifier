@@ -74,14 +74,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.preload_dataset = CONFIG.preload_dataset
 
     def setup(self, stage=None):
-        labels, all_files = self.prepare_data_setup()
+        training_pairs = self.prepare_data_setup()
 
-        if len(all_files) == 0:
+        if len(training_pairs) == 0:
             raise FileNotFoundError(f"Did not find any files")
 
         train_split = self.train_split
         valid_split = train_split + self.validation_split
-        length = len(all_files)
+        length = len(training_pairs)
 
         train_split_start = 0
         train_split_end = int(length * train_split)
@@ -90,9 +90,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         test_split_start = valid_split_end
         test_split_end = length
 
-        train_subset = all_files[train_split_start: train_split_end]
-        valid_subset = all_files[valid_split_start: valid_split_end]
-        test_subset = all_files[test_split_start: test_split_end]
+        train_subset = training_pairs[train_split_start: train_split_end]
+        valid_subset = training_pairs[valid_split_start: valid_split_end]
+        test_subset = training_pairs[test_split_start: test_split_end]
 
         if stage == 'fit' or stage is None:
             self.train_data = PlanktonDataSet(train_subset, transform=self.transform)
