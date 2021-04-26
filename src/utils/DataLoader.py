@@ -2,6 +2,8 @@ import glob
 import logging
 import os
 
+
+from PIL import Image, ImageOps
 import pytorch_lightning as pl
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
@@ -10,13 +12,15 @@ import torch
 from src.utils import CONFIG
 
 
+
 class PlanktonDataSet(Dataset):
-    def __init__(self, files, integer_labels, transform=None):
+    def __init__(self, files, integer_labels, final_image_size=500, transform=None):
         self.files = files
         self.integer_labels = integer_labels
 
         self.transform = transform
         self.preload_dataset = CONFIG.preload_dataset
+        self.final_image_size = final_image_size
 
     def __getitem__(self, item):
         image, label_name = self.files[item]
@@ -30,9 +34,10 @@ class PlanktonDataSet(Dataset):
 
         return image, label, label_name
 
-    @staticmethod
-    def load_file(file):
+    def load_file(self, file):
         this_image = Image.open(file)
+        this_image = ImageOps.pad(this_image, size=(self.final_image_size, self.final_image_size))
+        this_image = torchvision.transforms.ToTensor()(this_image)
         return this_image
 
     def __len__(self):
@@ -68,6 +73,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.use_new_data = CONFIG.use_new_data
         self.use_subclasses = CONFIG.use_subclasses
         self.preload_dataset = CONFIG.preload_dataset
+
+        self.final_image_size = CONFIG.final_image_size
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
