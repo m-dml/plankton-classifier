@@ -16,7 +16,7 @@ class TestPlanktonDataLoader(unittest.TestCase):
         pass
 
     def test_dataloader_old_data_group_classe(self):
-        new_config = dict(use_only_subclasses_of_old_data=False,
+        new_config = dict(use_subclasses=False,
                           use_old_data=True,
                           use_new_data=False,
                           preload_dataset=False
@@ -26,7 +26,7 @@ class TestPlanktonDataLoader(unittest.TestCase):
         dl.setup()
 
     def test_dataloader_old_data_subclasses(self):
-        new_config = dict(use_only_subclasses_of_old_data=True,
+        new_config = dict(use_subclasses=True,
                           use_old_data=True,
                           use_new_data=False,
                           preload_dataset=False
@@ -36,7 +36,7 @@ class TestPlanktonDataLoader(unittest.TestCase):
         dl.setup()
 
     def test_dataloader_new_data(self):
-        new_config = dict(use_only_subclasses_of_old_data=True,
+        new_config = dict(use_subclasses=True,
                           use_old_data=False,
                           use_new_data=True,
                           preload_dataset=False

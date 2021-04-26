@@ -61,7 +61,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         self.use_old_data = CONFIG.use_old_data
         self.use_new_data = CONFIG.use_new_data
-        self.use_only_subclasses_of_old_data = CONFIG.use_only_subclasses_of_old_data
+        self.use_subclasses = CONFIG.use_subclasses
         self.preload_dataset = CONFIG.preload_dataset
 
     def setup(self, stage=None):
@@ -102,7 +102,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         files = []
         if self.use_old_data:
             for folder in glob.glob(os.path.join(self.old_data_path, "*")):
-                if not self.use_only_subclasses_of_old_data:
+                if not self.use_subclasses:
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
                         files.append((self.load_image(file, self.preload_dataset), os.path.split(folder)[-1]))

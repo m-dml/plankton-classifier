@@ -70,9 +70,9 @@ use_old_data: false
 # Bool whether to use the new data for training. Either old, new or both have to be used:
 use_new_data: true
 
-# if old data is used, this decides whether to use the top groups as labels (true) or to use the subclasses as labels
-# (false). If use_old_data == false, than this is not taken into account:
-use_only_subclasses_of_old_data: false
+# whether to use finer distinctions of different object types as different target categories
+# this has not effect on datasets with a flat directory structure
+use_subclasses: false
 
 # whether to load the whole dataset into memory at the beginning of the training:
 preload_dataset: false
