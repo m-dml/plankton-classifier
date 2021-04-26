@@ -12,7 +12,8 @@ Using this repo
 -------------------------------
 To run the vanilla model just run `main.py`. A conda environment which works with this project can be installed
 with `conda env create -f environment.yaml`. To adjust hyperparameters make yourself a copy of the `default_config.yaml`
-file and then run the program with `main.py -f my_config.yaml`.
+file and then run the program with `main.py -f my_config.yaml`. 
+Also, please adjust the account name in the `train_on_strand.sh`.
 
 
 Quick refresher on git and github
