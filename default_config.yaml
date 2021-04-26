@@ -1,0 +1,29 @@
+
+# top path where to find all plankton data:
+plankton_data_base_path: "/gpfs/work/machnitz/plankton_dataset"
+
+# The folder structure is Sorted/ClassName/DateFolder/*.png
+new_sorted_plankton_data: "new_data/4David/M160/Sorted"
+
+# Contains unsorted data in date-sorted subfolders. Files end on .png
+new_unsorted_plankton_data: "new_data/4David/HE570/rois/20*/20*"
+
+# the data in this dataset is grouped, meaning each class (folder) may contain subclasses (another folder). Files
+# end on .tif:
+old_sorted_plankton_data: "VPR_M87_grouped"
+
+# --------------------------------------------------------------------------------------
+
+# Dataloader configuration:
+
+# Bool whether to use the old data for training:
+use_old_data: false
+
+# Bool whether to use the new data for training. Either old, new or both have to be used:
+use_new_data: true
+
+# if old data is used, this decides whether to use the top groups as labels (true) or to use the subclasses as labels
+# (false). If use_old_data == false, than this is not taken into account:
+use_only_subclasses_of_old_data: false
+
+
