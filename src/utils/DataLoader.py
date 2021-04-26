@@ -2,15 +2,12 @@ import glob
 import logging
 import os
 
-
-from PIL import Image, ImageOps
 import pytorch_lightning as pl
+import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-import torch
 
 from src.utils import CONFIG
-
 
 
 class PlanktonDataSet(Dataset):
@@ -36,8 +33,6 @@ class PlanktonDataSet(Dataset):
 
     def load_file(self, file):
         this_image = Image.open(file)
-        this_image = ImageOps.pad(this_image, size=(self.final_image_size, self.final_image_size))
-        this_image = torchvision.transforms.ToTensor()(this_image)
         return this_image
 
     def __len__(self):

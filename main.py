@@ -43,7 +43,8 @@ def main():
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
     transform = transforms.Compose([
-        transforms.Resize([512, 512]),
+        transforms.Pad(CONFIG.final_image_size),
+        transforms.CenterCrop([CONFIG.final_image_size, CONFIG.final_image_size]),
         transforms.ToTensor(),
     ])
 
