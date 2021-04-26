@@ -15,7 +15,7 @@ class TestPlanktonDataLoader(unittest.TestCase):
     def test_dataset(self):
         pass
 
-    def test_dataloader_old_data_group_classe(self):
+    def test_dataloader_old_data_group_classes(self):
         new_config = dict(use_subclasses=False,
                           use_old_data=True,
                           use_new_data=False,
