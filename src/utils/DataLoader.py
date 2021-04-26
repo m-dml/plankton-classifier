@@ -1,11 +1,16 @@
+import glob
 import logging
-import pytorch_lightning as pl
+import os
 
+from PIL import Image
+import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
+import torchvision
+
 from src.utils import CONFIG
 
 
-class RadarDataSet(Dataset):
+class PlanktonDataSet(Dataset):
     def __init__(self, files, transform=None):
         self.files = files
 
@@ -40,7 +45,7 @@ class RadarDataSet(Dataset):
         raise NotImplementedError
 
 
-class RadarDataLoader(pl.LightningDataModule):
+class PlanktonDataLoader(pl.LightningDataModule):
     def __init__(self, transform=None):
         super().__init__()
 
@@ -59,13 +64,20 @@ class RadarDataLoader(pl.LightningDataModule):
         self.shuffle_train_dataset = CONFIG.shuffle_train_dataset  # whether to shuffle the train dataset (bool)
         self.shuffle_validation_dataset = CONFIG.shuffle_validation_dataset
         self.shuffle_test_dataset = CONFIG.shuffle_test_dataset
+        self.preload_dataset = CONFIG.preload_dataset
+        self.old_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.old_sorted_plankton_data)
+        self.new_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.new_sorted_plankton_data)
 
+        self.use_old_data = CONFIG.use_old_data
+        self.use_new_data = CONFIG.use_new_data
+        self.use_only_subclasses_of_old_data = CONFIG.use_only_subclasses_of_old_data
+        self.preload_dataset = CONFIG.preload_dataset
 
     def setup(self, stage=None):
-        all_files = self.get_radar_files(self.radar_data_list)
+        labels, all_files = self.prepare_data_setup()
 
         if len(all_files) == 0:
-            raise FileNotFoundError(f"Did not find any files in {self.radar_data_list}")
+            raise FileNotFoundError(f"Did not find any files")
 
         train_split = self.train_split
         valid_split = train_split + self.validation_split
@@ -83,17 +95,39 @@ class RadarDataLoader(pl.LightningDataModule):
         test_subset = all_files[test_split_start: test_split_end]
 
         if stage == 'fit' or stage is None:
-            self.train_data = RadarDataSet(train_subset, transform=self.transform)
+            self.train_data = PlanktonDataSet(train_subset, transform=self.transform)
             self.input_channels = self.train_data.get_input_channel_size()
             self.output_channels = self.train_data.get_output_channel_size()
             logging.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data = RadarDataSet(valid_subset, transform=self.transform)
+            self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == 'test' or stage is None:
-            self.test_data = RadarDataSet(test_subset, transform=self.transform)
+            self.test_data = PlanktonDataSet(test_subset, transform=self.transform)
             self.input_channels = self.train_data.get_input_channel_size()
             self.output_channels = self.train_data.get_output_channel_size()
+
+    def prepare_data_setup(self):
+        files = []
+        if self.use_old_data:
+            for folder in glob.glob(os.path.join(self.old_data_path, "*")):
+                if not self.use_only_subclasses_of_old_data:
+                    raw_file_paths = glob.glob(folder + "*/*/*.tif")
+                    for file in raw_file_paths:
+                        files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+
+                else:
+                    for sub_folder in glob.glob(os.path.join(folder, "*")):
+                        raw_file_paths = glob.glob(sub_folder + "*/*.tif")
+                        for file in raw_file_paths:
+                            files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+
+        if self.use_new_data:
+            for folder in glob.glob(os.path.join(self.new_data_path, "*")):
+                raw_file_paths = glob.glob(folder + "*/*/*.tif")
+                for file in raw_file_paths:
+                    files.append((load_image(file, self.preload_dataset), os.path.split(folder)[-1]))
+        return files
 
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
@@ -106,3 +140,11 @@ class RadarDataLoader(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(self.test_data, batch_size=self.batch_size, num_workers=self.num_workers,
                           shuffle=self.shuffle_test_dataset, pin_memory=True)
+
+
+def load_image(image_file, preload):
+    if preload:
+        this_image = Image.open(image_file)
+        return torchvision.transforms.ToTensor()(this_image)
+    else:
+        return image_file
