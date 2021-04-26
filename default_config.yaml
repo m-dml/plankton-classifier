@@ -1,3 +1,50 @@
+# Default Configuration file for setting up experiments for GanCasting. Do not change!
+# New config files do not have to include all of these entries. Only provided entries will be overwritten.
+# Only keys that are defined in the "default config" file are allowed to be set.
+# The "None" value in python is in yaml called "null" without "".
+this_config_file: "default_config.yaml"
+
+# --------------------------------------------------------------------------------------
+# ==================
+# technical:
+# ==================
+batch_size: 8
+min_epochs: 5
+max_epochs: 20
+
+# makes the model completely reproducible but slower:
+deterministic_trainer: false
+
+random_seed: 42
+
+# For debugging and developing:
+debug_mode: false
+fast_dev_run: false
+
+# if precision=16 then mixed precision is used:
+precision: 32
+
+# if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
+plugins: null
+
+# Choose whether to use a distributed backend (For multi-GPU training) or not:
+accelerator: null  # [null, "ddp", "ddp2", "ddp_cpu"]
+
+# CPUs for the dataloader. For windows this should be 0, otherwise it will crash:
+# Also with streaming data this should be 0:
+num_workers: 0
+
+# Number of GPUs per Node (On strand max. is 1). If 0 then use CPUs:
+gpus: 1
+
+# When this is changed, the the slurm script has to be adjusted as well:
+num_nodes: 1
+
+# --------------------------------------------------------------------------------------
+# ==================
+# Paths:
+# ==================
+
 
 # top path where to find all plankton data:
 plankton_data_base_path: "/gpfs/work/machnitz/plankton_dataset"
@@ -13,8 +60,9 @@ new_unsorted_plankton_data: "new_data/4David/HE570/rois/20*/20*"
 old_sorted_plankton_data: "VPR_M87_grouped"
 
 # --------------------------------------------------------------------------------------
-
-# Dataloader configuration:
+# ==================
+# DataLoader:
+# ==================
 
 # Bool whether to use the old data for training:
 use_old_data: false
@@ -26,4 +74,14 @@ use_new_data: true
 # (false). If use_old_data == false, than this is not taken into account:
 use_only_subclasses_of_old_data: false
 
+# Relative splitting of the data into subsets. Splitting is done along the time dimension and data is not shuffled
+# before the splitting, so that the validation data always comes chronologically after the train data.
+# The size of the test dataset is the 1 - (train_split + validation_split):
+train_split: 0.7
+validation_split: 0.2
+
+# Whether the different datasets should be shuffled or not:
+shuffle_train_dataset: true
+shuffle_validation_dataset: false
+shuffle_test_dataset: false
 

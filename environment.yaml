@@ -1,0 +1,18 @@
+name: plankton
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.8
+  - jupyterlab
+  - ipython
+  - ipywidgets
+  - numpy
+  - pytorch
+  - pytorch-lightning
+  - torchvision
+  - pillow
+  - cv2
+  - matplotlib
+  - pip:
+      - test-tube
