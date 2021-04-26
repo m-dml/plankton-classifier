@@ -10,9 +10,9 @@ this_config_file: "default_config.yaml"
 # ==================
 
 experiment_name: Resnet_classifier_plankton
-batch_size: 8
-min_epochs: 5
-max_epochs: 20
+batch_size: 16
+min_epochs: 1
+max_epochs: 5
 learning_rate: 0.002
 
 # makes the model completely reproducible but slower:
@@ -21,7 +21,7 @@ deterministic_trainer: false
 random_seed: 42
 
 # For debugging and developing:
-debug_mode: true
+debug_mode: false
 fast_dev_run: false
 
 # if precision=16 then mixed precision is used:
@@ -35,7 +35,7 @@ accelerator: null  # [null, "ddp", "ddp2", "ddp_cpu"]
 
 # CPUs for the dataloader. For windows this should be 0, otherwise it will crash:
 # Also with streaming data this should be 0:
-num_workers: 0
+num_workers: 20
 
 # Number of GPUs per Node (On strand max. is 1). If 0 then use CPUs:
 gpus: 1
@@ -50,7 +50,6 @@ log_interval: 10
 # ==================
 # Paths:
 # ==================
-
 
 # top path where to find all plankton data:
 plankton_data_base_path: "/gpfs/work/machnitz/plankton_dataset"

@@ -12,7 +12,8 @@ dependencies:
   - pytorch-lightning
   - torchvision
   - pillow
-  - cv2
+  - tqdm
   - matplotlib
   - pip:
       - test-tube
+      - fairscale

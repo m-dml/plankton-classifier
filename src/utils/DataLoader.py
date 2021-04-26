@@ -8,6 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
 from src.utils import CONFIG
+from tqdm import tqdm
 
 
 class PlanktonDataSet(Dataset):
@@ -108,7 +109,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def prepare_data_setup(self):
         files = []
         if self.use_old_data:
-            for folder in glob.glob(os.path.join(self.old_data_path, "*")):
+            for folder in tqdm(glob.glob(os.path.join(self.old_data_path, "*")), desc="Load old data"):
                 if not self.use_subclasses:
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
@@ -118,7 +119,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                             self.unique_labels.append(label)
 
                 else:
-                    for sub_folder in glob.glob(os.path.join(folder, "*")):
+                    for sub_folder in tqdm(glob.glob(os.path.join(folder, "*")), desc="Load old data"):
                         raw_file_paths = glob.glob(sub_folder + "*/*.tif")
                         for file in raw_file_paths:
                             label = os.path.split(folder)[-1]
@@ -127,7 +128,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                 self.unique_labels.append(label)
 
         if self.use_new_data:
-            for folder in glob.glob(os.path.join(self.new_data_path, "*")):
+            for folder in tqdm(glob.glob(os.path.join(self.new_data_path, "*")), desc="Load new data"):
                 raw_file_paths = glob.glob(folder + "*/*/*.png")
                 for file in raw_file_paths:
                     label = os.path.split(folder)[-1]

@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
 from torchvision.models import resnet18
-
+import pytorch_lightning.metrics as pl_metrics
 
 class LightningModel(pl.LightningModule):
 
@@ -42,8 +42,12 @@ class LightningModel(pl.LightningModule):
         loss_func = nn.NLLLoss()
         loss = loss_func(predictions, labels.view(-1).long())
 
+        accuracy_func = pl_metrics.Accuracy()
+        accuracy = accuracy_func(predictions, labels)
+
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Training", loss)
+        self.log("Accuracy Training", accuracy)
 
         return loss
 
@@ -56,11 +60,16 @@ class LightningModel(pl.LightningModule):
         loss_func = nn.NLLLoss()
         loss = loss_func(predictions, labels.view(-1).long())
 
+        accuracy_func = pl_metrics.Accuracy()
+        accuracy = accuracy_func(predictions, labels)
+
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Validation", loss)
+        self.log("Accuracy Validation", accuracy)
 
         if batch_idx == 0:
             self.log_confusion_matrix(predictions, labels)
+            self.log_images(images, label_names)
 
         return loss
 
@@ -90,3 +99,14 @@ class LightningModel(pl.LightningModule):
         ax.set_ylabel("Prediction")
         self.logger.experiment[0].add_figure("Confusion_Matrix", fig, self.global_step)
         plt.close("all")
+
+    def log_images(self, images, labels):
+        if self.hparams.batch_size >= 16:
+            fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
+            for i in range(16):
+                ax = axes.flatten()[i]
+                ax.imshow(images[i].detach().cpu())
+                ax.set_title(labels[i].detach().cpu())
+
+            self.logger.experiment[0].add_figure("Image Matrix", fig, self.global_step)
+            plt.close("all")

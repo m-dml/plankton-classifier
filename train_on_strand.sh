@@ -22,4 +22,4 @@
 
 module load compilers/cuda/11.0
 nvidia-smi
-srun /gpfs/home/machnitz/miniconda3/envs/pytorch/bin/python main.py -f "default_config.yaml"
+srun /gpfs/home/machnitz/miniconda3/envs/radar/bin/python main.py -f "default_config.yaml"
