@@ -9,11 +9,15 @@ dependencies:
   - ipywidgets
   - numpy
   - pytorch
+  - cudatoolkit=11.1
   - pytorch-lightning
   - torchvision
+  - scikit-learn
   - pillow
   - tqdm
   - matplotlib
+  - pip
   - pip:
       - test-tube
       - fairscale
+      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html

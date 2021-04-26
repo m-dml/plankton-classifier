@@ -10,6 +10,7 @@ from sklearn.metrics import confusion_matrix
 from torchvision.models import resnet18
 import pytorch_lightning.metrics as pl_metrics
 
+
 class LightningModel(pl.LightningModule):
 
     def __init__(self, class_labels, *args, **kwargs):
@@ -43,7 +44,7 @@ class LightningModel(pl.LightningModule):
         loss = loss_func(predictions, labels.view(-1).long())
 
         accuracy_func = pl_metrics.Accuracy()
-        accuracy = accuracy_func(predictions, labels)
+        accuracy = accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Training", loss)
@@ -61,7 +62,7 @@ class LightningModel(pl.LightningModule):
         loss = loss_func(predictions, labels.view(-1).long())
 
         accuracy_func = pl_metrics.Accuracy()
-        accuracy = accuracy_func(predictions, labels)
+        accuracy = accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Validation", loss)
@@ -105,8 +106,8 @@ class LightningModel(pl.LightningModule):
             fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
             for i in range(16):
                 ax = axes.flatten()[i]
-                ax.imshow(images[i].detach().cpu())
-                ax.set_title(labels[i].detach().cpu())
+                ax.imshow(images[i].detach().cpu().moveaxis(0, -1))
+                ax.set_title(labels[i])
 
             self.logger.experiment[0].add_figure("Image Matrix", fig, self.global_step)
             plt.close("all")
