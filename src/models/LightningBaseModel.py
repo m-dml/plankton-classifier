@@ -19,7 +19,7 @@ class LightningModel(pl.LightningModule):
         self.class_labels = class_labels
         self.model = self.define_model()
         self.learning_rate = kwargs["learning_rate"]
-        self.loss_func = nn.BCELoss()
+        self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
         self.save_hyperparameters()
 
