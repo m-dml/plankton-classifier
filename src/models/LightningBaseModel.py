@@ -19,6 +19,8 @@ class LightningModel(pl.LightningModule):
         self.class_labels = class_labels
         self.model = self.define_model()
         self.learning_rate = kwargs["learning_rate"]
+        self.loss_func = nn.BCELoss()
+        self.accuracy_func = pl_metrics.Accuracy()
         self.save_hyperparameters()
 
     def define_model(self):
@@ -40,11 +42,9 @@ class LightningModel(pl.LightningModule):
         logging.debug(f"labels have the shape: {labels.shape}")
         logging.debug(f"predictions have the shape: {predictions.shape}")
 
-        loss_func = nn.NLLLoss()
-        loss = loss_func(predictions, labels.view(-1).long())
 
-        accuracy_func = pl_metrics.Accuracy()
-        accuracy = accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
+        loss = self.loss_func(predictions, labels.view(-1).long())
+        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Training", loss)
@@ -58,11 +58,8 @@ class LightningModel(pl.LightningModule):
         # for the toy example we will not use the meta_data and only the images to make a prediction.
         predictions = self(images)
 
-        loss_func = nn.NLLLoss()
-        loss = loss_func(predictions, labels.view(-1).long())
-
-        accuracy_func = pl_metrics.Accuracy()
-        accuracy = accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
+        loss = self.loss_func(predictions, labels.view(-1).long())
+        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Validation", loss)
@@ -80,11 +77,12 @@ class LightningModel(pl.LightningModule):
         # for the toy example we will not use the meta_data and only the images to make a prediction.
         predictions = self(images)
 
-        loss_func = nn.NLLLoss()
-        loss = loss_func(predictions, labels.view(-1).long())
+        loss = self.loss_func(predictions, labels.view(-1).long())
+        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
         self.log("NLL Test", loss)
+        self.log("Accuracy Test", accuracy)
 
         return loss
 
