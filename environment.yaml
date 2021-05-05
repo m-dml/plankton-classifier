@@ -16,6 +16,7 @@ dependencies:
   - pillow
   - tqdm
   - matplotlib
+  - tensorboard
   - pip
   - pip:
       - test-tube
