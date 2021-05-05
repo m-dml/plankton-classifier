@@ -1,14 +1,15 @@
 import glob
 import logging
 import os
+import random
 
 import pytorch_lightning as pl
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 
 from src.utils import CONFIG
-from tqdm import tqdm
 
 
 class PlanktonDataSet(Dataset):
@@ -52,6 +53,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.input_channels = None
         self.output_channels = None
         self.unique_labels = []
+        self.all_labels = []
         self.integer_class_labels = dict()
 
         self.batch_size = CONFIG.batch_size
@@ -115,6 +117,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     for file in raw_file_paths:
                         label = os.path.split(folder)[-1]
                         files.append((self.load_image(file, self.preload_dataset),label))
+                        self.all_labels.append(label)
                         if label not in self.unique_labels:
                             self.unique_labels.append(label)
 
@@ -124,6 +127,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                         for file in raw_file_paths:
                             label = os.path.split(folder)[-1]
                             files.append((self.load_image(file, self.preload_dataset), label))
+                            self.all_labels.append(label)
                             if label not in self.unique_labels:
                                 self.unique_labels.append(label)
 
@@ -133,8 +137,12 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 for file in raw_file_paths:
                     label = os.path.split(folder)[-1]
                     files.append((self.load_image(file, self.preload_dataset), label))
+                    self.all_labels.append(label)
                     if label not in self.unique_labels:
                         self.unique_labels.append(label)
+
+        random.seed(CONFIG.random_seed)
+        random.shuffle(files)
         return files
 
     def train_dataloader(self):

@@ -73,7 +73,8 @@ def main():
                                           dirpath=os.path.join(CONFIG.checkpoint_file_path, experiment_name),
                                           )
 
-    model = LightningModel(class_labels=data_module.unique_labels, **CONFIG.__dict__)
+    model = LightningModel(class_labels=data_module.unique_labels, all_labels=data_module.all_labels,
+                           **CONFIG.__dict__)
 
     trainer = pl.Trainer.from_argparse_args(CONFIG,
                                             callbacks=callbacks,
