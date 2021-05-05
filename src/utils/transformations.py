@@ -13,7 +13,7 @@ def transform_function(transform_type: str = "default", final_image_size=100):
              transforms.ToTensor()])
     elif transform_type == "random_rotations":
         transform = transforms.Compose(
-            [transforms.RandomRotation(degrees=[-10., 10.]), transforms.Pad(final_image_size),
+            [transforms.RandomRotation(degrees=[-180., 180°.]), transforms.Pad(final_image_size),
              transforms.CenterCrop([final_image_size, final_image_size]), transforms.ToTensor()])
     elif transform_type == "random_transforms":
         # Apply transforms out of a list of transforms randomly for a given probability
