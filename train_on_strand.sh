@@ -11,7 +11,7 @@
 #SBATCH --cpus-per-task=20
 
 #SBATCH --time=24:00:00
-#SBATCH --account=machnitz
+#SBATCH --account=demir
 #SBATCH --partition=pGPU
 #SBATCH --exclusive
 #SBATCH --output=slurm_output/slurm-%j.out
@@ -22,4 +22,4 @@
 
 module load compilers/cuda/11.0
 nvidia-smi
-srun /gpfs/home/machnitz/miniconda3/envs/radar/bin/python main.py -f "default_config.yaml"
+srun /gpfs/home/demir/miniconda3/envs/plankton/bin/python main.py -f "Kubi_config.yaml"
