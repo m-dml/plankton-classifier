@@ -97,6 +97,3 @@ checkpoint_file_path: "logs/checkpoints"
 
 # The size to which images should be padded/cropped using PIL.ImageOps.pad
 final_image_size: 500
-
-# The kind of transformation applied: valid options are "default"
-transform: "default"

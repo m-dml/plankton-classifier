@@ -2,7 +2,8 @@ import torch
 from torchvision import transforms
 
 
-def transform_function(transform_type: str = "default", final_image_size=10):  # CONFIG.final_image_size
+def transform_function(transform_type: str = "default", final_image_size: int):
+
     all_transform_types = ["default", "composed", "random"]
     if transform_type not in all_transform_types:
         transform_type = "default"
@@ -11,7 +12,6 @@ def transform_function(transform_type: str = "default", final_image_size=10):  #
         transform = transforms.Compose(
             [transforms.Pad(final_image_size), transforms.CenterCrop([final_image_size, final_image_size]),
              transforms.ToTensor()])
-
     elif transform_type == "composed":
         transform = transforms.Compose([transforms.Pad(), transforms.CenterCrop(10), transforms.ToTensor()])
     elif transform_type == "random":
