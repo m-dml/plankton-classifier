@@ -22,4 +22,4 @@
 
 module load compilers/cuda/11.0
 nvidia-smi
-srun /gpfs/home/machnitz/miniconda3/envs/plankton/bin/python main.py -f "strand_config.yaml"
+srun /gpfs/home/machnitz/miniconda3/envs/plankton/bin/python main.py -f "default_config.yaml"
