@@ -41,7 +41,7 @@ def main():
 
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
-    transform = transform_function(CONFIG.transforms, CONFIG.final_image_size)
+    transform = transform_function(CONFIG.transform, CONFIG.final_image_size)
 
     data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
