@@ -11,7 +11,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
-from src.utils.transformations import transform_function
+from src.utils.transformations import get_transforms_from_config
 
 def load_config():
     parser = ArgumentParser()
@@ -41,7 +41,7 @@ def main():
 
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
-    transform = transform_function(CONFIG.transform, CONFIG.final_image_size)
+    transform = get_transforms_from_config(CONFIG.transform, CONFIG.final_image_size)
 
     data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
