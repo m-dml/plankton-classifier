@@ -11,8 +11,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
-
-from transformations import transform_function
+from src.utils.transformations import transform_function
 
 def load_config():
     parser = ArgumentParser()

@@ -2,7 +2,7 @@ import torch
 from torchvision import transforms
 
 
-def transform_function(transform_type: str = "default", final_image_size: int):
+def transform_function(transform_type: str = "default", final_image_size=100):
 
     all_transform_types = ["default", "composed", "random"]
     if transform_type not in all_transform_types:
@@ -19,7 +19,7 @@ def transform_function(transform_type: str = "default", final_image_size: int):
         transform = transforms.RandomApply(
             torch.nn.ModuleList([transforms.RandomCrop(), transforms.RandomRotation(degrees=[-10., 10.])]), p=0.3)
         transform = torch.jit.script(transform)
-    elif transform_type == "random_rotations"
+    elif transform_type == "random_rotations":
         transform = transforms.RandomRotation(degrees=[-10., 10.])
     return transform
 
