@@ -38,7 +38,7 @@ accelerator: null  # [null, "ddp", "ddp2", "ddp_cpu"]
 num_workers: 20
 
 # Number of GPUs per Node (On strand max. is 1). If 0 then use CPUs:
-gpus: 1
+gpus: 0
 
 # When this is changed, the the slurm script has to be adjusted as well:
 num_nodes: 1
@@ -77,6 +77,19 @@ use_old_data: false
 
 # Bool whether to use the new data for training. Either old, new or both have to be used:
 use_new_data: true
+
+# use to combine come classes into super-classes
+# if you don't want to use super-classes set as null
+
+super_classes:
+  MarineSnow:
+    - MarineSnow_Comet
+    - MarineSnow_Detritus
+    - MarineSnow_FaecalPellet
+    - MarineSnow_Jelly
+  Radiolaria:
+    - Radiolaria
+    - Foraminifera
 
 # whether to use finer distinctions of different object types as different target categories
 # this has not effect on datasets with a flat directory structure
