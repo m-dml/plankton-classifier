@@ -109,6 +109,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                              integer_labels=self.integer_class_labels)
 
     def prepare_data_setup(self):
+        one_vs_all_classes = ["Bubbles", "Blurry"]
         files = []
         if self.use_old_data:
             for folder in tqdm(glob.glob(os.path.join(self.old_data_path, "*")), desc="Load old data"):
@@ -116,6 +117,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
                         label = os.path.split(folder)[-1]
+                        if label in one_vs_all_classes:
+                            label = "Noise"
+                        else:
+                            label = "Signal"
                         files.append((self.load_image(file, self.preload_dataset),label))
                         self.all_labels.append(label)
                         if label not in self.unique_labels:
@@ -126,6 +131,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
                         raw_file_paths = glob.glob(sub_folder + "*/*.tif")
                         for file in raw_file_paths:
                             label = os.path.split(folder)[-1]
+                            if label in one_vs_all_classes:
+                                label = "Noise"
+                            else:
+                                label = "Signal"
                             files.append((self.load_image(file, self.preload_dataset), label))
                             self.all_labels.append(label)
                             if label not in self.unique_labels:
@@ -136,6 +145,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raw_file_paths = glob.glob(folder + "*/*/*.png")
                 for file in raw_file_paths:
                     label = os.path.split(folder)[-1]
+                    if label in one_vs_all_classes:
+                        label = "Noise"
+                    else:
+                        label = "Signal"
                     files.append((self.load_image(file, self.preload_dataset), label))
                     self.all_labels.append(label)
                     if label not in self.unique_labels:

@@ -12,7 +12,7 @@ from torchvision import transforms
 
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
+from src.utils.DataLoaderBinary import PlanktonDataLoader
 
 
 def load_config():
