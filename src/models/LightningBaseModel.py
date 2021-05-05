@@ -119,7 +119,8 @@ class LightningModel(pl.LightningModule):
     def _log_confusion_matrix(self, datagroup):
         n_classes = len(self.class_labels)
         fig, ax = plt.subplots()
-        ax.imshow(self.CM[datagroup])
+        im = ax.imshow(self.CM[datagroup])
+        fig.colorbar(mappable=im, ticks=[1, self.CM[datagroup].max()])
         plt.xticks(np.arange(n_classes), self.class_labels, rotation='vertical')
         plt.yticks(np.arange(n_classes), self.class_labels)
         ax.set_xlabel("Target")
