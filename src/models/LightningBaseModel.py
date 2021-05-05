@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
-from torchvision.models import resnet18
+from torchvision.models import resnet50
 
 
 class LightningModel(pl.LightningModule):
@@ -50,8 +50,13 @@ class LightningModel(pl.LightningModule):
 
         return weight_tensor
 
-    def define_model(self):
-        return resnet18(pretrained=False, num_classes=len(self.class_labels))
+    def define_model(self, input_channels=3):
+        feature_extractor = resnet50(pretrained=True, num_classes=1000)
+        feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        classifier = nn.Linear(1000, len(self.class_labels))
+
+        model = nn.Sequential(feature_extractor, classifier)
+        return model
 
     def forward(self, images,  *args, **kwargs):
         predictions = self.model(images)

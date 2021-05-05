@@ -13,6 +13,7 @@ from torchvision import transforms
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
+from src.utils.SquarePadTransform import SquarePad
 
 
 def load_config():
@@ -44,8 +45,9 @@ def main():
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
     transform = transforms.Compose([
-        transforms.Pad(CONFIG.final_image_size),
-        transforms.CenterCrop([CONFIG.final_image_size, CONFIG.final_image_size]),
+        SquarePad(),
+        transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size]),
+        # transforms.CenterCrop([CONFIG.final_image_size, CONFIG.final_image_size]),
         transforms.ToTensor(),
     ])
 
