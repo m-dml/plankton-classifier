@@ -21,7 +21,10 @@ class LightningModel(pl.LightningModule):
         self.label_weight_tensor = self.get_label_weights()
         self.model = self.define_model()
         self.learning_rate = kwargs["learning_rate"]
-        self.loss_func = nn.NLLLoss(weight=self.label_weight_tensor)
+        if kwargs["use_weighted_loss"]:
+            self.loss_func = nn.NLLLoss(weight=self.label_weight_tensor)
+        else:
+            self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
         self.save_hyperparameters()
 
