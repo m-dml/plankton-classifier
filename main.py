@@ -13,6 +13,8 @@ from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
 
+from transformations import default_transforms, composed_transforms
+
 
 def load_config():
     parser = ArgumentParser()
@@ -42,11 +44,7 @@ def main():
 
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
-    transform = transforms.Compose([
-        transforms.Pad(CONFIG.final_image_size),
-        transforms.CenterCrop([CONFIG.final_image_size, CONFIG.final_image_size]),
-        transforms.ToTensor(),
-    ])
+    transform = transform_function(CONFIG.transforms)
 
     data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
