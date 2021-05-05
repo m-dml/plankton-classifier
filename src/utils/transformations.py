@@ -22,6 +22,3 @@ def transform_function(transform_type: str = "default", final_image_size=100):
     elif transform_type == "random_rotations":
         transform = transforms.RandomRotation(degrees=[-10., 10.])
     return transform
-
-
-print(transform_function("default", 10))
