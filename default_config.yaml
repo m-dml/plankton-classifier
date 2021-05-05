@@ -99,4 +99,4 @@ checkpoint_file_path: "logs/checkpoints"
 final_image_size: 500
 
 # The kind of transformation applied: valid options are "default", "random_rotations", "random_transforms"
-transform: "random_rotations"
+transform: "default"
