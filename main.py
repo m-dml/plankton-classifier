@@ -52,6 +52,10 @@ def main():
     data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
 
+    for batch in data_module.train_dataloader():
+        example_input, _, _ = batch
+        break
+
     # if the model is trained on GPU add a GPU logger to see GPU utilization in comet-ml logs:
     if CONFIG.gpus == 0:
         callbacks = None
@@ -75,6 +79,7 @@ def main():
 
     model = LightningModel(class_labels=data_module.unique_labels,
                            all_labels=data_module.all_labels,
+                           example_input_array=example_input,
                            **CONFIG.__dict__)
 
     trainer = pl.Trainer.from_argparse_args(CONFIG,

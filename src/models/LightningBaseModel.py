@@ -13,9 +13,10 @@ from torchvision.models import resnet18
 
 class LightningModel(pl.LightningModule):
 
-    def __init__(self, class_labels, all_labels, *args, **kwargs):
+    def __init__(self, class_labels, all_labels, example_input_array, *args, **kwargs):
 
         super().__init__()
+        self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.label_weight_tensor = self.get_label_weights()
