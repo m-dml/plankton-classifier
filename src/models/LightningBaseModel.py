@@ -31,7 +31,7 @@ class LightningModel(pl.LightningModule):
         self.log_images = kwargs['log_images']
         self.log_confusion_matrices = kwargs['log_confusion_matrices']
         self.CM = dict()
-        self._initCMs()
+        self._init_confusion_matrices()
 
     def get_label_weights(self):
         label_weights_dict = dict()
@@ -64,15 +64,15 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=False)
+        log_images = self.log_images and batch_idx == 0
+
+        loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
         return loss
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        log_images = False
-        if batch_idx == 0:
-            log_images = True
+        log_images = self.log_images and batch_idx == 0
 
         loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
         return loss
@@ -93,35 +93,34 @@ class LightningModel(pl.LightningModule):
         labels_est = predictions.argmax(dim=-1).detach().cpu()
         targets = labels.to(torch.int).detach().cpu()
 
-        accuracy = self.accuracy_func(labels_est, targets)
-
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"NLL {step}", loss)
         self.log(f"Accuracy {step}", accuracy)
 
         if self.log_confusion_matrices:
-            self._updateCM(step, targets, labels_est)
+            self._update_confusion_matrix(step, targets, labels_est)
 
-        if self.log_images:
+        if log_images:
             self.log_images(images, label_names)
 
         return loss, accuracy
 
-    def _updateCM(self, datagroup, labels_true, labels_est):
+    def _update_confusion_matrix(self, datagroup, labels_true, labels_est):
         # sum over batch to update confusion matrix
         n_classes = len(self.class_labels)
         idx = labels_true + n_classes * labels_est
         counts = np.bincount(idx.reshape(-1), minlength=n_classes ** 2)
         self.CM[datagroup] += counts.reshape((n_classes, n_classes))
 
-    def _initCMs(self):
+    def _init_confusion_matrices(self):
         for datagroup in ['Validation', 'Training', 'Testing']:
             self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
 
-    def _logCM(self, datagroup):
+    def _log_confusion_matrix(self, datagroup):
         n_classes = len(self.class_labels)
         fig, ax = plt.subplots()
-        ax.imshow(self.CM[datagroup])
+        im = ax.imshow(self.CM[datagroup])
+        fig.colorbar(mappable=im, ticks=[1, self.CM[datagroup].max()])
         plt.xticks(np.arange(n_classes), self.class_labels, rotation='vertical')
         plt.yticks(np.arange(n_classes), self.class_labels)
         ax.set_xlabel("Target")
@@ -129,17 +128,15 @@ class LightningModel(pl.LightningModule):
         self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
         plt.close("all")
         # reset the CM
-        self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+        self.CM[datagroup] = np.zeros((n_classes, n_classes), dtype=np.int64)
 
     def on_validation_epoch_end(self):
-        self._logCM('Validation')
+        self._log_confusion_matrix('Validation')
         # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
-        self._logCM('Training')
-        return
+        self._log_confusion_matrix('Training')
 
     def on_test_epoch_end(self):
-        self._logCM('Testing')
-        return
+        self._log_confusion_matrix('Testing')
 
     def log_images(self, images, labels):
         if self.hparams.batch_size >= 16:
