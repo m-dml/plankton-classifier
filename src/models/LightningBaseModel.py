@@ -119,10 +119,11 @@ class LightningModel(pl.LightningModule):
             self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
 
     def _logCM(self, datagroup):
+        n_classes = len(self.class_labels)
         fig, ax = plt.subplots()
         ax.imshow(self.CM[datagroup])
-        ax.set_xticklabels(self.class_labels)
-        ax.set_yticklabels(self.class_labels)
+        plt.xticks(np.arange(n_classes), self.class_labels, rotation='vertical')
+        plt.yticks(np.arange(n_classes), self.class_labels)
         ax.set_xlabel("Target")
         ax.set_ylabel("Prediction")
         self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
