@@ -1,6 +1,7 @@
 import logging
 import os
 from argparse import ArgumentParser
+from datetime import datetime as dt
 
 import pytorch_lightning as pl
 import torch
@@ -58,8 +59,9 @@ def main():
         callbacks = [pl.callbacks.GPUStatsMonitor()]
 
     # logging to tensorboard:
+    experiment_name = f"{CONFIG.experiment_name}_{dt.now().strftime('%d%m%YT%H%M%S')}"
     test_tube_logger = pl_loggers.TestTubeLogger(save_dir=CONFIG.tensorboard_logger_logdir,
-                                                 name=CONFIG.experiment_name,
+                                                 name=experiment_name,
                                                  create_git_tag=False,
                                                  log_graph=True)
 
@@ -68,7 +70,7 @@ def main():
                                           save_top_k=5,
                                           mode='min',
                                           save_last=True,
-                                          dirpath=os.path.join(CONFIG.checkpoint_file_path, CONFIG.experiment_name),
+                                          dirpath=os.path.join(CONFIG.checkpoint_file_path, experiment_name),
                                           )
 
     model = LightningModel(class_labels=data_module.unique_labels, **CONFIG.__dict__)
