@@ -7,8 +7,7 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.metrics import confusion_matrix
-from torchvision.models import resnet50
+from torchvision.models import resnet18
 
 
 class LightningModel(pl.LightningModule):
@@ -51,8 +50,7 @@ class LightningModel(pl.LightningModule):
         return weight_tensor
 
     def define_model(self, input_channels=3):
-        feature_extractor = resnet50(pretrained=True, num_classes=1000)
-        feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        feature_extractor = resnet18(pretrained=False, num_classes=1000)
         classifier = nn.Linear(1000, len(self.class_labels))
 
         model = nn.Sequential(feature_extractor, classifier)
@@ -63,8 +61,11 @@ class LightningModel(pl.LightningModule):
         return F.log_softmax(predictions, dim=1)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.hparams.learning_rate)
-        return optimizer
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.hparams.learning_rate)
+        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, 0.0002, 0.002,
+                                                      step_size_up=int(len(self.all_labels)/2))
+
+        return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch

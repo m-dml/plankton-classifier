@@ -28,6 +28,7 @@ class PlanktonDataSet(Dataset):
 
         if self.transform:
             image = self.transform(image)
+            image = image / 255
 
         label = torch.Tensor([self.integer_labels[label_name]])
 
