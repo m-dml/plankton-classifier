@@ -98,6 +98,8 @@ use_subclasses: false
 # whether to load the whole dataset into memory at the beginning of the training:
 preload_dataset: false
 
+excluded_classes: ["Blurry", "Bubbles"]
+
 # Relative splitting of the data into subsets. Splitting is done along the time dimension and data is not shuffled
 # before the splitting, so that the validation data always comes chronologically after the train data.
 # The size of the test dataset is the 1 - (train_split + validation_split):
