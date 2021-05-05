@@ -17,8 +17,10 @@ dependencies:
   - tqdm
   - matplotlib
   - tensorboard
+  - onnx
   - pip
   - pip:
+      - onnxruntime
       - test-tube
       - fairscale
       - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html

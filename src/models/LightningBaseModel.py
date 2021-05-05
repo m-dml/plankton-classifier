@@ -1,21 +1,22 @@
-import logging
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
+import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
 from torchvision.models import resnet18
-import pytorch_lightning.metrics as pl_metrics
 
 
 class LightningModel(pl.LightningModule):
 
-    def __init__(self, class_labels, all_labels, *args, **kwargs):
+    def __init__(self, class_labels, all_labels, example_input_array, *args, **kwargs):
 
         super().__init__()
+        self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.label_weight_tensor = self.get_label_weights()
@@ -118,3 +119,19 @@ class LightningModel(pl.LightningModule):
 
             self.logger.experiment[0].add_figure("Image Matrix", fig, self.global_step)
             plt.close("all")
+
+    def on_save_checkpoint(self, checkpoint) -> None:
+        # save model to onnx:
+        folder = self.trainer.checkpoint_callback.dirpath
+        onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
+        torch.onnx.export(model=self.model,
+                          args=self.example_input_array.to(self.device),
+                          f=onnx_file_generator,
+                          opset_version=12,
+                          verbose=False,
+                          export_params=True,
+                          input_names=['input'],
+                          output_names=['output'],
+                          dynamic_axes={'input': {0: 'batch_size'},  # makes the batch-size variable for inference
+                                        'output': {0: 'batch_size'}}
+                          )
