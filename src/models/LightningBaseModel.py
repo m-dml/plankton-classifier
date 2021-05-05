@@ -37,54 +37,40 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        # for the toy example we will not use the meta_data and only the images to make a prediction.
-        predictions = self(images)
-        logging.debug(f"labels have the shape: {labels.shape}")
-        logging.debug(f"predictions have the shape: {predictions.shape}")
-
-
-        loss = self.loss_func(predictions, labels.view(-1).long())
-        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
-
-        # lets log some values for inspection (for example in tensorboard):
-        self.log("NLL Training", loss)
-        self.log("Accuracy Training", accuracy)
-
+        loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=False)
         return loss
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        # for the toy example we will not use the meta_data and only the images to make a prediction.
-        predictions = self(images)
-
-        loss = self.loss_func(predictions, labels.view(-1).long())
-        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
-
-        # lets log some values for inspection (for example in tensorboard):
-        self.log("NLL Validation", loss)
-        self.log("Accuracy Validation", accuracy)
-
+        log_images = False
         if batch_idx == 0:
-            self.log_confusion_matrix(predictions, labels)
-            self.log_images(images, label_names)
+            log_images = True
 
+        loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
         return loss
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        # for the toy example we will not use the meta_data and only the images to make a prediction.
-        predictions = self(images)
+        loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=False)
+        return loss
 
+    def _do_step(self, images, labels, label_names, step, log_images=False):
+
+        predictions = self(images)
         loss = self.loss_func(predictions, labels.view(-1).long())
         accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
 
         # lets log some values for inspection (for example in tensorboard):
-        self.log("NLL Test", loss)
-        self.log("Accuracy Test", accuracy)
+        self.log(f"NLL {step}", loss)
+        self.log(f"Accuracy {step}", accuracy)
 
-        return loss
+        if log_images:
+            self.log_confusion_matrix(predictions, labels)
+            self.log_images(images, label_names)
+
+        return loss, accuracy
 
     def log_confusion_matrix(self, predictions, targets):
         conf_mat = confusion_matrix(torch.argmax(predictions, dim=-1).detach().cpu(), targets.detach().cpu(),
