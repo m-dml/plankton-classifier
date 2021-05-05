@@ -128,7 +128,7 @@ class LightningModel(pl.LightningModule):
         self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
         plt.close("all")
         # reset the CM
-        self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+        self.CM[datagroup] = np.zeros((n_classes, n_classes), dtype=np.int64)
 
     def on_validation_epoch_end(self):
         self._log_confusion_matrix('Validation')
