@@ -64,15 +64,15 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=False)
+        log_images = self.log_images and batch_idx == 0
+
+        loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
         return loss
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        log_images = False
-        if batch_idx == 0:
-            log_images = True
+        log_images = self.log_images and batch_idx == 0
 
         loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
         return loss
@@ -100,7 +100,7 @@ class LightningModel(pl.LightningModule):
         if self.log_confusion_matrices:
             self._update_confusion_matrix(step, targets, labels_est)
 
-        if self.log_images:
+        if log_images:
             self.log_images(images, label_names)
 
         return loss, accuracy
@@ -133,11 +133,6 @@ class LightningModel(pl.LightningModule):
         self._log_confusion_matrix('Validation')
         # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
         self._log_confusion_matrix('Training')
-        return
-
-    def on_test_epoch_end(self):
-        self._log_confusion_matrix('Testing')
-        return
 
     def log_images(self, images, labels):
         if self.hparams.batch_size >= 16:
