@@ -98,3 +98,12 @@ checkpoint_file_path: "logs/checkpoints"
 # The size to which images should be padded/cropped using PIL.ImageOps.pad
 final_image_size: 500
 
+# All transforms specified below are being composed and applied to the images. Where necessary, supply CONFIG.final_image_size as an input
+transform:
+  - "SquarePad()"
+  - "transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size])"
+  - "transforms.RandomRotation(360)"
+  - "transforms.RandomHorizontalFlip()"
+  - "transforms.RandomVerticalFlip()"
+  - "transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1)"
+  - "transforms.ToTensor()"
