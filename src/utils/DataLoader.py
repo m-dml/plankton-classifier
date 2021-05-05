@@ -142,8 +142,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     self.all_labels.append(label)
                     if label not in self.unique_labels:
                         self.unique_labels.append(label)
-        print(self.unique_labels)
-        raise NotImplemented
 
         random.seed(CONFIG.random_seed)
         random.shuffle(files)
