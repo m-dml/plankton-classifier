@@ -135,6 +135,9 @@ class LightningModel(pl.LightningModule):
         # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
         self._log_confusion_matrix('Training')
 
+    def on_test_epoch_end(self):
+        self._log_confusion_matrix('Testing')
+
     def log_images(self, images, labels):
         if self.hparams.batch_size >= 16:
             fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
