@@ -28,6 +28,10 @@ class LightningModel(pl.LightningModule):
             self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
         self.save_hyperparameters()
+        self.log_images = kwargs['log_images']
+        self.log_confusion_matrices = kwargs['log_confusion_matrices']
+        self.CM = dict()
+        _initCMs()
 
     def get_label_weights(self):
         label_weights_dict = dict()
@@ -76,7 +80,7 @@ class LightningModel(pl.LightningModule):
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
 
-        loss, acc = self._do_step(images, labels, label_names, step="Test", log_images=False)
+        loss, acc = self._do_step(images, labels, label_names, step="Testing", log_images=False)
         return loss
 
     def _do_step(self, images, labels, label_names, step, log_images=False):
@@ -90,24 +94,45 @@ class LightningModel(pl.LightningModule):
         self.log(f"NLL {step}", loss)
         self.log(f"Accuracy {step}", accuracy)
 
-        if log_images:
-            self.log_confusion_matrix(predictions, labels)
+        if self.log_confusion_matrices:
+            _updateCM(self, step, targets.detach().cpu(), predictions.argmax(dim=-1).detach.cpu())
+
+        if self.log_images:
             self.log_images(images, label_names)
 
         return loss, accuracy
 
-    def log_confusion_matrix(self, predictions, targets):
-        conf_mat = confusion_matrix(torch.argmax(predictions, dim=-1).detach().cpu(), targets.detach().cpu(),
-                                    labels=np.arange(len(self.class_labels)))
+    def _updateCM(self, datagroup, labels_true, labels_est):
+        n_classes = len(self.class_labels)
+        idx = labels_true + n_classes * labels_est
+        counts, _ = np.bincount(idx, minlength=n_classes ** 2)
+        self.CM[datagroup] += counts.reshape((n_classes, n_classes))
 
+    def _initCMs(self):
+        for datagroup in ['Validation', 'Training', 'Testing']:
+            self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+
+    def _logCM(self, datagroup):
         fig, ax = plt.subplots()
-        ax.imshow(conf_mat)
+        ax.imshow(self.CM[datagroup])
         ax.set_xticklabels(self.class_labels)
         ax.set_yticklabels(self.class_labels)
         ax.set_xlabel("Target")
         ax.set_ylabel("Prediction")
-        self.logger.experiment[0].add_figure("Confusion_Matrix", fig, self.global_step)
+        self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
         plt.close("all")
+        # reset the CM
+        self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+
+    def on_validation_epoch_end(self):
+        _logCM('validation')
+        # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
+        _logCM('train')
+        return
+
+    def on_test_epoch_end(self):
+        _logCM('test')
+        return
 
     def log_images(self, images, labels):
         if self.hparams.batch_size >= 16:
