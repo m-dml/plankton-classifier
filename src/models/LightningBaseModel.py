@@ -7,7 +7,6 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.metrics import confusion_matrix
 from torchvision.models import resnet50
 
 
@@ -30,8 +29,8 @@ class LightningModel(pl.LightningModule):
         self.save_hyperparameters()
         self.log_images = kwargs['log_images']
         self.log_confusion_matrices = kwargs['log_confusion_matrices']
-        self.CM = dict()
-        self._init_confusion_matrices()
+        self.confusion_matrix = dict()
+        self._init_accuracy_matrices()
 
     def get_label_weights(self):
         label_weights_dict = dict()
@@ -103,50 +102,67 @@ class LightningModel(pl.LightningModule):
         self.log(f"Accuracy {step}", accuracy)
 
         if self.log_confusion_matrices:
-            self._update_confusion_matrix(step, targets, labels_est)
+            self._update_accuracy_matrices(step, targets, labels_est)
 
         if log_images:
             self.log_images(images, label_names)
 
         return loss, accuracy
 
-    def _update_confusion_matrix(self, datagroup, labels_true, labels_est):
+    def _update_accuracy_matrices(self, datagroup, labels_true, labels_est):
         # sum over batch to update confusion matrix
         n_classes = len(self.class_labels)
         idx = labels_true + n_classes * labels_est
         counts = np.bincount(idx.reshape(-1), minlength=n_classes ** 2)
-        self.CM[datagroup] += counts.reshape((n_classes, n_classes))
+        self.confusion_matrix[datagroup] += counts.reshape((n_classes, n_classes))
 
-    def _init_confusion_matrices(self):
+    def _init_accuracy_matrices(self):
         for datagroup in ['Validation', 'Training', 'Testing']:
-            self.CM[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+            self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
 
-    def _log_confusion_matrix(self, datagroup):
-        n_classes = len(self.class_labels)
-        fig, ax = plt.subplots(figsize=(10,10))
-        im = ax.imshow(self.CM[datagroup])
-        fig.colorbar(mappable=im, ticks=[1, self.CM[datagroup].max()])
-        plt.xticks(np.arange(n_classes), self.class_labels, rotation='vertical')
-        plt.yticks(np.arange(n_classes), self.class_labels)
-        ax.set_xlabel("Target")
-        ax.set_ylabel("Prediction")
-        n = self.CM[datagroup].astype(np.float).sum()
-        if n > 0:
-            accuracy = np.diag(self.CM[datagroup]).astype(np.float).sum() / n
-            plt.title(f'Accuracy {accuracy}')
-        plt.axis('tight')
-        self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
-        plt.close("all")
+    def _log_accuracy_matrices(self, datagroup):
+        cm = self.confusion_matrix[datagroup]
+        n = cm.sum()
+        with np.errstate(divide='ignore', invalid='ignore'):
+            accuracy = np.diag(cm).sum() / n  # accuracy average over all data we're now logging
+            conditional_probabilities = cm / cm.sum(axis=0)
+
+        self._log_img(cm, f"Confusion_Matrix {datagroup}",
+                      ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction', title=f'Accuracy {accuracy}')
+        self._log_img(conditional_probabilities, f"P(est | true) {datagroup}",
+                      ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction')
+
         # reset the CM
-        self.CM[datagroup] = np.zeros((n_classes, n_classes), dtype=np.int64)
+        self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+
+    def _log_img(self, x, figname, show_colorbar=True, ticklabels=None, xlabel=None, ylabel=None, title=None):
+        h, w = x.shape[0:2]
+        x[np.isnan(x)] = 0.0
+        fig, ax = plt.subplots(figsize=(10, 10))
+        im = ax.imshow(x)
+        if show_colorbar:
+            fig.colorbar(mappable=im, ticks=[0, x.max()])
+        if ticklabels is not None and len(ticklabels) == w:
+            plt.xticks(np.arange(w), ticklabels, rotation='vertical')
+        if ticklabels is not None and len(ticklabels) == h:
+            plt.yticks(np.arange(h), self.class_labels)
+        if xlabel is not None:
+            ax.set_xlabel(xlabel)
+        if ylabel is not None:
+            ax.set_ylabel(ylabel)
+        if title is not None:
+            plt.title(title)
+        plt.axis('tight')
+        self.logger.experiment[0].add_figure(figname, fig, self.global_step)
+        plt.close('all')
 
     def on_validation_epoch_end(self):
-        self._log_confusion_matrix('Validation')
+        self._log_accuracy_matrices('Validation')
         # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
-        self._log_confusion_matrix('Training')
+        self._log_accuracy_matrices('Training')
 
     def on_test_epoch_end(self):
-        self._log_confusion_matrix('Testing')
+        self._log_accuracy_matrices('Testing')
 
     def log_images(self, images, labels):
         if self.hparams.batch_size >= 16:
