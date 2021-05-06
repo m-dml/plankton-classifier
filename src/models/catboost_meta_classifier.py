@@ -203,10 +203,13 @@ class BoostClassifier:
                                "either training it or loading a checkpoint")
 
         image = self._open_image(image_file)
-        resnet_prediction = self._make_predictions_with_resnet(self._image_to_pil(image))
+        resnet_prediction = self._make_predictions_with_resnet(image)
         radiomics = self._prepare_radiomics(self._calculate_radiomics(image))
 
-        data = self._combine_radiomics_and_resnet_predictions(radiomics, resnet_prediction)
+        resnet_labels = [str(x) for x in range(len(resnet_prediction))]
 
-        prediction = catboost.predict(self.boost_model, data)
+        df = pd.DataFrame(radiomics, index=range(1))
+        df[resnet_labels] = resnet_prediction
+
+        prediction = self.boost_model.predict(df.values)
         return prediction

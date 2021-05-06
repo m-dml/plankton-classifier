@@ -85,18 +85,21 @@ class TestBoostPipeline(unittest.TestCase):
         self.assertGreaterEqual(0, prediction.min())
         self.assertAlmostEqual(1, prediction.sum())
 
-    def test_combine_radiomics_and_resnet_predictions(self):
-        raise NotImplementedError
-
-    def test_train_and_load_catboost(self):
-        cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
-        cl._init_resnet_classifier()
-        cl.train_catboost_calssifier()
-
-        self.assertTrue(cl.catboost_is_initialized)
+    # def test_train_and_load_catboost(self):
+    #     cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
+    #     cl._init_resnet_classifier()
+    #     cl.train_catboost_calssifier()
+    #
+    #     self.assertTrue(cl.catboost_is_initialized)
 
     def test_predict(self):
-        raise NotImplementedError
+        cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
+        cl._init_resnet_classifier()
+        cl.load_catboost_from_checkpoint(checkpoint_file="catboost_trained.bin")
+        prediction = cl.predict(TEST_IMAGE)
+        print(prediction)
+
+        self.assertTrue(cl.catboost_is_initialized)
 
 
 if __name__ == "__main__":
