@@ -18,6 +18,7 @@ class LightningModel(pl.LightningModule):
         self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
+        self.use_image_morphings = kwargs["use_image_morphings"]
         self.label_weight_tensor = self.get_label_weights()
         self.model = self.define_model()
         self.learning_rate = kwargs["learning_rate"]
@@ -51,6 +52,8 @@ class LightningModel(pl.LightningModule):
 
     def define_model(self, input_channels=3):
         feature_extractor = resnet18(pretrained=False, num_classes=1000)
+        if self.use_image_morphings:
+            feature_extractor.conv1 = nn.Conv2d(input_channels * 4, 64, kernel_size=7, stride=2, padding=3, bias=False)
         classifier = nn.Linear(1000, len(self.class_labels))
 
         model = nn.Sequential(feature_extractor, classifier)

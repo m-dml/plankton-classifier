@@ -4,12 +4,15 @@ import os
 import random
 
 import pytorch_lightning as pl
+import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-
+import SimpleITK as sitk
 from src.utils import CONFIG
+import PIL
+from PIL import Image
 
 
 class PlanktonDataSet(Dataset):
@@ -20,16 +23,29 @@ class PlanktonDataSet(Dataset):
         self.transform = transform
         self.preload_dataset = CONFIG.preload_dataset
         self.final_image_size = final_image_size
+        self.use_image_morphings = CONFIG.use_image_morphings
 
     def __getitem__(self, item):
         image, label_name = self.files[item]
         if not self.preload_dataset:
             image = self.load_file(image)
 
+        if self.use_image_morphings:
+            sitk_image = self._get_sitk_image(image)
+            grayscale_eroded = self._get_image_from_sitk(self._grayscale_erode(sitk_image))
+            canny_edges = self._get_image_from_sitk(self._canny_edges(sitk_image))
+            grayscale_dilated = self._get_image_from_sitk(self._grayscale_dilated(sitk_image))
+
         if self.transform:
             image = self.transform(image)
             image = image / 255
 
+            if self.use_image_morphings:
+                grayscale_eroded = self.transform(grayscale_eroded)
+                canny_edges = self.transform(canny_edges)
+                grayscale_dilated = self.transform(grayscale_dilated)
+
+        image = torch.cat([image, grayscale_eroded, grayscale_dilated, canny_edges], dim=0)
         label = torch.Tensor([self.integer_labels[label_name]])
 
         return image, label, label_name
@@ -40,6 +56,44 @@ class PlanktonDataSet(Dataset):
 
     def __len__(self):
         return len(self.files)
+
+    @staticmethod
+    def _get_sitk_image(image: PIL.Image):
+        image_array = np.array(image)
+        image_sitk = sitk.GetImageFromArray(image_array)
+        return image_sitk
+
+    @staticmethod
+    def _get_image_from_sitk(sitk_image) -> PIL.Image:
+        array = sitk.GetArrayFromImage(sitk_image)
+        pil_image = Image.fromarray(array.astype('uint8'), 'RGB')
+        return pil_image
+
+    @staticmethod
+    def _grayscale_erode(image_sitk):
+        grayscale_erode_filter = sitk.GrayscaleErodeImageFilter()
+        grayscale_erode_filter.SetKernelRadius(3)
+        grayscale_erode_filter.SetKernelType(sitk.sitkBall)
+        grayscale_eroded_image = grayscale_erode_filter.Execute(image_sitk)
+        return grayscale_eroded_image
+
+    @staticmethod
+    def _grayscale_dilated(image_sitk):
+        grayscale_dilate_filter = sitk.GrayscaleDilateImageFilter()
+
+        grayscale_dilate_filter.SetKernelRadius(3)
+        grayscale_dilate_filter.SetKernelType(sitk.sitkBall)
+        grayscale_dilate_image = grayscale_dilate_filter.Execute(image_sitk)
+        return grayscale_dilate_image
+
+    @staticmethod
+    def _canny_edges(image_sitk):
+        canny_filter = sitk.CannyEdgeDetectionImageFilter()
+        float_image = sitk.Cast(image_sitk, sitk.sitkFloat32)
+        canny_filter.SetLowerThreshold(20)
+        canny_filter.SetVariance(15)
+        canny_edges = canny_filter.Execute(float_image)
+        return canny_edges
 
 
 class PlanktonDataLoader(pl.LightningDataModule):

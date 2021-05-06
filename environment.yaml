@@ -17,6 +17,7 @@ dependencies:
   - tqdm
   - matplotlib
   - tensorboard
+  - simpleitk
   - onnx
   - pip
   - pip:
