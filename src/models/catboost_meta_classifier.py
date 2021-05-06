@@ -5,9 +5,15 @@ import onnxruntime as ort
 import SimpleITK as sitk
 from radiomics import featureextractor
 from PIL import Image
+import torch
+from torchvision import transforms
+
+from src.utils.SquarePadTransform import SquarePad
+from src.utils import CONFIG
+from scipy.special import softmax
 
 
-class CatboostClassifier:
+class BoostClassifier:
     def __init__(self, onnx_file: str):
         self.onnx_file = onnx_file
 
@@ -17,19 +23,28 @@ class CatboostClassifier:
         self.resnet_is_initialized = False
 
     @staticmethod
-    def _open_image(image_path):
+    def _open_image(image_path: str) -> sitk.Image:
         return sitk.ReadImage(image_path)
 
     @staticmethod
-    def _image_to_pil(image):
+    def _image_to_pil(image: sitk.Image) -> Image:
         array = sitk.GetArrayFromImage(image)
-        return Image.fromarray()
+        array = np.moveaxis(array, -1, 0)
+        return Image.fromarray(array)
+
+    def transform_pil(self, image: Image.Image):
+        transform = transforms.Compose([
+                   SquarePad(),
+                   transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size]),
+        ])
+        return transform(image)
 
     @staticmethod
-    def _calculate_radiomics(image):
+    def _calculate_radiomics(image: sitk.Image):
         array = sitk.GetArrayFromImage(image)
         mask_array = np.zeros_like(array)
         mask_array[array > 5] = 1
+        mask_array = np.moveaxis(mask_array, -1, 0)
         mask = sitk.GetImageFromArray(mask_array)
         extractor = featureextractor.RadiomicsFeatureExtractor()
         result = extractor.execute(image, mask)
@@ -45,7 +60,7 @@ class CatboostClassifier:
         self.classifier = ort.InferenceSession(self.onnx_file, sess_options=options)
         self.resnet_is_initialized = True
 
-    def _make_predictions_with_resnet(self, images):
+    def _make_predictions_with_resnet(self, image: Image) -> np.ndarray:
         """
         This should return the probabilites
         """
@@ -55,8 +70,10 @@ class CatboostClassifier:
         input_name = self.classifier.get_inputs()[0].name
         output_name = self.classifier.get_outputs()[0].name
 
-        model_input = images.cpu().numpy()
-        predictions = self.classifier.run([output_name], {input_name: model_input})[0]
+        transformed_image = self.transform_pil(image)
+        model_input = np.expand_dims(np.array(transformed_image).astype(np.float32), 0)
+        model_input = np.moveaxis(model_input, -1, 1)
+        predictions = softmax(self.classifier.run([output_name], {input_name: model_input})[0])[0]
         return predictions
 
     def _init_catboost_classifier(self):
@@ -87,6 +104,10 @@ class CatboostClassifier:
                                "either training it or loading a checkpoint")
 
         image = self._open_image(image_file)
-        resnet_prediction = self._make_predictions_with_resnet(image)
-        prediction = catboost.predict(self.boost_model, image)
+        resnet_prediction = self._make_predictions_with_resnet(self._image_to_pil(image))
+        radiomics = self._calculate_radiomics(image)
+
+        data = self._combine_radiomics_and_resnet_predictions(radiomics, resnet_prediction)
+
+        prediction = catboost.predict(self.boost_model, data)
         return prediction
