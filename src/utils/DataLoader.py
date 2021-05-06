@@ -13,6 +13,7 @@ import SimpleITK as sitk
 from src.utils import CONFIG
 import PIL
 from PIL import Image
+from torchvision import transforms
 
 
 class PlanktonDataSet(Dataset):
@@ -45,7 +46,11 @@ class PlanktonDataSet(Dataset):
                 canny_edges = self.transform(canny_edges)
                 grayscale_dilated = self.transform(grayscale_dilated)
 
-        image = torch.cat([image, grayscale_eroded, grayscale_dilated, canny_edges], dim=0)
+        else:
+            image = transforms.ToTensor()(image)
+
+        if self.use_image_morphings:
+            image = torch.cat([image, grayscale_eroded, grayscale_dilated, canny_edges], dim=0)
         label = torch.Tensor([self.integer_labels[label_name]])
 
         return image, label, label_name

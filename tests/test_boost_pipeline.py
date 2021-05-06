@@ -1,12 +1,12 @@
+import logging
 import unittest
 
+import PIL
+import SimpleITK as sitk
 import numpy as np
 
-from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
 from src.models.catboost_meta_classifier import BoostClassifier
-import SimpleITK as sitk
-import PIL
+from src.utils import CONFIG
 
 ONNX_FILE = "C:/Users/Tobias/Downloads/model_99917.onnx"
 TEST_IMAGE = "C:\\Users\\Tobias\\PycharmProjects\\plankton-classifier\\data\\new_data\\4David\\M160\\Sorted\\Trochophora\\011219\\20191201_024326.836.0.png"
@@ -17,6 +17,11 @@ class TestBoostPipeline(unittest.TestCase):
     def setUp(self) -> None:
         config_file = "../tobis_config.yaml"
         CONFIG.update(config_file)
+
+        if CONFIG.debug_mode:
+            logging.basicConfig(level=logging.DEBUG, format='%(name)s %(funcName)s %(levelname)s %(message)s')
+        else:
+            logging.basicConfig(level=logging.WARNING, format='%(name)s %(funcName)s %(levelname)s %(message)s')
 
     def test_main_class_init(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
@@ -80,14 +85,15 @@ class TestBoostPipeline(unittest.TestCase):
         self.assertGreaterEqual(0, prediction.min())
         self.assertAlmostEqual(1, prediction.sum())
 
-    def test_init_catboost_classifier(self):
-        raise NotImplementedError
-
     def test_combine_radiomics_and_resnet_predictions(self):
         raise NotImplementedError
 
     def test_train_and_load_catboost(self):
-        raise NotImplementedError
+        cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
+        cl._init_resnet_classifier()
+        cl.train_catboost_calssifier()
+
+        self.assertTrue(cl.catboost_is_initialized)
 
     def test_predict(self):
         raise NotImplementedError
