@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 import pytorch_lightning as pl
 import torch
+from torchvision import transforms
 import yaml
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -11,7 +12,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
-from src.utils.transformations import get_transforms_from_config
 
 def load_config():
     parser = ArgumentParser()
@@ -41,7 +41,7 @@ def main():
 
     logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
 
-    transform = get_transforms_from_config(CONFIG.transform, CONFIG.final_image_size)
+    transform = transforms.Compose([eval(i) for i in CONFIG.transform])
 
     data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
