@@ -20,7 +20,7 @@ class LightningModel(pl.LightningModule):
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.label_weight_tensor = self.get_label_weights()
-        self.model = self.define_model()
+        self.model = self.define_model(pretrained=kwargs['use_pretrained'])
         self.learning_rate = kwargs["learning_rate"]
         if kwargs["use_weighted_loss"]:
             self.loss_func = nn.NLLLoss(weight=self.label_weight_tensor)
@@ -50,8 +50,8 @@ class LightningModel(pl.LightningModule):
 
         return weight_tensor
 
-    def define_model(self, input_channels=3):
-        feature_extractor = resnet50(pretrained=True, num_classes=1000)
+    def define_model(self, input_channels=3, pretrained=False):
+        feature_extractor = resnet50(pretrained=pretrained, num_classes=1000)
         feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         classifier = nn.Linear(1000, len(self.class_labels))
 
@@ -90,13 +90,13 @@ class LightningModel(pl.LightningModule):
 
     def _do_step(self, images, labels, label_names, step, log_images=False):
 
-        predictions = self(images)
+        class_log_probabilities = self(images)
+        class_probabilities = F.softmax(class_log_probabilities, dim=1).detach().cpu()
+        labels_est = class_log_probabilities.argmax(dim=-1).detach().cpu()
+        targets = labels.view(-1).to(torch.int).detach().cpu()
 
-        loss = self.loss_func(predictions, labels.view(-1).long())
-        accuracy = self.accuracy_func(F.softmax(predictions, dim=1).detach().cpu(), labels.to(torch.int).detach().cpu())
-
-        labels_est = predictions.argmax(dim=-1).detach().cpu()
-        targets = labels.to(torch.int).detach().cpu()
+        loss = self.loss_func(class_log_probabilities, labels.view(-1).long())
+        accuracy = self.accuracy_func(class_probabilities, targets)
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"NLL {step}", loss)
@@ -123,13 +123,18 @@ class LightningModel(pl.LightningModule):
 
     def _log_confusion_matrix(self, datagroup):
         n_classes = len(self.class_labels)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(10,10))
         im = ax.imshow(self.CM[datagroup])
         fig.colorbar(mappable=im, ticks=[1, self.CM[datagroup].max()])
         plt.xticks(np.arange(n_classes), self.class_labels, rotation='vertical')
         plt.yticks(np.arange(n_classes), self.class_labels)
         ax.set_xlabel("Target")
         ax.set_ylabel("Prediction")
+        n = self.CM[datagroup].astype(np.float).sum()
+        if n > 0:
+            accuracy = np.diag(self.CM[datagroup]).astype(np.float).sum() / n
+            plt.title(f'Accuracy {accuracy}')
+        plt.axis('tight')
         self.logger.experiment[0].add_figure(f"Confusion_Matrix {datagroup}", fig, self.global_step)
         plt.close("all")
         # reset the CM
