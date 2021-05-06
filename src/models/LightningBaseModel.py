@@ -117,8 +117,9 @@ class LightningModel(pl.LightningModule):
         self.confusion_matrix[datagroup] += counts.reshape((n_classes, n_classes))
 
     def _init_accuracy_matrices(self):
+        n = len(self.class_labels)
         for datagroup in ['Validation', 'Training', 'Testing']:
-            self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+            self.confusion_matrix[datagroup] = np.zeros((n, n), dtype=np.int64)
 
     def _log_accuracy_matrices(self, datagroup):
         cm = self.confusion_matrix[datagroup]
@@ -129,7 +130,7 @@ class LightningModel(pl.LightningModule):
 
         self._log_img(cm, f"Confusion_Matrix {datagroup}",
                       ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction', title=f'Accuracy {accuracy}')
-        self._log_img(conditional_probabilities, f"P(est | true) {datagroup}",
+        self._log_img(conditional_probabilities, f"P(best guess | true) {datagroup}",
                       ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction')
 
         # reset the CM
