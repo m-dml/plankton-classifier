@@ -17,18 +17,19 @@ from torchvision import transforms
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
 from src.utils.SquarePadTransform import SquarePad
+from joblib import Parallel, delayed
 
 radiomics.logger.setLevel(logging.ERROR)
 
 
 class BoostClassifier:
-    def __init__(self, onnx_file: str, config_file=None):
+    def __init__(self, onnx_file: str, config_file=None, n_jobs=1):
 
         if config_file is not None:
             self.update_config(config_file)
 
         self.onnx_file = onnx_file
-
+        self.n_jobs = n_jobs
         self.boost_model = None
         self.classifier = None
         self.catboost_is_initialized = False
@@ -40,6 +41,7 @@ class BoostClassifier:
             config_dict = yaml.safe_load(f)
 
         config_dict["batch_size"] = 1
+        config_dict["shuffle_train_dataset"] = False
         # update values in the config class.
         CONFIG.update(config_dict)
 
@@ -65,28 +67,11 @@ class BoostClassifier:
         ])
         return transform(image)
 
-    @staticmethod
-    def _calculate_radiomics(image: Image.Image):
-        image_array = np.array(image)
-        image_mask = np.zeros_like(image_array)
-
-        image_mask[image_array >= 10] = 1
-
-        if image_mask.max() == 0:
-            raise ValueError("Image does not contain anything.")
-
-        image_sitk = sitk.GetImageFromArray(image_array)
-        mask_sitk = sitk.GetImageFromArray(image_mask)
-
-        extractor = featureextractor.RadiomicsFeatureExtractor()
-        result = extractor.execute(image_sitk, mask_sitk)
-        return result
-
     def _init_resnet_classifier(self):
         # set up onnx
         options = ort.SessionOptions()
-        options.inter_op_num_threads = 12
-        options.intra_op_num_threads = 12
+        options.inter_op_num_threads = self.n_jobs
+        options.intra_op_num_threads = self.n_jobs
 
         # set up classifier
         self.classifier = ort.InferenceSession(self.onnx_file, sess_options=options)
@@ -108,18 +93,18 @@ class BoostClassifier:
         predictions = softmax(self.classifier.run([output_name], {input_name: model_input})[0])[0]
         return predictions
 
-    def _combine_radiomics_and_resnet_predictions(self, radiomics, resnet_predictions, label) -> pd.DataFrame:
+    def _combine_radiomics_and_resnet_predictions(self, radiomics_list, resnet_predictions, label) -> pd.DataFrame:
         resnet_labels = [str(x) for x in range(len(resnet_predictions))]
-        df = pd.DataFrame(radiomics)
+        df = pd.DataFrame(radiomics_list)
         df["label"] = label
         df[resnet_labels] = resnet_predictions
         return df
 
-    def _create_training_data(self, resnet_predictions: list, radiomics: list, labels: list):
+    def _create_training_data(self, resnet_predictions: list, radiomics_list: list, labels: list):
 
         resnet_labels = [str(x) for x in range(len(resnet_predictions[0]))]
 
-        df = pd.DataFrame([*radiomics])
+        df = pd.DataFrame([*radiomics_list])
         df["labels"] = labels
         df[resnet_labels] = resnet_predictions
         return df
@@ -131,11 +116,13 @@ class BoostClassifier:
 
         data_module = PlanktonDataLoader(transform=None)
         data_module.setup()
-        dataloader = data_module.train_dataloader()
+        dataloader = data_module.val_dataloader()
+        print(len(dataloader))
 
         predictions = []
-        radiomics = []
         labels = []
+
+        radiomics_list = Parallel(n_jobs=self.n_jobs, verbose=5)(delayed(_do_predictions)(batch) for batch in dataloader)
 
         for batch in dataloader:
 
@@ -143,53 +130,16 @@ class BoostClassifier:
             pil_image = transforms.ToPILImage()(image[0])
 
             predictions.append(self._make_predictions_with_resnet(pil_image))
-            radiomics.append(self._prepare_radiomics(self._calculate_radiomics(pil_image)))
-            labels.append(label.cpu().numpy()[0][0])
+            labels.append(label_name[0])
 
-        train_df = self._create_training_data(predictions, radiomics, labels)
+        train_df = self._create_training_data(predictions, radiomics_list, labels)
 
-        self.boost_model = CatBoostClassifier()
+        self.boost_model = CatBoostClassifier(iterations=1000, loss_function='MultiClass', learning_rate=0.03)
         self.boost_model.fit(train_df.drop(columns=["labels"]).values, train_df["labels"].values, verbose=False)
+
         self.boost_model.save_model("catboost_trained.bin")
 
         self.catboost_is_initialized = True
-
-    def _prepare_radiomics(self, radiomics):
-
-        bad_keys = ["diagnostics_Configuration_Settings",
-                    "diagnostics_Configuration_EnabledImageTypes",
-                    "diagnostics_Image-original_Hash",
-                    "diagnostics_Image-original_Dimensionality",
-                    "diagnostics_Image-original_Spacing",
-                    "diagnostics_Mask-original_Hash"
-                    ]
-
-        for key, value in radiomics.items():
-            if "diagnostics_Versions" in key:
-                bad_keys.append(key)
-
-            if key == "diagnostics_Image-original_Size":
-                channel, width, height = value
-                bad_keys.append(key)
-
-            if isinstance(value, tuple):
-                bad_keys.append(key)
-
-            if isinstance(value, np.ndarray):
-                if value.size > 1:
-                    bad_keys.append(key)
-
-        for bad_key in bad_keys:
-            try:
-                radiomics.pop(bad_key)
-            except KeyError:
-                continue
-
-        radiomics["original_number_of_channels"] = channel
-        radiomics["original_image_width"] = width
-        radiomics["original_image_height"] = height
-
-        return radiomics
 
     def load_catboost_from_checkpoint(self, checkpoint_file: str):
         self.boost_model = CatBoostClassifier()
@@ -204,12 +154,75 @@ class BoostClassifier:
 
         image = self._open_image(image_file)
         resnet_prediction = self._make_predictions_with_resnet(image)
-        radiomics = self._prepare_radiomics(self._calculate_radiomics(image))
+        radiomics_list = _prepare_radiomics(_calculate_radiomics(image))
 
         resnet_labels = [str(x) for x in range(len(resnet_prediction))]
 
-        df = pd.DataFrame(radiomics, index=range(1))
+        df = pd.DataFrame(radiomics_list, index=range(1))
         df[resnet_labels] = resnet_prediction
 
         prediction = self.boost_model.predict(df.values)
         return prediction
+
+
+def _do_predictions(batch):
+    image, label, label_name = batch
+    pil_image = transforms.ToPILImage()(image[0])
+    radiomics_list = _prepare_radiomics(_calculate_radiomics(pil_image))
+    return radiomics_list
+
+
+def _prepare_radiomics(radiomics_dict):
+    bad_keys = ["diagnostics_Configuration_Settings",
+                "diagnostics_Configuration_EnabledImageTypes",
+                "diagnostics_Image-original_Hash",
+                "diagnostics_Image-original_Dimensionality",
+                "diagnostics_Image-original_Spacing",
+                "diagnostics_Mask-original_Hash"
+                ]
+
+    for key, value in radiomics_dict.items():
+        if "diagnostics_Versions" in key:
+            bad_keys.append(key)
+
+        if key == "diagnostics_Image-original_Size":
+            channel, width, height = value
+            bad_keys.append(key)
+
+        if isinstance(value, tuple):
+            bad_keys.append(key)
+
+        if isinstance(value, np.ndarray):
+            if value.size > 1:
+                bad_keys.append(key)
+
+    for bad_key in bad_keys:
+        try:
+            radiomics_dict.pop(bad_key)
+        except KeyError:
+            continue
+
+    radiomics_dict["original_number_of_channels"] = channel
+    radiomics_dict["original_image_width"] = width
+    radiomics_dict["original_image_height"] = height
+
+    return radiomics_dict
+
+
+def _calculate_radiomics(image: Image.Image):
+    image_array = np.array(image)
+    image_mask = np.zeros_like(image_array)
+
+    image_array_median = np.median(image_array)
+
+    image_mask[image_array >= image_array_median] = 1
+
+    if image_mask.max() == 0:
+        raise ValueError("Image does not contain anything.")
+
+    image_sitk = sitk.GetImageFromArray(image_array)
+    mask_sitk = sitk.GetImageFromArray(image_mask)
+
+    extractor = featureextractor.RadiomicsFeatureExtractor()
+    result = extractor.execute(image_sitk, mask_sitk)
+    return result

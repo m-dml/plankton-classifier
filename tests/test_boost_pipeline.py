@@ -5,7 +5,7 @@ import PIL
 import SimpleITK as sitk
 import numpy as np
 
-from src.models.catboost_meta_classifier import BoostClassifier
+from src.models.catboost_meta_classifier import BoostClassifier, _prepare_radiomics, _calculate_radiomics
 from src.utils import CONFIG
 
 ONNX_FILE = "C:/Users/Tobias/Downloads/model_99917.onnx"
@@ -61,7 +61,7 @@ class TestBoostPipeline(unittest.TestCase):
     def test_calculate_radiomics(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
         image = cl._open_image(TEST_IMAGE)
-        radiomics = cl._calculate_radiomics(image)
+        radiomics = _calculate_radiomics(image)
 
         self.assertIsNotNone(radiomics)
         self.assertGreaterEqual(len(radiomics), 100)
@@ -85,12 +85,14 @@ class TestBoostPipeline(unittest.TestCase):
         self.assertGreaterEqual(0, prediction.min())
         self.assertAlmostEqual(1, prediction.sum())
 
-    # def test_train_and_load_catboost(self):
-    #     cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
-    #     cl._init_resnet_classifier()
-    #     cl.train_catboost_calssifier()
-    #
-    #     self.assertTrue(cl.catboost_is_initialized)
+    def test_train_and_load_catboost(self):
+        # this test can take a very long time, so please exclude for quick tests:
+        cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml", n_jobs=6)
+        CONFIG.update(dict(validation_split=0.00016))
+        cl._init_resnet_classifier()
+        cl.train_catboost_calssifier()
+
+        self.assertTrue(cl.catboost_is_initialized)
 
     def test_predict(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE, config_file="../tobis_config.yaml")
