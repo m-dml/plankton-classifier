@@ -23,14 +23,19 @@ class BoostClassifier:
         self.resnet_is_initialized = False
 
     @staticmethod
-    def _open_image(image_path: str) -> sitk.Image:
-        return sitk.ReadImage(image_path)
+    def _open_image(image_path: str) -> Image.Image:
+        return Image.open(image_path)
 
     @staticmethod
     def _image_to_pil(image: sitk.Image) -> Image:
         array = sitk.GetArrayFromImage(image)
-        array = np.moveaxis(array, -1, 0)
-        return Image.fromarray(array)
+        array = np.moveaxis(array, -1, 0).astype(np.uint8)
+        return Image.fromarray(array, "RGB")
+
+    def _image_to_sitk(self, image: Image.Image) -> sitk.Image:
+        array = np.array(image)
+        sitk_image = sitk.GetImageFromArray(array)
+        return sitk_image
 
     def transform_pil(self, image: Image.Image):
         transform = transforms.Compose([
@@ -40,14 +45,17 @@ class BoostClassifier:
         return transform(image)
 
     @staticmethod
-    def _calculate_radiomics(image: sitk.Image):
-        array = sitk.GetArrayFromImage(image)
-        mask_array = np.zeros_like(array)
-        mask_array[array > 5] = 1
-        mask_array = np.moveaxis(mask_array, -1, 0)
-        mask = sitk.GetImageFromArray(mask_array)
+    def _calculate_radiomics(image: Image.Image):
+        image_array = np.array(image)
+        image_mask = np.zeros_like(image_array)
+
+        image_mask[image_array > 5] = 1
+
+        image_sitk = sitk.GetImageFromArray(image_array)
+        mask_sitk = sitk.GetImageFromArray(image_mask)
+
         extractor = featureextractor.RadiomicsFeatureExtractor()
-        result = extractor.execute(image, mask)
+        result = extractor.execute(image_sitk, mask_sitk)
         return result
 
     def _init_resnet_classifier(self):

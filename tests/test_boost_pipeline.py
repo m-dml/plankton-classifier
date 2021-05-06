@@ -32,16 +32,26 @@ class TestBoostPipeline(unittest.TestCase):
         image = cl._open_image(TEST_IMAGE)
 
         self.assertIsNotNone(image)
-        self.assertIsInstance(image, sitk.Image)
+        self.assertIsInstance(image, PIL.Image.Image)
 
     def test_image_to_pil(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
         image = cl._open_image(TEST_IMAGE)
-        pil_image = cl._image_to_pil(image)
+        sitk_image = cl._image_to_sitk(image)
+        pil_image = cl._image_to_pil(sitk_image)
 
-        self.assertIsNotNone(image)
+        self.assertIsNotNone(pil_image)
         self.assertIsInstance(pil_image, PIL.Image.Image)
         self.assertEqual(3, np.array(pil_image).shape[0])
+
+    def test_image_to_sitk(self):
+        cl = BoostClassifier(onnx_file=ONNX_FILE)
+        image = cl._open_image(TEST_IMAGE)
+        sitk_image = cl._image_to_sitk(image)
+
+        self.assertIsNotNone(image)
+        self.assertIsInstance(sitk_image, sitk.Image)
+        self.assertEqual(3, sitk.GetArrayFromImage(sitk_image).shape[-1])
 
     def test_calculate_radiomics(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
@@ -49,7 +59,7 @@ class TestBoostPipeline(unittest.TestCase):
         radiomics = cl._calculate_radiomics(image)
 
         self.assertIsNotNone(radiomics)
-        self.assertGreaterEqual(100, len(radiomics))
+        self.assertGreaterEqual(len(radiomics), 100)
 
     def test_init_resnet_classifier(self):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
@@ -61,8 +71,7 @@ class TestBoostPipeline(unittest.TestCase):
         cl = BoostClassifier(onnx_file=ONNX_FILE)
         cl._init_resnet_classifier()
         image = cl._open_image(TEST_IMAGE)
-        pil_image = cl._image_to_pil(image)
-        prediction = cl._make_predictions_with_resnet(pil_image)
+        prediction = cl._make_predictions_with_resnet(image)
 
         self.assertIsNotNone(prediction)
         self.assertIsInstance(prediction, np.ndarray)
@@ -82,3 +91,7 @@ class TestBoostPipeline(unittest.TestCase):
 
     def test_predict(self):
         raise NotImplementedError
+
+
+if __name__ == "__main__":
+    unittest.main()

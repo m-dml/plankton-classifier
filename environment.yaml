@@ -3,7 +3,7 @@ channels:
   - pytorch
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.7 # has to be 3.7 for radiomics
   - jupyterlab
   - ipython=7.22.0
   - ipywidgets
@@ -21,7 +21,11 @@ dependencies:
   - onnx
   - pip
   - pip:
+      - pyradiomics
+      - catboost
       - onnxruntime
       - test-tube
       - fairscale
-      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+
+# run the next line manually in a terminal:
+#      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
