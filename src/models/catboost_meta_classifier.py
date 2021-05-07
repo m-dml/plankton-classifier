@@ -2,7 +2,6 @@ import logging
 import os
 
 import SimpleITK as sitk
-import catboost
 import numpy as np
 import onnxruntime as ort
 import pandas as pd
@@ -19,14 +18,16 @@ from src.utils.DataLoader import PlanktonDataLoader
 from src.utils.SquarePadTransform import SquarePad
 from joblib import Parallel, delayed
 
+from tqdm import tqdm
+
+
 radiomics.logger.setLevel(logging.ERROR)
 
 
 class BoostClassifier:
     def __init__(self, onnx_file: str, config_file=None, n_jobs=1):
 
-        if config_file is not None:
-            self.update_config(config_file)
+        self.update_config(config_file)
 
         self.onnx_file = onnx_file
         self.n_jobs = n_jobs
@@ -35,10 +36,12 @@ class BoostClassifier:
         self.catboost_is_initialized = False
         self.resnet_is_initialized = False
 
-    @staticmethod
-    def update_config(config_file):
-        with open(os.path.abspath(config_file), "r") as f:
-            config_dict = yaml.safe_load(f)
+    def update_config(self, config_file=None):
+        if config_file:
+            with open(os.path.abspath(config_file), "r") as f:
+                config_dict = yaml.safe_load(f)
+        else:
+            config_dict = dict()
 
         config_dict["batch_size"] = 1
         config_dict["shuffle_train_dataset"] = False
@@ -90,49 +93,61 @@ class BoostClassifier:
         transformed_image = self.transform_pil(image)
         model_input = np.expand_dims(np.array(transformed_image).astype(np.float32), 0)
         model_input = np.moveaxis(model_input, -1, 1)
+        model_input[:, :3, :, :] = model_input[:, :3, :, :] / 255  # normalize the first three channels
         predictions = softmax(self.classifier.run([output_name], {input_name: model_input})[0])[0]
         return predictions
 
-    def _combine_radiomics_and_resnet_predictions(self, radiomics_list, resnet_predictions, label) -> pd.DataFrame:
-        resnet_labels = [str(x) for x in range(len(resnet_predictions))]
-        df = pd.DataFrame(radiomics_list)
-        df["label"] = label
-        df[resnet_labels] = resnet_predictions
-        return df
+    def _create_training_data(self, resnet_predictions: pd.DataFrame, radiomics_df: pd.DataFrame):
+        out_df = pd.concat([resnet_predictions.set_index("file_names"), radiomics_df.set_index("file_names")], axis=1)
+        return out_df
 
-    def _create_training_data(self, resnet_predictions: list, radiomics_list: list, labels: list):
+    def get_radiomics_from_dataloader(self, dataloader) -> pd.DataFrame:
+        radiomics_file = "radiomics_train_data.csv"
+        if not os.path.isfile(radiomics_file):
+            parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
+                delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
 
-        resnet_labels = [str(x) for x in range(len(resnet_predictions[0]))]
+            radiomics_list, parallel_labels, parallel_file_names = zip(*parallel_results)
+            radiomics_df = pd.DataFrame([*radiomics_list])
+            radiomics_df["file_names"] = parallel_file_names
+            radiomics_df["labels"] = parallel_labels
+            radiomics_df.to_csv("radiomics_train_data.csv", index=False)
+            del radiomics_df
 
-        df = pd.DataFrame([*radiomics_list])
-        df["labels"] = labels
-        df[resnet_labels] = resnet_predictions
-        return df
+        radiomics_out_df = pd.read_csv(radiomics_file)
+        return radiomics_out_df
+
+    def get_resnet_predictions_from_dataloader(self, dataloader) -> pd.DataFrame:
+        predictions = []
+        file_names = []
+        resnet_file = "resnet_train_data_for_catboost.csv"
+        if not os.path.isfile(resnet_file):
+
+            for batch in tqdm(dataloader):
+                image, label, label_name, file_name = batch
+                pil_image = transforms.ToPILImage()(image[0])
+
+                predictions.append(self._make_predictions_with_resnet(pil_image))
+                file_names.append(file_name[0])
+
+            df = pd.DataFrame(predictions)
+            df["file_names"] = file_names
+            df.to_csv(resnet_file, index=False)
+            del df
+
+        df_out = pd.read_csv(resnet_file)
+        return df_out
 
     def train_catboost_calssifier(self):
-        """
-        :param dataloader: a torch dataloader
-        """
-
-        data_module = PlanktonDataLoader(transform=None)
+        data_module = PlanktonDataLoader(transform=None, return_filename=True)
         data_module.setup()
         dataloader = data_module.val_dataloader()
-        print(len(dataloader))
+        radiomics_df = self.get_radiomics_from_dataloader(dataloader)
 
-        predictions = []
-        labels = []
+        dataloader = data_module.val_dataloader()
+        resnet_df = self.get_resnet_predictions_from_dataloader(dataloader)
 
-        radiomics_list = Parallel(n_jobs=self.n_jobs, verbose=5)(delayed(_do_predictions)(batch) for batch in dataloader)
-
-        for batch in dataloader:
-
-            image, label, label_name = batch
-            pil_image = transforms.ToPILImage()(image[0])
-
-            predictions.append(self._make_predictions_with_resnet(pil_image))
-            labels.append(label_name[0])
-
-        train_df = self._create_training_data(predictions, radiomics_list, labels)
+        train_df = self._create_training_data(radiomics_df, resnet_df)
 
         self.boost_model = CatBoostClassifier(iterations=1000, loss_function='MultiClass', learning_rate=0.03)
         self.boost_model.fit(train_df.drop(columns=["labels"]).values, train_df["labels"].values, verbose=False)
@@ -161,15 +176,15 @@ class BoostClassifier:
         df = pd.DataFrame(radiomics_list, index=range(1))
         df[resnet_labels] = resnet_prediction
 
-        prediction = self.boost_model.predict(df.values)
+        prediction = self.boost_model.predict(df.values)[0][0]
         return prediction
 
 
 def _do_predictions(batch):
-    image, label, label_name = batch
+    image, label, label_name, file_name = batch
     pil_image = transforms.ToPILImage()(image[0])
     radiomics_list = _prepare_radiomics(_calculate_radiomics(pil_image))
-    return radiomics_list
+    return radiomics_list, label_name[0], file_name[0]
 
 
 def _prepare_radiomics(radiomics_dict):

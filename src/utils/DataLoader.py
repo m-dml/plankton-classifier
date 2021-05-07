@@ -17,9 +17,10 @@ from torchvision import transforms
 
 
 class PlanktonDataSet(Dataset):
-    def __init__(self, files, integer_labels, final_image_size=500, transform=None):
+    def __init__(self, files, integer_labels, final_image_size=500, transform=None, return_filename=False):
         self.files = files
         self.integer_labels = integer_labels
+        self.return_filename = return_filename
 
         self.transform = transform
         self.preload_dataset = CONFIG.preload_dataset
@@ -51,9 +52,13 @@ class PlanktonDataSet(Dataset):
 
         if self.use_image_morphings:
             image = torch.cat([image, grayscale_eroded, grayscale_dilated, canny_edges], dim=0)
+
         label = torch.Tensor([self.integer_labels[label_name]])
 
-        return image, label, label_name
+        if self.return_filename:
+            return image, label, label_name, self.files[item][0]
+        else:
+            return image, label, label_name
 
     def load_file(self, file):
         this_image = Image.open(file)
@@ -102,10 +107,11 @@ class PlanktonDataSet(Dataset):
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
-    def __init__(self, transform=None):
+    def __init__(self, transform=None, return_filename=False):
         super().__init__()
 
         self.transform = transform
+        self.return_filename = return_filename
 
         self.train_data = None
         self.valid_data = None
@@ -160,15 +166,18 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         if stage == 'fit' or stage is None:
             self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
-                                              integer_labels=self.integer_class_labels)
+                                              integer_labels=self.integer_class_labels,
+                                              return_filename=self.return_filename)
             logging.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform,
-                                              integer_labels=self.integer_class_labels)
+                                              integer_labels=self.integer_class_labels,
+                                              return_filename=self.return_filename)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == 'test' or stage is None:
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
-                                             integer_labels=self.integer_class_labels)
+                                             integer_labels=self.integer_class_labels,
+                                             return_filename=self.return_filename)
 
     def prepare_data_setup(self):
         excluded = self.excluded_labels

@@ -19,6 +19,7 @@ dependencies:
   - tensorboard
   - simpleitk
   - onnx
+  - pandas
   - pip
   - pip:
       - pyradiomics
