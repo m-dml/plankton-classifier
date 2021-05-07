@@ -9,17 +9,15 @@ import radiomics
 import yaml
 from PIL import Image
 from catboost import CatBoostClassifier
+from joblib import Parallel, delayed, parallel_backend
 from radiomics import featureextractor
 from scipy.special import softmax
 from torchvision import transforms
+from tqdm import tqdm
 
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
 from src.utils.SquarePadTransform import SquarePad
-from joblib import Parallel, delayed
-
-from tqdm import tqdm
-
 
 radiomics.logger.setLevel(logging.ERROR)
 
@@ -101,11 +99,18 @@ class BoostClassifier:
         out_df = pd.concat([resnet_predictions.set_index("file_names"), radiomics_df.set_index("file_names")], axis=1)
         return out_df
 
-    def get_radiomics_from_dataloader(self, dataloader) -> pd.DataFrame:
+    def get_radiomics_from_dataloader(self, dataloader, ray_backend=False) -> pd.DataFrame:
         radiomics_file = "radiomics_train_data.csv"
         if not os.path.isfile(radiomics_file):
-            parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
-                delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
+            if ray_backend:
+                from ray.util.joblib import register_ray   # noqa: E402
+                register_ray()
+                with parallel_backend("ray"):
+                    parallel_results = Parallel(verbose=7)(
+                        delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
+            else:
+                parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
+                    delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
 
             radiomics_list, parallel_labels, parallel_file_names = zip(*parallel_results)
             radiomics_df = pd.DataFrame([*radiomics_list])

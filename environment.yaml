@@ -30,3 +30,6 @@ dependencies:
 
 # run the next line manually in a terminal:
 #      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+
+# if you want to use ray for prerpocessing the radiomics data:
+# pip install ray
