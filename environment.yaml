@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.8
   - jupyterlab
-  - ipython
+  - ipython=7.22.0
   - ipywidgets
   - numpy
   - pytorch
@@ -16,8 +16,11 @@ dependencies:
   - pillow
   - tqdm
   - matplotlib
+  - tensorboard
+  - onnx
   - pip
   - pip:
+      - onnxruntime
       - test-tube
       - fairscale
       - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html

@@ -1,14 +1,15 @@
 import glob
 import logging
 import os
+import random
 
 import pytorch_lightning as pl
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 
 from src.utils import CONFIG
-from tqdm import tqdm
 
 
 class PlanktonDataSet(Dataset):
@@ -52,8 +53,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.input_channels = None
         self.output_channels = None
         self.unique_labels = []
+        self.all_labels = []
         self.integer_class_labels = dict()
 
+        self.excluded_labels = CONFIG.excluded_classes
         self.batch_size = CONFIG.batch_size
         self.num_workers = CONFIG.num_workers
         self.train_split = CONFIG.train_split  # The fraction size of the training data
@@ -69,6 +72,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.use_new_data = CONFIG.use_new_data
         self.use_subclasses = CONFIG.use_subclasses
         self.preload_dataset = CONFIG.preload_dataset
+        self.super_classes = CONFIG.super_classes
 
         self.final_image_size = CONFIG.final_image_size
 
@@ -107,6 +111,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                              integer_labels=self.integer_class_labels)
 
     def prepare_data_setup(self):
+        excluded = self.excluded_labels
         files = []
         if self.use_old_data:
             for folder in tqdm(glob.glob(os.path.join(self.old_data_path, "*")), desc="Load old data"):
@@ -114,7 +119,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     raw_file_paths = glob.glob(folder + "*/*/*.tif")
                     for file in raw_file_paths:
                         label = os.path.split(folder)[-1]
+                        if label in excluded:
+                            continue
                         files.append((self.load_image(file, self.preload_dataset),label))
+                        self.all_labels.append(label)
                         if label not in self.unique_labels:
                             self.unique_labels.append(label)
 
@@ -123,7 +131,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
                         raw_file_paths = glob.glob(sub_folder + "*/*.tif")
                         for file in raw_file_paths:
                             label = os.path.split(folder)[-1]
+                            if label in excluded:
+                                continue
                             files.append((self.load_image(file, self.preload_dataset), label))
+                            self.all_labels.append(label)
                             if label not in self.unique_labels:
                                 self.unique_labels.append(label)
 
@@ -132,10 +143,27 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raw_file_paths = glob.glob(folder + "*/*/*.png")
                 for file in raw_file_paths:
                     label = os.path.split(folder)[-1]
+                    label = self._find_super_class(label)
+                    if label in excluded:
+                        continue
                     files.append((self.load_image(file, self.preload_dataset), label))
+                    self.all_labels.append(label)
                     if label not in self.unique_labels:
                         self.unique_labels.append(label)
+
+        random.seed(CONFIG.random_seed)
+        random.shuffle(files)
         return files
+
+    def _find_super_class(self, label):
+        if self.super_classes is None:
+            return label
+        else:
+            for super_class in self.super_classes.keys():
+                if label in self.super_classes[super_class]:
+                    label = super_class
+                    break
+            return label
 
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
