@@ -49,6 +49,9 @@ log_interval: 10
 # weather to weight the losses according to the number of samples per class
 use_weighted_loss: false
 
+# whether to download a pretrained network
+use_pretrained: false
+
 # --------------------------------------------------------------------------------------
 # ==================
 # Paths:
@@ -116,8 +119,8 @@ shuffle_test_dataset: false
 tensorboard_logger_logdir: "logs/tb_logs/"
 checkpoint_file_path: "logs/checkpoints"
 
-# The size to which images should be padded/cropped using PIL.ImageOps.pad
-final_image_size: 500
+# The size to which images should be padded/cropped
+final_image_size: 128
 
 # All transforms specified below are being composed and applied to the images. Where necessary, supply CONFIG.final_image_size as an input
 transform:
