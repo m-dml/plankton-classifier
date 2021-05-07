@@ -14,13 +14,12 @@
 #SBATCH --account=machnitz
 #SBATCH --partition=pGPU
 #SBATCH --exclusive
+
+## output directory should already exist
 #SBATCH --output=slurm_output/slurm-%j.out
 
 ## 300 seconds before training ends resubmit the job
 #SBATCH --signal=SIGUSR1@300
-
-## create SLURM output directory if it doesn't exist
-mkdir -p slurm_output
 
 module load compilers/cuda/11.0
 nvidia-smi
