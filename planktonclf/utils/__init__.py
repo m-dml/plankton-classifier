@@ -1,4 +1,4 @@
-from src.utils.Config import Config
+from planktonclf.utils.Config import Config
 
 import yaml
 import os

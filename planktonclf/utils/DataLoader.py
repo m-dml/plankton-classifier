@@ -10,7 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import SimpleITK as sitk
-from src.utils import CONFIG
+from planktonclf.utils import CONFIG
 import PIL
 from PIL import Image
 from torchvision import transforms

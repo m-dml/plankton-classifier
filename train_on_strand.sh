@@ -2,13 +2,13 @@
 
 # SLURM SUBMIT SCRIPT
 #SBATCH --job-name=PlanktonClassifier
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 
 ## The number of tasks per node should be the same number as requested GPUS per node.
-#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks-per-node=1
 
 ## The number of cpus per task should be the same number as dataloader workers.
-#SBATCH --cpus-per-task=20
+#SBATCH --cpus-per-task=40
 
 #SBATCH --time=24:00:00
 #SBATCH --account=machnitz
@@ -22,4 +22,4 @@
 
 module load compilers/cuda/11.0
 nvidia-smi
-srun /gpfs/home/machnitz/miniconda3/envs/plankton/bin/python main.py -f "default_config.yaml"
+srun /gpfs/home/machnitz/miniconda3/envs/plankton/bin/python main.py -f "strand_config.yaml"

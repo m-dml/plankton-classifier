@@ -1,7 +1,7 @@
 import unittest
 
-from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
+from planktonclf.utils import CONFIG
+from planktonclf.utils.DataLoader import PlanktonDataLoader
 
 
 class TestPlanktonDataLoader(unittest.TestCase):

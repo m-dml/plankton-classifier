@@ -7,9 +7,9 @@ import SimpleITK as sitk
 import numpy as np
 import pandas as pd
 
-from src.models.catboost_meta_classifier import BoostClassifier, _calculate_radiomics
-from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
+from planktonclf.models.catboost_meta_classifier import BoostClassifier, _calculate_radiomics
+from planktonclf.utils import CONFIG
+from planktonclf.utils.DataLoader import PlanktonDataLoader
 
 ONNX_FILE = "C:/Users/Tobias/Downloads/model_99917.onnx"
 TEST_IMAGE = "C:\\Users\\Tobias\\PycharmProjects\\plankton-classifier\\data\\new_data\\4David\\M160\\Sorted\\" \

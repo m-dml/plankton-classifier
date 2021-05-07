@@ -1,9 +1,7 @@
 import sys, os
-sys.path.append(os.path.abspath("../"))
-
-from src.models.catboost_meta_classifier import BoostClassifier
-from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
+from planktonclf.models.catboost_meta_classifier import BoostClassifier
+from planktonclf.utils import CONFIG
+from planktonclf.utils.DataLoader import PlanktonDataLoader
 
 
 if __name__ == "__main__":
@@ -16,4 +14,4 @@ if __name__ == "__main__":
     data_module.setup()
 
     dataloader = data_module.val_dataloader()
-    radiomics_df = model.get_radiomics_from_dataloader(dataloader)
+    radiomics_df = model.get_radiomics_from_dataloader(dataloader, ray_backend=True)

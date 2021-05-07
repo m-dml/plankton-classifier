@@ -13,11 +13,12 @@ from joblib import Parallel, delayed, parallel_backend
 from radiomics import featureextractor
 from scipy.special import softmax
 from torchvision import transforms
+import socket
 from tqdm import tqdm
 
-from src.utils import CONFIG
-from src.utils.DataLoader import PlanktonDataLoader
-from src.utils.SquarePadTransform import SquarePad
+from planktonclf.utils import CONFIG
+from planktonclf.utils.DataLoader import PlanktonDataLoader
+from planktonclf.utils.SquarePadTransform import SquarePad
 
 radiomics.logger.setLevel(logging.ERROR)
 
@@ -103,10 +104,13 @@ class BoostClassifier:
         radiomics_file = "radiomics_train_data.csv"
         if not os.path.isfile(radiomics_file):
             if ray_backend:
-                from ray.util.joblib import register_ray   # noqa: E402
+                print(f"I am {socket.gethostname()}")
+                import ray
+                from ray.util.joblib import register_ray  # noqa: E402
+                ray.init(address=os.getenv("RAY_ADDRESS"), _redis_password=os.getenv("REDIS_PWD"))
                 register_ray()
                 with parallel_backend("ray"):
-                    parallel_results = Parallel(verbose=7)(
+                    parallel_results = Parallel(verbose=7, n_jobs=-1)(
                         delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
             else:
                 parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
