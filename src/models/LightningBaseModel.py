@@ -124,8 +124,11 @@ class LightningModel(pl.LightningModule):
     def _log_accuracy_matrices(self, datagroup):
         cm = self.confusion_matrix[datagroup]
 
-        accuracy = np.diag(cm).sum() / np.maximum(0.0, cm.sum())  # accuracy average over all data we're now logging
-        conditional_probabilities = cm / np.maximum(0.0, cm.sum(axis=0))  # conditional probabilities for best guess
+        accuracy = np.diag(cm).sum() / np.maximum(1.0, cm.sum())  # accuracy average over all data we're now logging
+        conditional_probabilities = cm / np.maximum(1.0, cm.sum(axis=0))  # conditional probabilities for best guess
+        conditional_accuracy = np.diag(conditional_probabilities)
+        for L, ca in zip(self.class_labels, conditional_accuracy):
+            self.log(f"Cond. Acc. {L} {datagroup}", ca)
 
         self._log_img(cm, f"Confusion_Matrix {datagroup}",
                       ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction', title=f'Accuracy {accuracy}')
