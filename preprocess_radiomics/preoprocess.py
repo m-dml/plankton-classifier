@@ -15,3 +15,4 @@ if __name__ == "__main__":
 
     dataloader = data_module.val_dataloader()
     radiomics_df = model.get_radiomics_from_dataloader(dataloader, ray_backend=True)
+    print("Finished preprocessing")

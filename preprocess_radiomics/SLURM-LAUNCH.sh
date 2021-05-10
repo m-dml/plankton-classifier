@@ -2,7 +2,7 @@
 #SBATCH --job-name=preprocess-plankton
 
 ### Modify this according to your Ray workload.
-#SBATCH --nodes=3
+#SBATCH --nodes=20
 #SBATCH --exclusive
 
 #SBATCH --ntasks-per-node=1  # do not change
@@ -16,8 +16,6 @@
 
 
 ################# DON NOT CHANGE THINGS HERE UNLESS YOU KNOW WHAT YOU ARE DOING ###############
-# This script is a modification to the implementation suggest by gregSchwartz18 here:
-# https://github.com/ray-project/ray/issues/826#issuecomment-522116599
 redis_password=$(uuidgen)
 export redis_password
 
@@ -49,5 +47,5 @@ done
 ##############################################################################################
 
 #### call your code below
-srun /gpfs/home/machnitz/miniconda3/envs/plankton/bin/python preoprocess.py
+/gpfs/home/machnitz/miniconda3/envs/plankton/bin/python preoprocess.py
 exit

@@ -109,18 +109,24 @@ class BoostClassifier:
                 from ray.util.joblib import register_ray  # noqa: E402
                 ray.init(address=os.getenv("RAY_ADDRESS"), _redis_password=os.getenv("REDIS_PWD"))
                 register_ray()
+                print("Starting ray loop:")
                 with parallel_backend("ray"):
                     parallel_results = Parallel(verbose=7, n_jobs=-1)(
                         delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
+                print("Finished ray loop.")
             else:
                 parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
                     delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
 
             radiomics_list, parallel_labels, parallel_file_names = zip(*parallel_results)
+            print("Creating dataframe...")
             radiomics_df = pd.DataFrame([*radiomics_list])
             radiomics_df["file_names"] = parallel_file_names
             radiomics_df["labels"] = parallel_labels
+
+            print("Saving results...")
             radiomics_df.to_csv("radiomics_train_data.csv", index=False)
+            print(f"Saved results to {os.getcwd()}")
             del radiomics_df
 
         radiomics_out_df = pd.read_csv(radiomics_file)
