@@ -1,3 +1,4 @@
+import itertools
 import os
 
 import matplotlib.pyplot as plt
@@ -7,7 +8,7 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet50
+from torchvision.models import resnext101_32x8d
 
 
 class LightningModel(pl.LightningModule):
@@ -50,7 +51,7 @@ class LightningModel(pl.LightningModule):
         return weight_tensor
 
     def define_model(self, input_channels=3, pretrained=False):
-        feature_extractor = resnet50(pretrained=pretrained, num_classes=1000)
+        feature_extractor = resnext101_32x8d(pretrained=pretrained, num_classes=1000)
         feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         classifier = nn.Linear(1000, len(self.class_labels))
 
@@ -130,8 +131,7 @@ class LightningModel(pl.LightningModule):
         for L, ca in zip(self.class_labels, conditional_accuracy):
             self.log(f"Cond. Acc. {L} {datagroup}", ca)
 
-        self._log_img(cm, f"Confusion_Matrix {datagroup}",
-                      ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction', title=f'Accuracy {accuracy}')
+        self.plot_confusion_matrix(cm, self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
         self._log_img(conditional_probabilities, f"P(best guess | true) {datagroup}",
                       ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction')
 
@@ -158,6 +158,29 @@ class LightningModel(pl.LightningModule):
         plt.axis('tight')
         self.logger.experiment[0].add_figure(figname, fig, self.global_step)
         plt.close('all')
+
+    def plot_confusion_matrix(self, cm, class_names, figname, title):
+        figure = plt.figure(figsize=(12, 12))
+        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.title(title)
+        plt.colorbar()
+        tick_marks = np.arange(len(class_names))
+        plt.xticks(tick_marks, class_names, rotation=45)
+        plt.yticks(tick_marks, class_names)
+
+        # Use white text if squares are dark; otherwise black.
+        threshold = cm.max() / 2.
+
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            color = "white" if cm[i, j] > threshold else "black"
+            plt.text(j, i, cm[i, j], horizontalalignment="center", color=color)
+
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        self.logger.experiment[0].add_figure(figname, figure, self.global_step)
+        plt.close('all')
+        return figure
 
     def on_validation_epoch_end(self):
         self._log_accuracy_matrices('Validation')

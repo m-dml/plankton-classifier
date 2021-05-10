@@ -6,7 +6,9 @@ import random
 import pytorch_lightning as pl
 import torch
 from PIL import Image
-from torch.utils.data import Dataset, DataLoader
+from sklearn.utils import class_weight
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+from torchsampler import ImbalancedDatasetSampler
 from tqdm import tqdm
 
 from src.utils import CONFIG
@@ -32,6 +34,11 @@ class PlanktonDataSet(Dataset):
         label = torch.Tensor([self.integer_labels[label_name]])
 
         return image, label, label_name
+
+    def _get_label(self, item):
+        image, label_name = self.files[item]
+        label = self.integer_labels[label_name]
+        return label
 
     def load_file(self, file):
         this_image = Image.open(file)
@@ -73,6 +80,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.use_subclasses = CONFIG.use_subclasses
         self.preload_dataset = CONFIG.preload_dataset
         self.super_classes = CONFIG.super_classes
+        self.oversample_data = CONFIG.oversample_data
 
         self.final_image_size = CONFIG.final_image_size
 
@@ -109,6 +117,13 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
                                              integer_labels=self.integer_class_labels)
+
+    def set_up_weighted_sampler(self):
+        weights = class_weight.compute_class_weight(class_weight="balanced",
+                                                    classes=self.unique_labels,
+                                                    y=self.all_labels)
+        sampler = WeightedRandomSampler(weights, len(weights))
+        return sampler
 
     def prepare_data_setup(self):
         excluded = self.excluded_labels
@@ -166,12 +181,22 @@ class PlanktonDataLoader(pl.LightningDataModule):
             return label
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                          shuffle=self.shuffle_train_dataset, pin_memory=True)
+        if self.oversample_data:
+            sampler = ImbalancedDatasetSampler(self.train_data)
+            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
+                              pin_memory=True, sampler=sampler)
+        else:
+            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
+                              pin_memory=True, shuffle=self.shuffle_train_dataset)
 
     def val_dataloader(self):
-        return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                          shuffle=self.shuffle_validation_dataset, pin_memory=True)
+        if self.oversample_data:
+            sampler = ImbalancedDatasetSampler(self.valid_data)
+            return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
+                              pin_memory=True, sampler=sampler)
+        else:
+            return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
+                              pin_memory=True, shuffle=self.shuffle_validation_dataset)
 
     def test_dataloader(self):
         return DataLoader(self.test_data, batch_size=self.batch_size, num_workers=self.num_workers,
