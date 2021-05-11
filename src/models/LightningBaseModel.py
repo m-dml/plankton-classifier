@@ -169,17 +169,6 @@ class LightningModel(pl.LightningModule):
     def on_test_epoch_end(self):
         self._log_accuracy_matrices('Testing')
 
-    def log_images(self, images, labels):
-        if self.hparams.batch_size >= 16:
-            fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(12, 12))
-            for i in range(16):
-                ax = axes.flatten()[i]
-                ax.imshow(images[i].detach().cpu().moveaxis(0, -1))
-                ax.set_title(labels[i])
-
-            self.logger.experiment[0].add_figure("Image Matrix", fig, self.global_step)
-            plt.close("all")
-
     def on_save_checkpoint(self, checkpoint) -> None:
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath

@@ -6,8 +6,7 @@ import random
 import pytorch_lightning as pl
 import torch
 from PIL import Image
-from sklearn.utils import class_weight
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+from torch.utils.data import Dataset, DataLoader
 from torchsampler import ImbalancedDatasetSampler
 from tqdm import tqdm
 
@@ -117,13 +116,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
                                              integer_labels=self.integer_class_labels)
-
-    def set_up_weighted_sampler(self):
-        weights = class_weight.compute_class_weight(class_weight="balanced",
-                                                    classes=self.unique_labels,
-                                                    y=self.all_labels)
-        sampler = WeightedRandomSampler(weights, len(weights))
-        return sampler
 
     def prepare_data_setup(self):
         excluded = self.excluded_labels
