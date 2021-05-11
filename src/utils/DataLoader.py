@@ -35,7 +35,7 @@ class PlanktonDataSet(Dataset):
 
         return image, label, label_name
 
-    def _get_label(self, item):
+    def get_label(self, item):
         image, label_name = self.files[item]
         label = self.integer_labels[label_name]
         return label

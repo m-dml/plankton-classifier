@@ -132,32 +132,11 @@ class LightningModel(pl.LightningModule):
             self.log(f"Cond. Acc. {L} {datagroup}", ca)
 
         self.plot_confusion_matrix(cm, self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
-        self._log_img(conditional_probabilities, f"P(best guess | true) {datagroup}",
-                      ticklabels=self.class_labels, xlabel='Target', ylabel='Prediction')
+        self.plot_confusion_matrix(conditional_probabilities, self.class_labels,
+                                   f"P(best guess | true) {datagroup}", title=f"P(best guess | true) {datagroup}")
 
         # reset the CM
         self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
-
-    def _log_img(self, x, figname, show_colorbar=True, ticklabels=None, xlabel=None, ylabel=None, title=None):
-        h, w = x.shape[0:2]
-        x[np.isnan(x)] = 0.0
-        fig, ax = plt.subplots(figsize=(10, 10))
-        im = ax.imshow(x)
-        if show_colorbar:
-            fig.colorbar(mappable=im, ticks=[0, x.max()])
-        if ticklabels is not None and len(ticklabels) == w:
-            plt.xticks(np.arange(w), ticklabels, rotation='vertical')
-        if ticklabels is not None and len(ticklabels) == h:
-            plt.yticks(np.arange(h), self.class_labels)
-        if xlabel is not None:
-            ax.set_xlabel(xlabel)
-        if ylabel is not None:
-            ax.set_ylabel(ylabel)
-        if title is not None:
-            plt.title(title)
-        plt.axis('tight')
-        self.logger.experiment[0].add_figure(figname, fig, self.global_step)
-        plt.close('all')
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
         figure = plt.figure(figsize=(12, 12))
@@ -173,7 +152,7 @@ class LightningModel(pl.LightningModule):
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             color = "white" if cm[i, j] > threshold else "black"
-            plt.text(j, i, cm[i, j], horizontalalignment="center", color=color)
+            plt.text(j, i, "{:.2f}".format(cm[i, j]), horizontalalignment="center", color=color)
 
         plt.tight_layout()
         plt.ylabel('True label')
