@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+import pathlib
 import random
 
 import pytorch_lightning as pl
@@ -65,15 +66,12 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.shuffle_validation_dataset = CONFIG.shuffle_validation_dataset
         self.shuffle_test_dataset = CONFIG.shuffle_test_dataset
         self.preload_dataset = CONFIG.preload_dataset
-        self.old_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.old_sorted_plankton_data)
         self.new_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.new_sorted_plankton_data)
-
-        self.use_old_data = CONFIG.use_old_data
-        self.use_new_data = CONFIG.use_new_data
-        self.use_subclasses = CONFIG.use_subclasses
+        self.planktonnet_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.planktonnet_data)
+        self.use_planktonnet_data = CONFIG.use_planktonnet_data
+        self.use_klas_data = CONFIG.use_klas_data
         self.preload_dataset = CONFIG.preload_dataset
         self.super_classes = CONFIG.super_classes
-
         self.final_image_size = CONFIG.final_image_size
 
     def setup(self, stage=None):
@@ -111,48 +109,31 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                              integer_labels=self.integer_class_labels)
 
     def prepare_data_setup(self):
-        excluded = self.excluded_labels
         files = []
-        if self.use_old_data:
-            for folder in tqdm(glob.glob(os.path.join(self.old_data_path, "*")), desc="Load old data"):
-                if not self.use_subclasses:
-                    raw_file_paths = glob.glob(folder + "*/*/*.tif")
-                    for file in raw_file_paths:
-                        label = os.path.split(folder)[-1]
-                        if label in excluded:
-                            continue
-                        files.append((self.load_image(file, self.preload_dataset),label))
-                        self.all_labels.append(label)
-                        if label not in self.unique_labels:
-                            self.unique_labels.append(label)
+        if self.use_klas_data:
+            for folder in tqdm(glob.glob(os.path.join(self.new_data_path, "*")), desc="Load Klas data"):
+                files += self._add_data_from_folder(folder, file_ext="png")
 
-                else:
-                    for sub_folder in tqdm(glob.glob(os.path.join(folder, "*")), desc="Load old data"):
-                        raw_file_paths = glob.glob(sub_folder + "*/*.tif")
-                        for file in raw_file_paths:
-                            label = os.path.split(folder)[-1]
-                            if label in excluded:
-                                continue
-                            files.append((self.load_image(file, self.preload_dataset), label))
-                            self.all_labels.append(label)
-                            if label not in self.unique_labels:
-                                self.unique_labels.append(label)
-
-        if self.use_new_data:
-            for folder in tqdm(glob.glob(os.path.join(self.new_data_path, "*")), desc="Load new data"):
-                raw_file_paths = glob.glob(folder + "*/*/*.png")
-                for file in raw_file_paths:
-                    label = os.path.split(folder)[-1]
-                    label = self._find_super_class(label)
-                    if label in excluded:
-                        continue
-                    files.append((self.load_image(file, self.preload_dataset), label))
-                    self.all_labels.append(label)
-                    if label not in self.unique_labels:
-                        self.unique_labels.append(label)
+        if self.use_planktonnet_data:
+            for folder in tqdm(glob.glob(os.path.join(self.planktonnet_data_path, "*")), desc="Load planktonNet"):
+                files += self._add_data_from_folder(folder, file_ext="jpg")
 
         random.seed(CONFIG.random_seed)
         random.shuffle(files)
+        return files
+
+    def _add_data_from_folder(self, folder, file_ext="png"):
+        files = []
+        for file in pathlib.Path(folder).rglob(f'*.{file_ext}'):
+            label = os.path.split(folder)[-1]
+            label = self._find_super_class(label)
+            if label in self.excluded_labels:
+                continue
+            files.append((self.load_image(file, self.preload_dataset), label))
+            self.all_labels.append(label)
+            if label not in self.unique_labels:
+                self.unique_labels.append(label)
+
         return files
 
     def _find_super_class(self, label):

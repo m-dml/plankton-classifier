@@ -13,7 +13,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
-from src.utils.SquarePadTransform import SquarePad
+from src.utils.SquarePadTransform import SquarePad  # noqa
+
 
 def load_config():
     parser = ArgumentParser()
