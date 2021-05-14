@@ -55,7 +55,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.output_channels = None
         self.unique_labels = []
         self.all_labels = []
-        self.integer_class_labels = dict()
+        self.integer_class_label_dict = dict()
 
         self.excluded_labels = CONFIG.excluded_classes
         self.batch_size = CONFIG.batch_size
@@ -76,7 +76,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
-        self.integer_class_labels = self.set_up_integer_class_labels()
+        self.integer_class_label_dict = self.set_up_integer_class_labels()
 
         if len(training_pairs) == 0:
             raise FileNotFoundError(f"Did not find any files")
@@ -98,15 +98,15 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         if stage == 'fit' or stage is None:
             self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
-                                              integer_labels=self.integer_class_labels)
+                                              integer_labels=self.integer_class_label_dict)
             logging.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform,
-                                              integer_labels=self.integer_class_labels)
+                                              integer_labels=self.integer_class_label_dict)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == 'test' or stage is None:
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
-                                             integer_labels=self.integer_class_labels)
+                                             integer_labels=self.integer_class_label_dict)
 
     def prepare_data_setup(self):
         files = []
