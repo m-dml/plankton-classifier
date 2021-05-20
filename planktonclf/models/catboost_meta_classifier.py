@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 import SimpleITK as sitk
 import numpy as np
@@ -19,6 +20,10 @@ from tqdm import tqdm
 from planktonclf.utils import CONFIG
 from planktonclf.utils.DataLoader import PlanktonDataLoader
 from planktonclf.utils.SquarePadTransform import SquarePad
+from dask.distributed import Client
+from dask.diagnostics import ProgressBar
+import dask
+from dask_jobqueue import SLURMCluster
 
 radiomics.logger.setLevel(logging.ERROR)
 
@@ -100,20 +105,40 @@ class BoostClassifier:
         out_df = pd.concat([resnet_predictions.set_index("file_names"), radiomics_df.set_index("file_names")], axis=1)
         return out_df
 
-    def get_radiomics_from_dataloader(self, dataloader, ray_backend=False) -> pd.DataFrame:
+    def get_radiomics_from_dataloader(self, dataloader, dask_backend=False) -> pd.DataFrame:
         radiomics_file = "radiomics_train_data.csv"
         if not os.path.isfile(radiomics_file):
-            if ray_backend:
+            if dask_backend:
                 print(f"I am {socket.gethostname()}")
-                import ray
-                from ray.util.joblib import register_ray  # noqa: E402
-                ray.init(address=os.getenv("RAY_ADDRESS"), _redis_password=os.getenv("REDIS_PWD"))
-                register_ray()
-                print("Starting ray loop:")
-                with parallel_backend("ray"):
-                    parallel_results = Parallel(verbose=7, n_jobs=-1)(
-                        delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
-                print("Finished ray loop.")
+
+                cluster = SLURMCluster(cores=45,
+                                       header_skip=['--mem'],
+                                       processes=1,
+                                       interface="ib0",
+                                       memory="100 GB",
+                                       project="machnitz",
+                                       walltime="02:00:00",
+                                       local_directory="/gpfs/work/machnitz/dask_storage",
+                                       job_extra=['--partition=pAll', '--exclusive',
+                                                  '--output=slurm_output/slurm-%j.out'])
+
+                cluster.adapt(maximum_jobs=20)
+                client = Client(cluster)
+                print(cluster.job_script())
+                time.sleep(10)
+
+                print("Preparing dask loop:")
+                all_batches = []
+                for batch in tqdm(dataloader):
+                    all_batches.append(batch)
+
+                futures = []
+                for batch in tqdm(all_batches):
+                    # big_future = client.scatter(batch)
+                    future = client.submit(_do_predictions, batch)
+                    futures.append(future)
+                parallel_results = client.gather(futures)
+                print("Finished dask loop.")
             else:
                 parallel_results = Parallel(n_jobs=self.n_jobs, verbose=0)(
                     delayed(_do_predictions)(batch) for batch in tqdm(dataloader))
