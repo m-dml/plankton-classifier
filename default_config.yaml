@@ -94,6 +94,9 @@ super_classes:
     - Radiolaria
     - Foraminifera
 
+# whether to oversample underrepresented data:
+oversample_data: false
+
 # whether to use finer distinctions of different object types as different target categories
 # this has not effect on datasets with a flat directory structure
 use_subclasses: false
