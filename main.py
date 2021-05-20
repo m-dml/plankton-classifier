@@ -5,10 +5,10 @@ from datetime import datetime as dt
 
 import pytorch_lightning as pl
 import torch
-from torchvision import transforms
 import yaml
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
+from torchvision import transforms
 
 from src.models.LightningBaseModel import LightningModel
 from src.utils import CONFIG

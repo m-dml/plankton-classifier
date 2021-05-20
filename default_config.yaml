@@ -93,6 +93,9 @@ super_classes:
     - Radiolaria
     - Foraminifera
 
+# whether to oversample underrepresented data:
+oversample_data: false
+
 # whether to load the whole dataset into memory at the beginning of the training:
 preload_dataset: false
 
