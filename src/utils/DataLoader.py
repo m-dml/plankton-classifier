@@ -74,8 +74,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.preload_dataset = CONFIG.preload_dataset
         self.new_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.new_sorted_plankton_data)
         self.planktonnet_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.planktonnet_data)
+        self.canadian_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.canadian_data)
         self.use_planktonnet_data = CONFIG.use_planktonnet_data
         self.use_klas_data = CONFIG.use_klas_data
+        self.use_canadian_data = CONFIG.use_canadian_data
         self.preload_dataset = CONFIG.preload_dataset
         self.super_classes = CONFIG.super_classes
         self.oversample_data = CONFIG.oversample_data
@@ -124,6 +126,15 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_planktonnet_data:
             for folder in tqdm(glob.glob(os.path.join(self.planktonnet_data_path, "*")), desc="Load planktonNet"):
                 files += self._add_data_from_folder(folder, file_ext="jpg")
+
+        if self.use_canadian_data:
+            for folder in tqdm(glob.glob(os.path.join(self.canadian_data_path, "ringstudy_train", "*")),
+                               desc="Load canadian data"):
+                files += self._add_data_from_folder(folder, file_ext="png")
+
+            for folder in tqdm(glob.glob(os.path.join(self.canadian_data_path, "ringstudy_test", "*")),
+                               desc="Load canadian data"):
+                files += self._add_data_from_folder(folder, file_ext="png")
 
         random.seed(CONFIG.random_seed)
         random.shuffle(files)

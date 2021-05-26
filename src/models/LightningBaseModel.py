@@ -8,7 +8,7 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnext101_32x8d
+from torchvision.models import resnet18 as base_model
 
 
 class LightningModel(pl.LightningModule):
@@ -27,7 +27,7 @@ class LightningModel(pl.LightningModule):
         else:
             self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
-        self.save_hyperparameters()
+        self.save_hyperparameters(kwargs)
         self.log_images = kwargs['log_images']
         self.log_confusion_matrices = kwargs['log_confusion_matrices']
         self.confusion_matrix = dict()
@@ -51,7 +51,7 @@ class LightningModel(pl.LightningModule):
         return weight_tensor
 
     def define_model(self, input_channels=3, pretrained=False):
-        feature_extractor = resnext101_32x8d(pretrained=pretrained, num_classes=1000)
+        feature_extractor = base_model(pretrained=pretrained, num_classes=1000)
         feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         classifier = nn.Linear(1000, len(self.class_labels))
 
@@ -139,12 +139,12 @@ class LightningModel(pl.LightningModule):
         self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
-        figure = plt.figure(figsize=(12, 12))
+        figure = plt.figure(figsize=(15, 15))
         plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
         plt.title(title)
         plt.colorbar()
         tick_marks = np.arange(len(class_names))
-        plt.xticks(tick_marks, class_names, rotation=45)
+        plt.xticks(tick_marks, class_names, rotation=90)
         plt.yticks(tick_marks, class_names)
 
         # Use white text if squares are dark; otherwise black.
@@ -152,11 +152,15 @@ class LightningModel(pl.LightningModule):
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             color = "white" if cm[i, j] > threshold else "black"
-            plt.text(j, i, "{:.2f}".format(cm[i, j]), horizontalalignment="center", color=color)
+            if cm[i, j] != 0:
+                if int(cm[i, j]) == float(cm[i, j]):
+                    plt.text(j, i, str(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
+                else:
+                    plt.text(j, i, "{:.2f}".format(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
 
         plt.tight_layout()
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
+        plt.xlabel('True label')
+        plt.ylabel('Predicted label')
         self.logger.experiment[0].add_figure(figname, figure, self.global_step)
         plt.close('all')
         return figure

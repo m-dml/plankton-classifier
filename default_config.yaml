@@ -68,6 +68,8 @@ new_unsorted_plankton_data: "new_data/4David/HE570/rois/20*/20*"
 
 planktonnet_data: "PlanktonNet/DYB-PlanktonNet_V1.0_EN"
 
+canadian_data: "canadian_dataset"
+
 # --------------------------------------------------------------------------------------
 # ==================
 # DataLoader:
@@ -79,6 +81,7 @@ use_klas_data: false
 # Bool whether to use the data from planktonnet for training.
 use_planktonnet_data: true
 
+use_canadian_data: false
 
 # use to combine come classes into super-classes
 # if you don't want to use super-classes set as null

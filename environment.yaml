@@ -23,5 +23,5 @@ dependencies:
       - onnxruntime
       - test-tube
       - fairscale
-      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-      - https://github.com/tmachnitzki/imbalanced-dataset-sampler/archive/master.zip
+#      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+#      - https://github.com/tmachnitzki/imbalanced-dataset-sampler/archive/master.zip
