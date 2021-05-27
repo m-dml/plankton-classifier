@@ -9,9 +9,11 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchsampler import ImbalancedDatasetSampler
+from torchvision.transforms import transforms
 from tqdm import tqdm
 
 from src.utils import CONFIG
+from src.utils.SquarePadTransform import SquarePad
 
 
 class PlanktonDataSet(Dataset):
@@ -109,13 +111,21 @@ class PlanktonDataLoader(pl.LightningDataModule):
             self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
                                               integer_labels=self.integer_class_label_dict)
             logging.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data = PlanktonDataSet(valid_subset, transform=self.transform,
+            self.valid_data = PlanktonDataSet(valid_subset, transform=self.validation_transform(),
                                               integer_labels=self.integer_class_label_dict)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == 'test' or stage is None:
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
                                              integer_labels=self.integer_class_label_dict)
+
+    @staticmethod
+    def validation_transform():
+        return transforms.Compose([
+            SquarePad(),
+            transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size]),
+            transforms.ToTensor()
+        ])
 
     def prepare_data_setup(self):
         files = []
@@ -167,20 +177,16 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def train_dataloader(self):
         if self.oversample_data:
             sampler = ImbalancedDatasetSampler(self.train_data)
-            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
+            # the imbalanced dataloader only works correctly with 0 workers!
+            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=0,
                               pin_memory=True, sampler=sampler)
         else:
             return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
                               pin_memory=True, shuffle=self.shuffle_train_dataset)
 
     def val_dataloader(self):
-        if self.oversample_data:
-            sampler = ImbalancedDatasetSampler(self.valid_data)
-            return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                              pin_memory=True, sampler=sampler)
-        else:
-            return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                              pin_memory=True, shuffle=self.shuffle_validation_dataset)
+        return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
+                          pin_memory=True, shuffle=self.shuffle_validation_dataset)
 
     def test_dataloader(self):
         return DataLoader(self.test_data, batch_size=self.batch_size, num_workers=self.num_workers,

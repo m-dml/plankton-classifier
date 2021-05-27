@@ -152,7 +152,7 @@ class LightningModel(pl.LightningModule):
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             color = "white" if cm[i, j] > threshold else "black"
-            if cm[i, j] != 0:
+            if cm[i, j] > 0.01:
                 if int(cm[i, j]) == float(cm[i, j]):
                     plt.text(j, i, str(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
                 else:
