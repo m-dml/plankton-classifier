@@ -1,0 +1,7 @@
+
+
+default:
+  dataloader: default_dataloader
+  model: default_model
+  paths: default_paths
+  technical: default_technical

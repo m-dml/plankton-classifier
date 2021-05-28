@@ -1,0 +1,40 @@
+# ==================
+# technical:
+# ==================
+technical:
+  experiment_name: Resnet_classifier_plankton
+
+  min_epochs: 1
+  max_epochs: 5
+
+  batch_size: 16
+  learning_rate: 0.002
+
+  # makes the model completely reproducible but slower:
+  deterministic_trainer: false
+
+  random_seed: 42
+
+  # For debugging and developing:
+  debug_mode: false
+  fast_dev_run: false
+
+  # if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
+  plugins: null
+
+  # Choose whether to use a distributed backend (For multi-GPU training) or not:
+  accelerator: null  # [null, "ddp", "ddp2", "ddp_cpu"]
+
+  # CPUs for the dataloader. For windows this should be 0, otherwise it will crash:
+  # Also with streaming data this should be 0:
+  num_workers: 0
+
+  # Number of GPUs per Node (On strand max. is 1). If 0 then use CPUs:
+  gpus: 0
+
+  # When this is changed, the the slurm script has to be adjusted as well:
+  num_nodes: 1
+
+  # interval for logging metrices:
+  log_interval: 10
+

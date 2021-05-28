@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 from datetime import datetime as dt
 
+import hydra
 import pytorch_lightning as pl
 import torch
 import yaml
@@ -11,41 +12,29 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torchvision import transforms
 
 from src.models.LightningBaseModel import LightningModel
-from src.utils import CONFIG
 from src.utils.DataLoader import PlanktonDataLoader
 from src.utils.SquarePadTransform import SquarePad  # noqa
+from omegaconf import DictConfig, OmegaConf
 
 
-def load_config():
-    parser = ArgumentParser()
-    parser.add_argument("--config_file", "-f", type=str, default="default_config.yaml",
-                        help="Set the configuration file used for the experiment.")
+@hydra.main(config_path="config")
+def main(cfg: DictConfig):
+    logging.info(f"Training with the following config:\n{OmegaConf.to_yaml(cfg)}")
+    torch.manual_seed(cfg.random_seed)
+    pl.seed_everything(cfg.random_seed)
 
-    args = parser.parse_args()
-    with open(os.path.abspath(args.config_file), "r") as f:
-        config_dict = yaml.safe_load(f)
-
-    # update values in the config class.
-    CONFIG.update(config_dict)
-
-
-def main():
-    load_config()
-    torch.manual_seed(CONFIG.random_seed)
-    pl.seed_everything(CONFIG.random_seed)
-
-    if CONFIG.debug_mode:
+    if cfg.debug_mode:
         logging.basicConfig(level=logging.DEBUG, format='%(name)s %(funcName)s %(levelname)s %(message)s')
     else:
         logging.basicConfig(level=logging.WARNING, format='%(name)s %(funcName)s %(levelname)s %(message)s')
 
-    if CONFIG.debug_mode:
+    if cfg.debug_mode:
         torch.autograd.set_detect_anomaly(True)
 
-    logging.warning(CONFIG.__dict__)  # prints the whole config used for that run
+    logging.warning(cfg.__dict__)  # prints the whole config used for that run
 
-    transform = transforms.Compose([eval(i) for i in CONFIG.transform])
-    data_module = PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
+    transform = transforms.Compose([eval(i) for i in cfg.dataloader.transform])
+    data_module = hydra.utils.instantiate(PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
     data_module.setup()
 
     for batch in data_module.train_dataloader():
