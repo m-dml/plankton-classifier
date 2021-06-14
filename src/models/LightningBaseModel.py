@@ -8,7 +8,7 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import inception_v3 as base_model
+from torchvision.models import resnet18 as base_model
 
 
 class LightningModel(pl.LightningModule):
@@ -51,7 +51,10 @@ class LightningModel(pl.LightningModule):
         return weight_tensor
 
     def define_model(self, input_channels=3, pretrained=False):
-        feature_extractor = base_model(pretrained=pretrained, num_classes=1000, aux_logits=False)
+        try:
+            feature_extractor = base_model(pretrained=pretrained, num_classes=1000, aux_logits=False)
+        except:
+            feature_extractor = base_model(pretrained=pretrained, num_classes=1000)
         # feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         classifier = nn.Linear(1000, len(self.class_labels))
 
