@@ -85,7 +85,6 @@ def print_config(
         "datamodule",
         "callbacks",
         "logger",
-        "latent_space",
         "lightning_module",
     ),
     resolve: bool = True,

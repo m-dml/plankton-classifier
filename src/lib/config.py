@@ -6,8 +6,6 @@ from omegaconf import MISSING
 
 from src.lib.callbacks import CheckpointCallback, GPUMonitur
 from src.lib.datamodule import PlanktonDataLoader
-
-
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.model import ResNet, resnet18
@@ -57,9 +55,6 @@ class Config:
     logger: Any = MISSING
     callbacks: Any = MISSING
     optimizer: Any = MISSING
-    loss: Any = MISSING
-    visualization: Any = MISSING
-    latent_space: Any = MISSING
 
     random_seed: int = 42
     print_config: bool = True

@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /datamodule/dataset: gamma
+  - override /datamodule: plankton
   - override /hydra/launcher: local
 
 debug: true
@@ -30,14 +30,6 @@ logger:
 #    partition: pGPU
 
 datamodule:
-  num_workers: ${hydra:launcher.cpus_per_task}
-  data_amount: 100
+  num_workers: 0
   batch_size: 4
 
-lightning_module:
-  ensemble_size: 3
-
-loss:
-  func: "lambda x: torch.pow(abs(x+0.1), p)"
-  centralize: true
-  random_power_max: 3

@@ -1,7 +1,0 @@
-defaults:
-  - wiki_base_dataloader
-
-batch_size: 16
-num_workers: 0
-pin_memory: True
-dataset: ${datamodule/dataset}

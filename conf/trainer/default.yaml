@@ -4,7 +4,7 @@ defaults:
 gpus: 1
 min_epochs: 5
 max_epochs: 20
-deterministic_trainer: false
+deterministic: false
 precision: 32
 
 # if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
@@ -14,4 +14,4 @@ plugins: null
 accelerator: null  # [null, "ddp", "ddp2", "ddp_cpu"]
 
 # interval for logging metrices:
-log_interval: 10
+log_every_n_steps: 10

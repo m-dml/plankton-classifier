@@ -1,6 +1,7 @@
 defaults:
   - base_config
   - lightning_module: default
+  - datamodule: plankton
   - model: resnet
   - model/resnet: resnet18
   - trainer: default

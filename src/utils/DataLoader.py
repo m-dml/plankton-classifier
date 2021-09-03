@@ -70,7 +70,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 klas_data_path,
                 planktonnet_data_path,
                 canadian_data_path,
-                random_seed
+                random_seed,
+                 **kwargs
                  ):
         super().__init__()
 
@@ -154,7 +155,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def prepare_data_setup(self):
         files = []
         if self.use_klas_data:
-            for folder in tqdm(glob.glob(os.path.join(self.new_data_path, "*")), desc="Load Klas data"):
+            for folder in tqdm(glob.glob(os.path.join(self.klas_data_path, "*")), desc="Load Klas data"):
                 files += self._add_data_from_folder(folder, file_ext="png")
 
         if self.use_planktonnet_data:
