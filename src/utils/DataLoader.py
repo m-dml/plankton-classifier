@@ -92,20 +92,25 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if len(training_pairs) == 0:
             raise FileNotFoundError(f"Did not find any files")
 
-        train_split = self.train_split
-        valid_split = train_split + self.validation_split
-        length = len(training_pairs)
+        if self.use_canadian_data:
+            train_subset = training_pairs[0]
+            valid_subset = training_pairs[1]
+            test_subset = training_pairs[1]  # This is only to not brake the code if a test-dataloader is needed.
+        else:
+            train_split = self.train_split
+            valid_split = train_split + self.validation_split
+            length = len(training_pairs)
 
-        train_split_start = 0
-        train_split_end = int(length * train_split)
-        valid_split_start = train_split_end
-        valid_split_end = int(length * valid_split)
-        test_split_start = valid_split_end
-        test_split_end = length
+            train_split_start = 0
+            train_split_end = int(length * train_split)
+            valid_split_start = train_split_end
+            valid_split_end = int(length * valid_split)
+            test_split_start = valid_split_end
+            test_split_end = length
 
-        train_subset = training_pairs[train_split_start: train_split_end]
-        valid_subset = training_pairs[valid_split_start: valid_split_end]
-        test_subset = training_pairs[test_split_start: test_split_end]
+            train_subset = training_pairs[train_split_start: train_split_end]
+            valid_subset = training_pairs[valid_split_start: valid_split_end]
+            test_subset = training_pairs[test_split_start: test_split_end]
 
         if stage == 'fit' or stage is None:
             self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
@@ -122,7 +127,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
     @staticmethod
     def validation_transform():
         return transforms.Compose([
-            SquarePad(),
+            # SquarePad(),
             transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size]),
             transforms.ToTensor()
         ])
@@ -142,12 +147,16 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                desc="Load canadian data"):
                 files += self._add_data_from_folder(folder, file_ext="png")
 
+            test_files = []
             for folder in tqdm(glob.glob(os.path.join(self.canadian_data_path, "ringstudy_test", "*")),
                                desc="Load canadian data"):
-                files += self._add_data_from_folder(folder, file_ext="png")
+                test_files += self._add_data_from_folder(folder, file_ext="png")
 
         random.seed(CONFIG.random_seed)
         random.shuffle(files)
+        if self.use_canadian_data:
+            return files, test_files
+
         return files
 
     def _add_data_from_folder(self, folder, file_ext="png"):
