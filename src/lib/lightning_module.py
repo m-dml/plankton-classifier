@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 from omegaconf import MISSING
 
@@ -10,4 +9,7 @@ from src.lib.optimizer import Optimizer
 class LitModule:
     _target_: str = "src.models.LightningBaseModel.LightningModel"
     _recursive_: bool = False
+    use_weighted_loss: bool = False
+    log_confusion_matrices: bool = True
+    log_images: bool = False
     optimizer: Optimizer = MISSING

@@ -1,7 +1,6 @@
 # @package _global_
 
 defaults:
-  - /visualization: sinus
   - override /datamodule/dataset: gamma
   - override /hydra/launcher: local
 

@@ -1,6 +1,7 @@
 import itertools
 import os
 
+import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
@@ -13,23 +14,25 @@ from torchvision.models import resnet18 as base_model
 
 class LightningModel(pl.LightningModule):
 
-    def __init__(self, class_labels, all_labels, example_input_array, *args, **kwargs):
+    def __init__(self, class_labels, all_labels, example_input_array, log_images, log_confusion_matrices, use_weighted_loss, cfg_optimizer, cfg_model):
 
         super().__init__()
+
+        self.cfg_optimizer = cfg_optimizer
+        self.save_hyperparameters()
+
         self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.label_weight_tensor = self.get_label_weights()
-        self.model = self.define_model(pretrained=kwargs['use_pretrained'])
-        self.learning_rate = kwargs["learning_rate"]
-        if kwargs["use_weighted_loss"]:
+        if use_weighted_loss:
             self.loss_func = nn.NLLLoss(weight=self.label_weight_tensor)
         else:
             self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
-        self.save_hyperparameters(kwargs)
-        self.log_images = kwargs['log_images']
-        self.log_confusion_matrices = kwargs['log_confusion_matrices']
+        self.model = hydra.utils.instantiate(cfg_model)
+        self.log_images = log_images
+        self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
 
@@ -50,23 +53,13 @@ class LightningModel(pl.LightningModule):
 
         return weight_tensor
 
-    def define_model(self, input_channels=3, pretrained=False):
-        try:
-            feature_extractor = base_model(pretrained=pretrained, num_classes=1000, aux_logits=False)
-        except:
-            feature_extractor = base_model(pretrained=pretrained, num_classes=1000)
-        # feature_extractor.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        classifier = nn.Linear(1000, len(self.class_labels))
-
-        model = nn.Sequential(feature_extractor, classifier)
-        return model
-
     def forward(self, images,  *args, **kwargs):
         predictions = self.model(images)
-        return F.log_softmax(predictions, dim=1)
+        return
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.hparams.learning_rate)
+        self.console_logger.info(f"Instantiating optimizer <{self.cfg_optimizer._target_}>")
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.parameters())
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):

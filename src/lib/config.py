@@ -5,21 +5,14 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
 from src.lib.callbacks import CheckpointCallback, GPUMonitur
-from src.lib.datamodule import (
-    GammaSinusGeneratorDataset,
-    GaussianSinusGeneratorDataset,
-    SinusDataLoader,
-    WikiTrafficDataLoader,
-    WikiTrafficDataset,
-)
+from src.lib.datamodule import PlanktonDataLoader
 
 
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.model import FFWModel, UnconditionalFFWModel
+from src.lib.model import ResNet, resnet18
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
-
 
 
 def register_configs() -> None:
@@ -27,18 +20,12 @@ def register_configs() -> None:
     # my own classes
     cs.store(name="base_lightning_module", node=LitModule, group="lightning_module")
 
-
     # the model:
-    cs.store(name="ffw_model", node=FFWModel, group="model")
-    cs.store(name="unconditional_ffw_model", node=UnconditionalFFWModel, group="model")
+    cs.store(name="resnet_base", node=ResNet, group="model")
+    cs.store(name="resnet18", node=resnet18, group="model/resnet")
 
     # data:
-    cs.store(name="sinus_base_dataloader", node=SinusDataLoader, group="datamodule")
-    cs.store(name="gamma", node=GammaSinusGeneratorDataset, group="datamodule/dataset")
-    cs.store(name="gauss", node=GaussianSinusGeneratorDataset, group="datamodule/dataset")
-
-    cs.store(name="wiki_base_dataloader", node=WikiTrafficDataLoader, group="datamodule")
-    cs.store(name="wiki_base_dataset", node=WikiTrafficDataset, group="datamodule/dataset")
+    cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
 
     # external objects:
     cs.store(name="base_trainer", node=Trainer, group="trainer")

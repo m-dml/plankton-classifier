@@ -1,5 +1,5 @@
 defaults:
-  - base_lightning_module
+  - resnet_base
 
 _target_: "src.models.LightningBaseModel.LightningModel"
-optimizer: ${optimizer}
+resnet: ${model/resnet}

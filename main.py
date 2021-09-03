@@ -1,81 +1,96 @@
-import logging
 import os
-from argparse import ArgumentParser
-from datetime import datetime as dt
+import platform
+from typing import List
 
 import hydra
 import pytorch_lightning as pl
 import torch
-import yaml
-from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import ModelCheckpoint
-from torchvision import transforms
+from hydra.utils import instantiate
+from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
+from pytorch_lightning.loggers import LightningLoggerBase
 
-from src.models.LightningBaseModel import LightningModel
-from src.utils.DataLoader import PlanktonDataLoader
-from src.utils.SquarePadTransform import SquarePad  # noqa
-from omegaconf import DictConfig, OmegaConf
+from src.lib.config import Config, register_configs
+from src.utils import utils
+
+# sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
+if platform.system() == "Windows":
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+
+# register the structured configs:
+register_configs()
+
+# set up advanced logging:
+log = utils.get_logger(__name__)
+pl_logger = utils.get_logger("pytorch_lightning")
+pl_logger.handlers = []
+pl_logger.addHandler(log)
 
 
-@hydra.main(config_path="config")
-def main(cfg: DictConfig):
-    logging.info(f"Training with the following config:\n{OmegaConf.to_yaml(cfg)}")
+@hydra.main(config_name="config", config_path="conf")
+def main(cfg: Config):
+
+    utils.extras(cfg)
+
+    # Pretty print config using Rich library
+    if cfg.print_config:
+        utils.print_config(cfg, resolve=True)
+
     torch.manual_seed(cfg.random_seed)
     pl.seed_everything(cfg.random_seed)
 
-    if cfg.debug_mode:
-        logging.basicConfig(level=logging.DEBUG, format='%(name)s %(funcName)s %(levelname)s %(message)s')
-    else:
-        logging.basicConfig(level=logging.WARNING, format='%(name)s %(funcName)s %(levelname)s %(message)s')
+    # Init Lightning callbacks
+    callbacks: List[Callback] = []
+    if "callbacks" in cfg:
+        for _, cb_conf in cfg["callbacks"].items():
+            if "_target_" in cb_conf:
+                log.info(f"Instantiating callback <{cb_conf._target_}>")
+                callbacks.append(hydra.utils.instantiate(cb_conf))
 
-    if cfg.debug_mode:
-        torch.autograd.set_detect_anomaly(True)
+    # Init Lightning loggers
+    logger: List[LightningLoggerBase] = []
+    if "logger" in cfg:
+        for _, lg_conf in cfg["logger"].items():
+            if "_target_" in lg_conf:
+                log.info(f"Instantiating logger <{lg_conf._target_}>")
+                logger.append(hydra.utils.instantiate(lg_conf))
 
-    logging.warning(cfg.__dict__)  # prints the whole config used for that run
+    # Init Lightning datamodule
+    log.info(f"Instantiating datamodule <{cfg.datamodule._target_}>")
+    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule, dataset=cfg.datamodule.dataset)
+    datamodule.setup()
 
-    transform = transforms.Compose([eval(i) for i in cfg.dataloader.transform])
-    data_module = hydra.utils.instantiate(cfg.data_module, transform=transform)
-    data_module.setup()
+    # Init Lightning model
+    log.info(f"Instantiating model <{cfg.lightning_module._target_}>")
+    model: LightningModule = hydra.utils.instantiate(
+        cfg.lightning_module,
+        optimizer=cfg.optimizer,
+        cfg_model=cfg.model,
+    )
 
-    for batch in data_module.train_dataloader():
-        example_input, _, _ = batch
-        break
+    # log hparam metrics to tensorboard:
+    hydra_params = utils.log_hyperparameters(config=cfg, model=model)
+    for this_logger in logger:
+        if "tensorboard" in str(this_logger):
+            log.info("Add hparams to tensorboard")
+            this_logger.log_hyperparams(hydra_params, {"hp/loss": 0, "hp/accuracy": 0, "hp/epoch": 0})
+        else:
+            this_logger.log_hyperparams(hydra_params)
 
-    # if the model is trained on GPU add a GPU logger to see GPU utilization in comet-ml logs:
-    if CONFIG.gpus == 0:
-        callbacks = None
-    else:
-        callbacks = [pl.callbacks.GPUStatsMonitor()]
+    # Send some parameters from config to all lightning loggers
+    log.info("Logging hyperparameters!")
+    model.hydra_params = hydra_params
 
-    # logging to tensorboard:
-    experiment_name = f"{CONFIG.experiment_name}_{dt.now().strftime('%d%m%YT%H%M%S')}"
-    test_tube_logger = pl_loggers.TestTubeLogger(save_dir=CONFIG.tensorboard_logger_logdir,
-                                                 name=experiment_name,
-                                                 create_git_tag=False,
-                                                 log_graph=True)
+    # Init Trainer:
+    log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
+    trainer: Trainer = instantiate(cfg.trainer, logger=logger, callbacks=callbacks, _convert_="partial")
 
-    # initializes a callback to save the 5 best model weights measured by the lowest loss:
-    checkpoint_callback = ModelCheckpoint(monitor="NLL Validation",
-                                          save_top_k=5,
-                                          mode='min',
-                                          save_last=True,
-                                          dirpath=os.path.join(CONFIG.checkpoint_file_path, experiment_name),
-                                          )
+    # trainer.tune(model, data_module)
+    trainer.fit(model, datamodule)
 
-    model = LightningModel(class_labels=data_module.unique_labels,
-                           all_labels=data_module.all_labels,
-                           example_input_array=example_input,
-                           **CONFIG.__dict__)
-
-    trainer = pl.Trainer.from_argparse_args(CONFIG,
-                                            callbacks=callbacks,
-                                            logger=[test_tube_logger],
-                                            checkpoint_callback=checkpoint_callback,
-                                            log_every_n_steps=CONFIG.log_interval,
-                                            )
-
-    trainer.fit(model, data_module)
+    # Print path to best checkpoint
+    if trainer.checkpoint_callback.best_model_path is not None:
+        log.info(f"Best checkpoint path:\n{trainer.checkpoint_callback.best_model_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

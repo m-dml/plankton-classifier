@@ -9,7 +9,7 @@ class CheckpointCallback:
     save_last: bool = True
     mode: str = "min"
     verbose: bool = False
-    dirpath: str = "./logs/checkpoints/"
+    dirpath: str = "./logs/checkpoints/"  # use  relative path, so it can be adjusted by hydra
     filename: str = "{epoch:02d}"
 
 

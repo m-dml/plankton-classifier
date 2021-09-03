@@ -1,17 +1,14 @@
 defaults:
   - base_config
   - lightning_module: default
-  - model: ffw_model
-  - datamodule: sinus
-  - datamodule/dataset: gamma
+  - model: resnet
+  - model/resnet: resnet18
   - trainer: default
   - optimizer: adam
-  - loss: gnn_loss
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
-  - latent_space: normal
 
-  - override hydra/launcher: strand
+  - override hydra/launcher: local
 
   # enable color logging
   - override hydra/hydra_logging: colorlog
@@ -19,4 +16,4 @@ defaults:
 
 logger:
   tensorboard:
-    default_hp_metric: False
+    default_hp_metric: False  # important to be False, when we want to use own hp_metrics

@@ -12,17 +12,16 @@ from torchsampler import ImbalancedDatasetSampler
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
-from src.utils import CONFIG
 from src.utils.SquarePadTransform import SquarePad
 
 
 class PlanktonDataSet(Dataset):
-    def __init__(self, files, integer_labels, final_image_size=500, transform=None):
+    def __init__(self, files, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
         self.files = files
         self.integer_labels = integer_labels
 
         self.transform = transform
-        self.preload_dataset = CONFIG.preload_dataset
+        self.preload_dataset = preload_dataset
         self.final_image_size = final_image_size
 
     def __getitem__(self, item):
@@ -51,7 +50,28 @@ class PlanktonDataSet(Dataset):
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
-    def __init__(self, transform=None):
+    def __init__(self,
+                transform,
+                excluded_labels,
+                batch_size,
+                num_workers,
+                train_split,  # The fraction size of the training data
+                validation_split,  # The fraction size of the validation data (rest ist test)
+                shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
+                shuffle_validation_dataset,
+                shuffle_test_dataset,
+                preload_dataset,
+                use_planktonnet_data,
+                use_klas_data,
+                use_canadian_data,
+                super_classes,
+                oversample_data,
+                final_image_size,
+                klas_data_path,
+                planktonnet_data_path,
+                canadian_data_path,
+                random_seed
+                 ):
         super().__init__()
 
         self.transform = transform
@@ -65,25 +85,25 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.all_labels = []
         self.integer_class_label_dict = dict()
 
-        self.excluded_labels = CONFIG.excluded_classes
-        self.batch_size = CONFIG.batch_size
-        self.num_workers = CONFIG.num_workers
-        self.train_split = CONFIG.train_split  # The fraction size of the training data
-        self.validation_split = CONFIG.validation_split  # The fraction size of the validation data (rest ist test)
-        self.shuffle_train_dataset = CONFIG.shuffle_train_dataset  # whether to shuffle the train dataset (bool)
-        self.shuffle_validation_dataset = CONFIG.shuffle_validation_dataset
-        self.shuffle_test_dataset = CONFIG.shuffle_test_dataset
-        self.preload_dataset = CONFIG.preload_dataset
-        self.new_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.new_sorted_plankton_data)
-        self.planktonnet_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.planktonnet_data)
-        self.canadian_data_path = os.path.join(CONFIG.plankton_data_base_path, CONFIG.canadian_data)
-        self.use_planktonnet_data = CONFIG.use_planktonnet_data
-        self.use_klas_data = CONFIG.use_klas_data
-        self.use_canadian_data = CONFIG.use_canadian_data
-        self.preload_dataset = CONFIG.preload_dataset
-        self.super_classes = CONFIG.super_classes
-        self.oversample_data = CONFIG.oversample_data
-        self.final_image_size = CONFIG.final_image_size
+        self.excluded_labels = excluded_labels
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.train_split = train_split  # The fraction size of the training data
+        self.validation_split = validation_split  # The fraction size of the validation data (rest ist test)
+        self.shuffle_train_dataset = shuffle_train_dataset  # whether to shuffle the train dataset (bool)
+        self.shuffle_validation_dataset = shuffle_validation_dataset
+        self.shuffle_test_dataset = shuffle_test_dataset
+        self.preload_dataset = preload_dataset
+        self.klas_data_path = klas_data_path
+        self.planktonnet_data_path = planktonnet_data_path
+        self.canadian_data_path = canadian_data_path
+        self.use_planktonnet_data = use_planktonnet_data
+        self.use_klas_data = use_klas_data
+        self.use_canadian_data = use_canadian_data
+        self.super_classes = super_classes
+        self.oversample_data = oversample_data
+        self.final_image_size = final_image_size
+        self.random_seed = random_seed
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -124,11 +144,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
             self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
                                              integer_labels=self.integer_class_label_dict)
 
-    @staticmethod
-    def validation_transform():
+    def validation_transform(self):
         return transforms.Compose([
             # SquarePad(),
-            transforms.Resize(size=[CONFIG.final_image_size, CONFIG.final_image_size]),
+            transforms.Resize(size=[self.final_image_size, self.final_image_size]),
             transforms.ToTensor()
         ])
 
@@ -152,7 +171,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                                desc="Load canadian data"):
                 test_files += self._add_data_from_folder(folder, file_ext="png")
 
-        random.seed(CONFIG.random_seed)
+        random.seed(self.random_seed)
         random.shuffle(files)
         if self.use_canadian_data:
             return files, test_files

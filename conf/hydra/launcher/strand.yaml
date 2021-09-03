@@ -12,4 +12,4 @@ partition: pGPU32
 signal_delay_s: 120
 #additional_parameters: { exclusive: true }
 array_parallelism: 256
-setup: ["source activate pytorch"]
+setup: ["source activate hydra"]
