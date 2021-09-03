@@ -1,0 +1,8 @@
+defaults:
+  - base_lightning_module
+
+_target_: "src.models.LightningBaseModel.LightningModel"
+ensemble_size: 200
+latent_space_len: 10
+optimizer: ${optimizer}
+loss: ${loss}

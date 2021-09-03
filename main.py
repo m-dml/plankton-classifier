@@ -34,7 +34,7 @@ def main(cfg: DictConfig):
     logging.warning(cfg.__dict__)  # prints the whole config used for that run
 
     transform = transforms.Compose([eval(i) for i in cfg.dataloader.transform])
-    data_module = hydra.utils.instantiate(PlanktonDataLoader.from_argparse_args(CONFIG, transform=transform)
+    data_module = hydra.utils.instantiate(cfg.data_module, transform=transform)
     data_module.setup()
 
     for batch in data_module.train_dataloader():

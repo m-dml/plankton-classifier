@@ -1,0 +1,8 @@
+defaults:
+  - sinus_base_dataloader
+
+batch_size: 16
+data_amount: 1000000
+num_workers: 0
+pin_memory: True
+dataset: ${datamodule/dataset}

@@ -1,0 +1,22 @@
+defaults:
+  - base_config
+  - lightning_module: default
+  - model: ffw_model
+  - datamodule: sinus
+  - datamodule/dataset: gamma
+  - trainer: default
+  - optimizer: adam
+  - loss: gnn_loss
+  - logger/tensorboard: tensorboard
+  - callbacks/checkpoint: model_checkpoint
+  - latent_space: normal
+
+  - override hydra/launcher: strand
+
+  # enable color logging
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+logger:
+  tensorboard:
+    default_hp_metric: False

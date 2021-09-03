@@ -1,0 +1,46 @@
+# @package _global_
+
+defaults:
+  #  - callbacks/gpu_monitoring: gpu_monitoring
+  - /visualization: sinus
+  - override /datamodule: sinus
+  - override /datamodule/dataset: gamma
+  - override /hydra/launcher: strand
+  - override /latent_space: normal
+
+debug: false
+
+trainer:
+  fast_dev_run: false
+  num_sanity_val_steps: 5
+  max_epochs: 40
+
+logger:
+  tensorboard:
+    default_hp_metric: False
+
+hydra:
+  job:
+    name: GNNN_gamma
+  sweep:
+    dir: /gpfs/work/machnitz/GNN_out/multirun/sinus/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  launcher:
+    cpus_per_task: 4
+    array_parallelism: 100
+    partition: pGPU
+
+datamodule:
+  num_workers: ${hydra:launcher.cpus_per_task}
+  data_amount: 1000000
+#  batch_size: choice(4,12,512,1024)
+
+#lightning_module:
+#  ensemble_size: choice(2,200,1000)
+
+loss:
+  func: "lambda x: torch.pow(abs(x+0.1), p)"
+#  centralize: choice(true,false)
+#  random_power_max: choice(3,4,5)
+
+#optimizer:
+#  lr: choice(0.02,0.002,0.0002)
