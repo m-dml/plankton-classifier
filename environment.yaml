@@ -1,28 +1,42 @@
 name: plankton
+
 channels:
-  - pytorch
   - conda-forge
+  - pytorch
+
 dependencies:
   - python=3.8
-  - jupyterlab
-  - ipython=7.22.0
-  - ipywidgets
-  - numpy
+  - pip
+  - cudatoolkit
   - pytorch
-  - cudatoolkit=11.1
-  - pytorch-lightning
+  - pre-commit
+  - black
+  - isort
+  - flake8
+  - tensorboard
   - torchvision
+  - pytorch-lightning
+  - torchmetrics
+  - matplotlib
+  - ipython
+  - libgcc
+  - hydra-core
+  - jupyterlab
   - scikit-learn
+  - rich
+  - pandas
+  - dask
+  - distributed
+  - numpy
+  - seaborn
+  - python-dotenv
+  - onnx
   - pillow
   - tqdm
-  - matplotlib
-  - tensorboard
-  - onnx
-  - pip
   - pip:
       - onnxruntime
+      - hydra-colorlog
+      - hydra-optuna-sweeper
+      - hydra-submitit-launcher
       - test-tube
       - fairscale
-      - hydra
-#      - torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-#      - https://github.com/tmachnitzki/imbalanced-dataset-sampler/archive/master.zip

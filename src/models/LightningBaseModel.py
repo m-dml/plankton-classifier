@@ -64,7 +64,7 @@ class LightningModel(pl.LightningModule):
 
     def forward(self, images, *args, **kwargs):
         predictions = self.model(images)
-        return
+        return predictions
 
     def configure_optimizers(self):
         self.console_logger.info(f"Instantiating optimizer <{self.cfg_optimizer._target_}>")

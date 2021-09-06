@@ -15,20 +15,20 @@ repos:
 
   # python code formatting
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.8b0
     hooks:
       - id: black
         args: [--line-length, "120"]
 
   # python import sorting
   - repo: https://github.com/PyCQA/isort
-    rev: 5.8.0
+    rev: 5.9.3
     hooks:
       - id: isort
 
   # yaml formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.3.0
+    rev: v2.3.2
     hooks:
       - id: prettier
         types: [yaml]
