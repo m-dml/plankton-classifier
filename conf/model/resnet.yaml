@@ -1,0 +1,4 @@
+defaults:
+  - resnet_base
+
+resnet: ${model/resnet}

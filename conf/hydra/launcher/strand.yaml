@@ -1,0 +1,15 @@
+# @package hydra.launcher
+defaults:
+  - submitit_slurm
+
+timeout_min: 4000 # maximum time for the job in minutes
+cpus_per_task: 10
+tasks_per_node: 1
+nodes: 1
+name: ${hydra.job.name}
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+partition: pGPU32
+signal_delay_s: 120
+#additional_parameters: { exclusive: true }
+array_parallelism: 256
+setup: ["source activate hydra"]

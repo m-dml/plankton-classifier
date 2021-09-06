@@ -1,0 +1,22 @@
+defaults:
+  - base_config
+  - lightning_module: default
+  - datamodule: plankton
+  - datamodule/train_transforms: default
+  - datamodule/valid_transforms: default
+  - model: resnet
+  - model/resnet: resnet18
+  - trainer: default
+  - optimizer: adam
+  - logger/tensorboard: tensorboard
+  - callbacks/checkpoint: model_checkpoint
+
+  - override hydra/launcher: local
+
+  # enable color logging
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+logger:
+  tensorboard:
+    default_hp_metric: False # important to be False, when we want to use own hp_metrics
