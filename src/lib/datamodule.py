@@ -8,7 +8,9 @@ from omegaconf import MISSING
 class PlanktonDataLoader:
     _target_: str = "src.utils.DataLoader.PlanktonDataLoader"
     _recursive_: bool = False
-    transform: Any = MISSING
+    train_transforms: Any = MISSING
+    valid_transforms: Any = MISSING
+    # transform: Any = None
     excluded_labels: Any = None
     batch_size: int = 16
     num_workers: int = 0

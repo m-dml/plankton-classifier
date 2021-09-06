@@ -56,26 +56,13 @@ def main(cfg: Config):
                 logger.append(hydra.utils.instantiate(lg_conf))
 
     # Init Transformations
-    train_transforms: List[torch.nn.Module] = []
-    if "train_transforms" in cfg:
-        for _, tranform_conf in cfg["train_transforms"].items():
-            if "_target_" in tranform_conf:
-                log.info(f"Instantiating train transform <{lg_conf._target_}>")
-                train_transforms.append(hydra.utils.instantiate(lg_conf))
-    train_transforms: Compose = Compose(train_transforms)
-
-    valid_transforms: List[torch.nn.Module] = []
-    if "valid_transforms" in cfg:
-        for _, tranform_conf in cfg["valid_transforms"].items():
-            if "_target_" in tranform_conf:
-                log.info(f"Instantiating train transform <{lg_conf._target_}>")
-                valid_transforms.append(hydra.utils.instantiate(lg_conf))
-    valid_transforms: Compose = Compose(valid_transforms)
+    train_transforms: Compose = hydra.utils.instantiate(cfg.datamodule.train_transforms)
+    valid_transforms: Compose = hydra.utils.instantiate(cfg.datamodule.valid_transforms)
 
     # Init Lightning datamodule
     log.info(f"Instantiating datamodule <{cfg.datamodule._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(
-        cfg.datamodule, train_transform=train_transforms, valid_transform=valid_transforms
+        cfg.datamodule, train_transforms=train_transforms, valid_transforms=valid_transforms
     )
     datamodule.setup()
 

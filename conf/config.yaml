@@ -2,6 +2,8 @@ defaults:
   - base_config
   - lightning_module: default
   - datamodule: plankton
+  - datamodule/train_transforms: default
+  - datamodule/valid_transforms: default
   - model: resnet
   - model/resnet: resnet18
   - trainer: default

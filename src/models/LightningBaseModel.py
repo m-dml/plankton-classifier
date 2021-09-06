@@ -9,7 +9,6 @@ import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet18 as base_model
 
 
 class LightningModel(pl.LightningModule):
@@ -39,7 +38,7 @@ class LightningModel(pl.LightningModule):
         else:
             self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
-        self.model = hydra.utils.instantiate(model)
+        self.model = hydra.utils.call(model, num_classes=len(class_labels))
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
@@ -67,8 +66,7 @@ class LightningModel(pl.LightningModule):
         return predictions
 
     def configure_optimizers(self):
-        self.console_logger.info(f"Instantiating optimizer <{self.cfg_optimizer._target_}>")
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.parameters())
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters())
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):

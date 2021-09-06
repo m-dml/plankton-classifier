@@ -5,7 +5,7 @@ from omegaconf import MISSING
 
 @dataclass
 class ResnetBaseClass:
-    num_classes: int = 1000
+    num_classes: int = 1000  # has to be 1000 for pretrained model
     pretrained: bool = True
 
 

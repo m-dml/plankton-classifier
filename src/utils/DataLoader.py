@@ -13,8 +13,6 @@ from torchsampler import ImbalancedDatasetSampler
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
-from src.utils.SquarePadTransform import SquarePad
-
 
 class PlanktonDataSet(Dataset):
     def __init__(self, files, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
@@ -75,14 +73,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
         planktonnet_data_path,
         canadian_data_path,
         random_seed,
-        train_transform,
-        valid_transform,
+        train_transforms,
+        valid_transforms,
         **kwargs,
     ):
         super().__init__()
 
-        self.train_transform = train_transform
-        self.valid_transform = valid_transform
+        self.train_transforms = train_transforms
+        self.valid_transforms = valid_transforms
 
         self.train_data = None
         self.valid_data = None
@@ -147,17 +145,17 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         if stage == "fit" or stage is None:
             self.train_data = PlanktonDataSet(
-                train_subset, transform=self.train_transform, integer_labels=self.integer_class_label_dict
+                train_subset, transform=self.train_transforms, integer_labels=self.integer_class_label_dict
             )
             logging.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data = PlanktonDataSet(
-                valid_subset, transform=self.valid_transform, integer_labels=self.integer_class_label_dict
+                valid_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
             )
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == "test" or stage is None:
             self.test_data = PlanktonDataSet(
-                test_subset, transform=self.valid_transform, integer_labels=self.integer_class_label_dict
+                test_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
             )
 
     def prepare_data_setup(self):

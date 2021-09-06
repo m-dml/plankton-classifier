@@ -52,13 +52,14 @@ def register_configs() -> None:
     cs.store(name="rmsprop", node=RMSprop, group="optimizer")
 
     # transforms:
-    cs.store(name="square_pad", node=SquarePad, group="transform/square_pad")
-    cs.store(name="random_vertical_flip", node=RandomVerticalFlip, group="transform/random_vertical_flip")
-    cs.store(name="random_horizontal_flip", node=RandomHorizontalFlip, group="transform/random_horizontal_flip")
-    cs.store(name="resize", node=Resize, group="transform/resize")
-    cs.store(name="random_rotation", node=RandomRotation, group="transform/random_rotation")
-    cs.store(name="color_jitter", node=ColorJitter, group="transform/color_jitter")
-    cs.store(name="to_tensor", node=ToTensor, group="transform/to_tensor")
+    transforms_group = "datamodule/transforms"
+    cs.store(name="square_pad_base", node=SquarePad, group=transforms_group)
+    cs.store(name="random_vertical_flip_base", node=RandomVerticalFlip, group=transforms_group)
+    cs.store(name="random_horizontal_flip_base", node=RandomHorizontalFlip, group=transforms_group)
+    cs.store(name="resize_base", node=Resize, group=transforms_group)
+    cs.store(name="random_rotation_base", node=RandomRotation, group=transforms_group)
+    cs.store(name="color_jitter_base", node=ColorJitter, group=transforms_group)
+    cs.store(name="to_tensor_base", node=ToTensor, group=transforms_group)
 
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)
