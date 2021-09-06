@@ -13,12 +13,21 @@ from torchvision.models import resnet18 as base_model
 
 
 class LightningModel(pl.LightningModule):
-
-    def __init__(self, class_labels, all_labels, example_input_array, log_images, log_confusion_matrices, use_weighted_loss, cfg_optimizer, cfg_model):
+    def __init__(
+        self,
+        class_labels,
+        all_labels,
+        example_input_array,
+        log_images,
+        log_confusion_matrices,
+        use_weighted_loss,
+        optimizer,
+        model,
+    ):
 
         super().__init__()
 
-        self.cfg_optimizer = cfg_optimizer
+        self.cfg_optimizer = optimizer
         self.save_hyperparameters()
 
         self.example_input_array = example_input_array
@@ -30,7 +39,7 @@ class LightningModel(pl.LightningModule):
         else:
             self.loss_func = nn.NLLLoss()
         self.accuracy_func = pl_metrics.Accuracy()
-        self.model = hydra.utils.instantiate(cfg_model)
+        self.model = hydra.utils.instantiate(model)
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
@@ -53,7 +62,7 @@ class LightningModel(pl.LightningModule):
 
         return weight_tensor
 
-    def forward(self, images,  *args, **kwargs):
+    def forward(self, images, *args, **kwargs):
         predictions = self.model(images)
         return
 
@@ -115,7 +124,7 @@ class LightningModel(pl.LightningModule):
 
     def _init_accuracy_matrices(self):
         n = len(self.class_labels)
-        for datagroup in ['Validation', 'Training', 'Testing']:
+        for datagroup in ["Validation", "Training", "Testing"]:
             self.confusion_matrix[datagroup] = np.zeros((n, n), dtype=np.int64)
 
     def _log_accuracy_matrices(self, datagroup):
@@ -128,15 +137,19 @@ class LightningModel(pl.LightningModule):
             self.log(f"Cond. Acc. {L} {datagroup}", ca)
 
         self.plot_confusion_matrix(cm, self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
-        self.plot_confusion_matrix(conditional_probabilities, self.class_labels,
-                                   f"P(best guess | true) {datagroup}", title=f"P(best guess | true) {datagroup}")
+        self.plot_confusion_matrix(
+            conditional_probabilities,
+            self.class_labels,
+            f"P(best guess | true) {datagroup}",
+            title=f"P(best guess | true) {datagroup}",
+        )
 
         # reset the CM
         self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
         figure = plt.figure(figsize=(15, 15))
-        plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
         plt.title(title)
         plt.colorbar()
         tick_marks = np.arange(len(class_names))
@@ -144,7 +157,7 @@ class LightningModel(pl.LightningModule):
         plt.yticks(tick_marks, class_names)
 
         # Use white text if squares are dark; otherwise black.
-        threshold = cm.max() / 2.
+        threshold = cm.max() / 2.0
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             color = "white" if cm[i, j] > threshold else "black"
@@ -155,32 +168,35 @@ class LightningModel(pl.LightningModule):
                     plt.text(j, i, "{:.2f}".format(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
 
         plt.tight_layout()
-        plt.xlabel('True label')
-        plt.ylabel('Predicted label')
+        plt.xlabel("True label")
+        plt.ylabel("Predicted label")
         self.logger.experiment[0].add_figure(figname, figure, self.global_step)
-        plt.close('all')
+        plt.close("all")
         return figure
 
     def on_validation_epoch_end(self):
-        self._log_accuracy_matrices('Validation')
+        self._log_accuracy_matrices("Validation")
         # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
-        self._log_accuracy_matrices('Training')
+        self._log_accuracy_matrices("Training")
 
     def on_test_epoch_end(self):
-        self._log_accuracy_matrices('Testing')
+        self._log_accuracy_matrices("Testing")
 
     def on_save_checkpoint(self, checkpoint) -> None:
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
         onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
-        torch.onnx.export(model=self.model,
-                          args=self.example_input_array.to(self.device),
-                          f=onnx_file_generator,
-                          opset_version=12,
-                          verbose=False,
-                          export_params=True,
-                          input_names=['input'],
-                          output_names=['output'],
-                          dynamic_axes={'input': {0: 'batch_size'},  # makes the batch-size variable for inference
-                                        'output': {0: 'batch_size'}}
-                          )
+        torch.onnx.export(
+            model=self.model,
+            args=self.example_input_array.to(self.device),
+            f=onnx_file_generator,
+            opset_version=12,
+            verbose=False,
+            export_params=True,
+            input_names=["input"],
+            output_names=["output"],
+            dynamic_axes={
+                "input": {0: "batch_size"},  # makes the batch-size variable for inference
+                "output": {0: "batch_size"},
+            },
+        )

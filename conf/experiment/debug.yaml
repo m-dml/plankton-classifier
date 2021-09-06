@@ -1,6 +1,9 @@
 # @package _global_
 
 defaults:
+  - train_transform:
+      - /transform/square_pad: square_pad
+      - /transform/square_pad: to_tensor
   - override /datamodule: plankton
   - override /hydra/launcher: local
 
@@ -32,4 +35,3 @@ logger:
 datamodule:
   num_workers: 0
   batch_size: 4
-

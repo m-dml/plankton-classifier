@@ -11,6 +11,15 @@ from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.model import ResNet, resnet18
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
+from src.lib.transforms import (
+    ColorJitter,
+    RandomHorizontalFlip,
+    RandomRotation,
+    RandomVerticalFlip,
+    Resize,
+    SquarePad,
+    ToTensor,
+)
 
 
 def register_configs() -> None:
@@ -41,6 +50,15 @@ def register_configs() -> None:
     cs.store(name="adam", node=Adam, group="optimizer")
     cs.store(name="sgd", node=SGD, group="optimizer")
     cs.store(name="rmsprop", node=RMSprop, group="optimizer")
+
+    # transforms:
+    cs.store(name="square_pad", node=SquarePad, group="transform/square_pad")
+    cs.store(name="random_vertical_flip", node=RandomVerticalFlip, group="transform/random_vertical_flip")
+    cs.store(name="random_horizontal_flip", node=RandomHorizontalFlip, group="transform/random_horizontal_flip")
+    cs.store(name="resize", node=Resize, group="transform/resize")
+    cs.store(name="random_rotation", node=RandomRotation, group="transform/random_rotation")
+    cs.store(name="color_jitter", node=ColorJitter, group="transform/color_jitter")
+    cs.store(name="to_tensor", node=ToTensor, group="transform/to_tensor")
 
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)

@@ -1,19 +1,19 @@
 defaults:
   - plankton_datamodule_base
 
-excluded_labels: null
+excluded_labels: [] # has to be  a list
 batch_size: 16
 num_workers: 0
-train_split:  0.8
-validation_split:  0.1
+train_split: 0.8
+validation_split: 0.1
 shuffle_train_dataset: true
-shuffle_validation_dataset:  false
+shuffle_validation_dataset: false
 shuffle_test_dataset: false
 preload_dataset: false
 use_planktonnet_data: false
 use_klas_data: true
 use_canadian_data: False
-super_classes:  null
+super_classes: {} # hast to be a dict
 oversample_data: true
 final_image_size: (512, 512)
 data_base_path: /gpfs/work/machnitz/plankton_dataset/

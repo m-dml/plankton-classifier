@@ -4,10 +4,11 @@ import os
 import pathlib
 import random
 
+import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
 from PIL import Image
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torchsampler import ImbalancedDatasetSampler
 from torchvision.transforms import transforms
 from tqdm import tqdm
@@ -32,14 +33,17 @@ class PlanktonDataSet(Dataset):
         if self.transform:
             image = self.transform(image)
 
+        if isinstance(image, PIL.PngImagePlugin.PngImageFile):
+            image = transforms.ToTensor()(image)
+
         label = torch.Tensor([self.integer_labels[label_name]])
 
         return image, label, label_name
 
-    def get_label(self, item):
-        image, label_name = self.files[item]
-        label = self.integer_labels[label_name]
-        return label
+    def get_labels(self):
+        _, label_names = zip(*self.files)
+        labels = [self.integer_labels[label_name] for label_name in label_names]
+        return labels
 
     def load_file(self, file):
         this_image = Image.open(file)
@@ -50,32 +54,35 @@ class PlanktonDataSet(Dataset):
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
-    def __init__(self,
-                transform,
-                excluded_labels,
-                batch_size,
-                num_workers,
-                train_split,  # The fraction size of the training data
-                validation_split,  # The fraction size of the validation data (rest ist test)
-                shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
-                shuffle_validation_dataset,
-                shuffle_test_dataset,
-                preload_dataset,
-                use_planktonnet_data,
-                use_klas_data,
-                use_canadian_data,
-                super_classes,
-                oversample_data,
-                final_image_size,
-                klas_data_path,
-                planktonnet_data_path,
-                canadian_data_path,
-                random_seed,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        excluded_labels,
+        batch_size,
+        num_workers,
+        train_split,  # The fraction size of the training data
+        validation_split,  # The fraction size of the validation data (rest ist test)
+        shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
+        shuffle_validation_dataset,
+        shuffle_test_dataset,
+        preload_dataset,
+        use_planktonnet_data,
+        use_klas_data,
+        use_canadian_data,
+        super_classes,
+        oversample_data,
+        final_image_size,
+        klas_data_path,
+        planktonnet_data_path,
+        canadian_data_path,
+        random_seed,
+        train_transform,
+        valid_transform,
+        **kwargs,
+    ):
         super().__init__()
 
-        self.transform = transform
+        self.train_transform = train_transform
+        self.valid_transform = valid_transform
 
         self.train_data = None
         self.valid_data = None
@@ -111,7 +118,12 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.integer_class_label_dict = self.set_up_integer_class_labels()
 
         if len(training_pairs) == 0:
-            raise FileNotFoundError(f"Did not find any files")
+            if self.use_klas_data:
+                raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.klas_data_path)}")
+            if self.use_canadian_data:
+                raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.canadian_data_path)}")
+            if self.use_planktonnet_data:
+                raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
 
         if self.use_canadian_data:
             train_subset = training_pairs[0]
@@ -129,28 +141,24 @@ class PlanktonDataLoader(pl.LightningDataModule):
             test_split_start = valid_split_end
             test_split_end = length
 
-            train_subset = training_pairs[train_split_start: train_split_end]
-            valid_subset = training_pairs[valid_split_start: valid_split_end]
-            test_subset = training_pairs[test_split_start: test_split_end]
+            train_subset = training_pairs[train_split_start:train_split_end]
+            valid_subset = training_pairs[valid_split_start:valid_split_end]
+            test_subset = training_pairs[test_split_start:test_split_end]
 
-        if stage == 'fit' or stage is None:
-            self.train_data = PlanktonDataSet(train_subset, transform=self.transform,
-                                              integer_labels=self.integer_class_label_dict)
+        if stage == "fit" or stage is None:
+            self.train_data = PlanktonDataSet(
+                train_subset, transform=self.train_transform, integer_labels=self.integer_class_label_dict
+            )
             logging.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data = PlanktonDataSet(valid_subset, transform=self.validation_transform(),
-                                              integer_labels=self.integer_class_label_dict)
+            self.valid_data = PlanktonDataSet(
+                valid_subset, transform=self.valid_transform, integer_labels=self.integer_class_label_dict
+            )
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
-        if stage == 'test' or stage is None:
-            self.test_data = PlanktonDataSet(test_subset, transform=self.transform,
-                                             integer_labels=self.integer_class_label_dict)
-
-    def validation_transform(self):
-        return transforms.Compose([
-            # SquarePad(),
-            transforms.Resize(size=[self.final_image_size, self.final_image_size]),
-            transforms.ToTensor()
-        ])
+        if stage == "test" or stage is None:
+            self.test_data = PlanktonDataSet(
+                test_subset, transform=self.valid_transform, integer_labels=self.integer_class_label_dict
+            )
 
     def prepare_data_setup(self):
         files = []
@@ -163,13 +171,15 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files += self._add_data_from_folder(folder, file_ext="jpg")
 
         if self.use_canadian_data:
-            for folder in tqdm(glob.glob(os.path.join(self.canadian_data_path, "ringstudy_train", "*")),
-                               desc="Load canadian data"):
+            for folder in tqdm(
+                glob.glob(os.path.join(self.canadian_data_path, "ringstudy_train", "*")), desc="Load canadian data"
+            ):
                 files += self._add_data_from_folder(folder, file_ext="png")
 
             test_files = []
-            for folder in tqdm(glob.glob(os.path.join(self.canadian_data_path, "ringstudy_test", "*")),
-                               desc="Load canadian data"):
+            for folder in tqdm(
+                glob.glob(os.path.join(self.canadian_data_path, "ringstudy_test", "*")), desc="Load canadian data"
+            ):
                 test_files += self._add_data_from_folder(folder, file_ext="png")
 
         random.seed(self.random_seed)
@@ -181,7 +191,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
-        for file in pathlib.Path(folder).rglob(f'*.{file_ext}'):
+        for file in pathlib.Path(folder).rglob(f"*.{file_ext}"):
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
             if label in self.excluded_labels:
@@ -207,19 +217,35 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.oversample_data:
             sampler = ImbalancedDatasetSampler(self.train_data)
             # the imbalanced dataloader only works correctly with 0 workers!
-            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=0,
-                              pin_memory=True, sampler=sampler)
+            return DataLoader(
+                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=True, sampler=sampler
+            )
         else:
-            return DataLoader(self.train_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                              pin_memory=True, shuffle=self.shuffle_train_dataset)
+            return DataLoader(
+                self.train_data,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=True,
+                shuffle=self.shuffle_train_dataset,
+            )
 
     def val_dataloader(self):
-        return DataLoader(self.valid_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                          pin_memory=True, shuffle=self.shuffle_validation_dataset)
+        return DataLoader(
+            self.valid_data,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            shuffle=self.shuffle_validation_dataset,
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size, num_workers=self.num_workers,
-                          shuffle=self.shuffle_test_dataset, pin_memory=True)
+        return DataLoader(
+            self.test_data,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=self.shuffle_test_dataset,
+            pin_memory=True,
+        )
 
     @staticmethod
     def load_image(image_file, preload):

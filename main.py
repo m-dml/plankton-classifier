@@ -8,6 +8,7 @@ import torch
 from hydra.utils import instantiate
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
+from torchvision.transforms import Compose
 
 from src.lib.config import Config, register_configs
 from src.utils import utils
@@ -54,17 +55,44 @@ def main(cfg: Config):
                 log.info(f"Instantiating logger <{lg_conf._target_}>")
                 logger.append(hydra.utils.instantiate(lg_conf))
 
+    # Init Transformations
+    train_transforms: List[torch.nn.Module] = []
+    if "train_transforms" in cfg:
+        for _, tranform_conf in cfg["train_transforms"].items():
+            if "_target_" in tranform_conf:
+                log.info(f"Instantiating train transform <{lg_conf._target_}>")
+                train_transforms.append(hydra.utils.instantiate(lg_conf))
+    train_transforms: Compose = Compose(train_transforms)
+
+    valid_transforms: List[torch.nn.Module] = []
+    if "valid_transforms" in cfg:
+        for _, tranform_conf in cfg["valid_transforms"].items():
+            if "_target_" in tranform_conf:
+                log.info(f"Instantiating train transform <{lg_conf._target_}>")
+                valid_transforms.append(hydra.utils.instantiate(lg_conf))
+    valid_transforms: Compose = Compose(valid_transforms)
+
     # Init Lightning datamodule
     log.info(f"Instantiating datamodule <{cfg.datamodule._target_}>")
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
+    datamodule: LightningDataModule = hydra.utils.instantiate(
+        cfg.datamodule, train_transform=train_transforms, valid_transform=valid_transforms
+    )
     datamodule.setup()
+
+    # generate example input array:
+    for batch in datamodule.train_dataloader():
+        example_input, _, _ = batch
+        break
 
     # Init Lightning model
     log.info(f"Instantiating model <{cfg.lightning_module._target_}>")
     model: LightningModule = hydra.utils.instantiate(
         cfg.lightning_module,
         optimizer=cfg.optimizer,
-        cfg_model=cfg.model,
+        model=cfg.model,
+        class_labels=datamodule.unique_labels,
+        all_labels=datamodule.all_labels,
+        example_input_array=example_input,
     )
 
     # log hparam metrics to tensorboard:

@@ -17,4 +17,4 @@ defaults:
 
 logger:
   tensorboard:
-    default_hp_metric: False  # important to be False, when we want to use own hp_metrics
+    default_hp_metric: False # important to be False, when we want to use own hp_metrics
