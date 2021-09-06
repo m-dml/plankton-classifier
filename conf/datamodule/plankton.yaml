@@ -1,7 +1,7 @@
 defaults:
   - plankton_datamodule_base
 
-excluded_labels: [] # has to be  a list
+excluded_labels: ["blurry", "bubbles"] # has to be  a list
 batch_size: 16
 num_workers: 0
 train_split: 0.8
@@ -13,7 +13,17 @@ preload_dataset: false
 use_planktonnet_data: false
 use_klas_data: true
 use_canadian_data: False
-super_classes: {} # hast to be a dict
+super_classes:
+  {
+    MarineSnow:
+      [
+        "MarineSnow_Comet",
+        "MarineSnow_Detritus",
+        "MarineSnow_FaecalPellet",
+        "MarineSnow_Jelly",
+      ],
+    Radiolaria: ["Radiolaria", "Foraminifera"],
+  }
 oversample_data: true
 final_image_size: (512, 512)
 data_base_path: /gpfs/work/machnitz/plankton_dataset/
