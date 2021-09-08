@@ -79,7 +79,7 @@ class PlanktonDataSetSimCLR(ParentDataSet):
 
         assert not torch.equal(image, image_copy), "Images are the same"
 
-        return (image, image_copy), None, None
+        return (image, image_copy), torch.tensor(list()), ""
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
