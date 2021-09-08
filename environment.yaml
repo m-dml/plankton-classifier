@@ -40,3 +40,4 @@ dependencies:
       - hydra-submitit-launcher
       - test-tube
       - fairscale
+      - https://github.com/ufoym/imbalanced-dataset-sampler/archive/master.zip # torchsampler
