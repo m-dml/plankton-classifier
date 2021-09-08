@@ -77,6 +77,7 @@ def main(cfg: Config):
         cfg.lightning_module,
         optimizer=cfg.optimizer,
         model=cfg.model,
+        loss=cfg.loss,
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
         example_input_array=example_input,

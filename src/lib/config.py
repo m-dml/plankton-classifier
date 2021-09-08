@@ -11,15 +11,7 @@ from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.model import ResNet, resnet18
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
-from src.lib.transforms import (
-    ColorJitter,
-    RandomHorizontalFlip,
-    RandomRotation,
-    RandomVerticalFlip,
-    Resize,
-    SquarePad,
-    ToTensor,
-)
+from src.lib.loss import NLLLoss, SimCLRLoss
 
 
 def register_configs() -> None:
@@ -51,15 +43,9 @@ def register_configs() -> None:
     cs.store(name="sgd", node=SGD, group="optimizer")
     cs.store(name="rmsprop", node=RMSprop, group="optimizer")
 
-    # transforms:
-    transforms_group = "datamodule/transforms"
-    cs.store(name="square_pad_base", node=SquarePad, group=transforms_group)
-    cs.store(name="random_vertical_flip_base", node=RandomVerticalFlip, group=transforms_group)
-    cs.store(name="random_horizontal_flip_base", node=RandomHorizontalFlip, group=transforms_group)
-    cs.store(name="resize_base", node=Resize, group=transforms_group)
-    cs.store(name="random_rotation_base", node=RandomRotation, group=transforms_group)
-    cs.store(name="color_jitter_base", node=ColorJitter, group=transforms_group)
-    cs.store(name="to_tensor_base", node=ToTensor, group=transforms_group)
+    # loss:
+    cs.store(name="NLLLoss", node=NLLLoss, group="loss")
+    cs.store(name="SimCLRLoss", node=SimCLRLoss, group="loss")
 
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)
@@ -74,6 +60,7 @@ class Config:
     logger: Any = MISSING
     callbacks: Any = MISSING
     optimizer: Any = MISSING
+    loss: Any = MISSING
 
     random_seed: int = 42
     print_config: bool = True

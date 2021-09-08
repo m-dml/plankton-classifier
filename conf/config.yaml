@@ -8,6 +8,7 @@ defaults:
   - model/resnet: resnet18
   - trainer: default
   - optimizer: adam
+  - loss: NLLLoss
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
 

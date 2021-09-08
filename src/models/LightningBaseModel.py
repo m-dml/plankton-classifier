@@ -19,24 +19,22 @@ class LightningModel(pl.LightningModule):
         example_input_array,
         log_images,
         log_confusion_matrices,
-        use_weighted_loss,
         optimizer,
         model,
+        loss
     ):
 
         super().__init__()
 
         self.cfg_optimizer = optimizer
+        self.cfg_loss = loss
         self.save_hyperparameters()
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.label_weight_tensor = self.get_label_weights()
-        if use_weighted_loss:
-            self.loss_func = nn.NLLLoss(weight=self.label_weight_tensor)
-        else:
-            self.loss_func = nn.NLLLoss()
+        self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = pl_metrics.Accuracy()
         self.model = hydra.utils.call(model, num_classes=len(class_labels))
         self.log_images = log_images
