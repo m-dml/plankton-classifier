@@ -7,8 +7,9 @@ import numpy as np
 import pytorch_lightning as pl
 import pytorch_lightning.metrics as pl_metrics
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+
+from src.models.BaseModels import concat_feature_extractor_and_classifier
 
 
 class LightningModel(pl.LightningModule):
@@ -20,8 +21,9 @@ class LightningModel(pl.LightningModule):
         log_images,
         log_confusion_matrices,
         optimizer,
-        model,
-        loss
+        feature_extractor,
+        classifier,
+        loss,
     ):
 
         super().__init__()
@@ -36,7 +38,12 @@ class LightningModel(pl.LightningModule):
         self.label_weight_tensor = self.get_label_weights()
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = pl_metrics.Accuracy()
-        self.model = hydra.utils.call(model, num_classes=len(class_labels))
+
+        self.feature_extractor = hydra.utils.instantiate(feature_extractor)
+        self.classifier = hydra.utils.instantiate(classifier, num_classes=len(self.class_labels))
+        self.model = concat_feature_extractor_and_classifier(feature_extractor=self.feature_extractor,
+                                                             classifier=self.classifier)
+
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
@@ -69,17 +76,13 @@ class LightningModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
-
         log_images = self.log_images and batch_idx == 0
-
         loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
         return loss
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = batch
-
         log_images = self.log_images and batch_idx == 0
-
         loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
         return loss
 
@@ -92,9 +95,9 @@ class LightningModel(pl.LightningModule):
     def _do_step(self, images, labels, label_names, step, log_images=False):
 
         class_log_probabilities = self(images)
-        class_probabilities = F.softmax(class_log_probabilities, dim=1).detach().cpu()
-        labels_est = class_log_probabilities.argmax(dim=-1).detach().cpu()
-        targets = labels.view(-1).to(torch.int).detach().cpu()
+        class_probabilities = F.softmax(class_log_probabilities.detach(), dim=1).detach().cpu()
+        labels_est = class_log_probabilities.detach().argmax(dim=-1).cpu()
+        targets = labels.detach().view(-1).to(torch.int).cpu()
 
         loss = self.loss_func(class_log_probabilities, labels.view(-1).long())
         accuracy = self.accuracy_func(class_probabilities, targets)
@@ -181,7 +184,7 @@ class LightningModel(pl.LightningModule):
     def on_save_checkpoint(self, checkpoint) -> None:
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
+        onnx_file_generator = os.path.join(folder, f"complete_model_{self.global_step}.onnx")
         torch.onnx.export(
             model=self.model,
             args=self.example_input_array.to(self.device),
@@ -196,3 +199,6 @@ class LightningModel(pl.LightningModule):
                 "output": {0: "batch_size"},
             },
         )
+
+        # save the feature_extractor_weights:
+        torch.save(self.feature_extractor.state_dict(), PATH)

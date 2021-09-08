@@ -76,7 +76,8 @@ def main(cfg: Config):
     model: LightningModule = hydra.utils.instantiate(
         cfg.lightning_module,
         optimizer=cfg.optimizer,
-        model=cfg.model,
+        feature_extractor=cfg.model.feature_extractor,
+        classifier=cfg.model.classifier,
         loss=cfg.loss,
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,

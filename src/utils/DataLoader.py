@@ -3,10 +3,13 @@ import logging
 import os
 import pathlib
 import random
+from abc import abstractmethod
+from typing import Union, Any
 
 import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
+from hydra.utils import instantiate
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchsampler import ImbalancedDatasetSampler
@@ -14,7 +17,7 @@ from torchvision.transforms import transforms
 from tqdm import tqdm
 
 
-class PlanktonDataSet(Dataset):
+class ParentDataSet(Dataset):
     def __init__(self, files, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
         self.files = files
         self.integer_labels = integer_labels
@@ -22,6 +25,27 @@ class PlanktonDataSet(Dataset):
         self.transform = transform
         self.preload_dataset = preload_dataset
         self.final_image_size = final_image_size
+
+    def get_labels(self):  # this is used by the torchsampler
+        _, label_names = zip(*self.files)
+        labels = [self.integer_labels[label_name] for label_name in label_names]
+        return labels
+
+    def load_file(self, file):
+        this_image = Image.open(file)
+        return this_image
+
+    def __len__(self):
+        return len(self.files)
+
+    @abstractmethod
+    def __getitem__(self, index) -> (Any, Union[torch.Tensor, None], str):
+        return Any, Union[torch.Tensor, None], str
+
+
+class PlanktonDataSet(ParentDataSet):
+    def __init__(self, *args, **kwargs):
+        super(PlanktonDataSet, self).__init__(*args, **kwargs)
 
     def __getitem__(self, item):
         image, label_name = self.files[item]
@@ -38,17 +62,21 @@ class PlanktonDataSet(Dataset):
 
         return image, label, label_name
 
-    def get_labels(self):
-        _, label_names = zip(*self.files)
-        labels = [self.integer_labels[label_name] for label_name in label_names]
-        return labels
 
-    def load_file(self, file):
-        this_image = Image.open(file)
-        return this_image
+class PlanktonDataSetSimCLR(ParentDataSet):
+    def __init__(self, *args, **kwargs):
+        super(PlanktonDataSetSimCLR, self).__init__(*args, **kwargs)
+        assert self.transform is not None, "Transform should be set"
 
-    def __len__(self):
-        return len(self.files)
+    def __getitem__(self, item):
+        image, label_name = self.files[item]
+        image_copy = image.copy()
+
+        image = self.transform(image)
+        image_copy = self.transform(image_copy)
+        assert image != image_copy, "Images are the same"
+
+        return (image, image_copy), None, None
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
@@ -75,6 +103,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         random_seed,
         train_transforms,
         valid_transforms,
+        dataset,
         **kwargs,
     ):
         super().__init__()
@@ -110,6 +139,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.oversample_data = oversample_data
         self.final_image_size = final_image_size
         self.random_seed = random_seed
+        self.cfg_dataset = dataset
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -144,18 +174,33 @@ class PlanktonDataLoader(pl.LightningDataModule):
             test_subset = training_pairs[test_split_start:test_split_end]
 
         if stage == "fit" or stage is None:
-            self.train_data = PlanktonDataSet(
-                train_subset, transform=self.train_transforms, integer_labels=self.integer_class_label_dict
+            self.train_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=train_subset,
+                integer_labels=self.integer_class_label_dict,
+                transform=self.train_transforms,
             )
+            # self.train_data = PlanktonDataSet(
+            #     train_subset, transform=self.train_transforms, integer_labels=self.integer_class_label_dict
+            # )
             logging.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data = PlanktonDataSet(
-                valid_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
+            self.valid_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=valid_subset,
+                integer_labels=self.integer_class_label_dict,
+                transform=self.valid_transforms,
             )
+            # self.valid_data = PlanktonDataSet(
+            #     valid_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
+            # )
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == "test" or stage is None:
-            self.test_data = PlanktonDataSet(
-                test_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
+            self.test_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=test_subset,
+                integer_labels=self.integer_class_label_dict,
+                transform=self.valid_transforms,
             )
 
     def prepare_data_setup(self):

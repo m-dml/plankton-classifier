@@ -1,5 +1,5 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -8,31 +8,24 @@ class SimCLRLoss(nn.Module):
         super(SimCLRLoss, self).__init__()
         self.temperature = temperature
 
-    def __call__(self, proj_feat1: torch.Tensor, proj_feat2: torch.Tensor) -> torch.Tensor:
+    def __call__(self, proj_features_combined: torch.Tensor) -> torch.Tensor:
 
         """
         custom_simclr_contrastive_loss(proj_feat1, proj_feat2)
         Returns contrastive loss, given sets of projected features, with positive
         pairs matched along the batch dimension.
         Required args:
-        - proj_feat1 (2D torch Tensor): projected features for first image
-            augmentations (batch_size x feat_size)
-        - proj_feat2 (2D torch Tensor): projected features for second image
-            augmentations (batch_size x feat_size)
+        - proj_features_combined (2D torch Tensor): projected features for both images
+            augmentations (2*batch_size x feat_size)
         Returns:
         - loss (float): mean contrastive loss
         """
-        device = proj_feat1.device
 
-        if len(proj_feat1) != len(proj_feat2):
-            raise ValueError(f"Batch dimension of proj_feat1 ({len(proj_feat1)}) "
-                             f"and proj_feat2 ({len(proj_feat2)}) should be same")
+        device = proj_features_combined.device
 
-        batch_size = len(proj_feat1)  # N
-        z1 = F.normalize(proj_feat1, dim=1)
-        z2 = F.normalize(proj_feat2, dim=1)
+        batch_size = int(len(proj_features_combined) / 2)  # N
+        proj_features = F.normalize(proj_features_combined, dim=1)
 
-        proj_features = torch.cat([z1, z2], dim=0)  # 2N x projected feature dimension
         similarity_matrix = F.cosine_similarity(
             proj_features.unsqueeze(1), proj_features.unsqueeze(0), dim=2
         )  # dim: 2N x 2N
@@ -51,10 +44,7 @@ class SimCLRLoss(nn.Module):
         # Calculate the denominator of the Loss expression by selecting the appropriate elements from similarity_matrix,
         # and summing over pairs for each item.
         # Use the neg_sample_indicators tensor
-        denominator = torch.sum(
-            torch.exp(similarity_matrix / self.temperature) * neg_sample_indicators,
-            dim=1
-        )
+        denominator = torch.sum(torch.exp(similarity_matrix / self.temperature) * neg_sample_indicators, dim=1)
 
         if (denominator < 1e-8).any():  # clamp to avoid division by 0
             denominator = torch.clamp(denominator, 1e-8)

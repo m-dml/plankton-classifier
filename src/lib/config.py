@@ -5,13 +5,13 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
 from src.lib.callbacks import CheckpointCallback, GPUMonitur
-from src.lib.datamodule import PlanktonDataLoader
+from src.lib.datamodule import PlanktonDataLoader, PlanktonDataSet, PlanktonDataSetSimCLR
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.model import ResNet, resnet18
+from src.lib.loss import NLLLoss, SimCLRLoss
+from src.lib.model import Classifier, ResNet
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
-from src.lib.loss import NLLLoss, SimCLRLoss
 
 
 def register_configs() -> None:
@@ -20,11 +20,14 @@ def register_configs() -> None:
     cs.store(name="base_lightning_module", node=LitModule, group="lightning_module")
 
     # the model:
-    cs.store(name="resnet_base", node=ResNet, group="model")
-    cs.store(name="resnet18", node=resnet18, group="model/resnet")
+    cs.store(name="resnet_base", node=ResNet, group="model/feature_extractor")
+    cs.store(name="classifier_base", node=Classifier, group="model/classifier")
 
     # data:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
+
+    cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group="datamodule/dataset")
+    cs.store(name="default_base", node=PlanktonDataSet, group="datamodule/dataset")
 
     # external objects:
     cs.store(name="base_trainer", node=Trainer, group="trainer")

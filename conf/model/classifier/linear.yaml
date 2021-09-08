@@ -1,0 +1,7 @@
+defaults:
+  - classifier_base
+
+hidden_layers: []
+input_features: 1000
+activation:
+  _target_: torch.nn.ReLU

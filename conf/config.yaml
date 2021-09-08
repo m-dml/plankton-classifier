@@ -4,8 +4,8 @@ defaults:
   - datamodule: plankton
   - datamodule/train_transforms: default
   - datamodule/valid_transforms: default
-  - model: resnet
-  - model/resnet: resnet18
+  - model/feature_extractor: resnet
+  - model/classifier: linear
   - trainer: default
   - optimizer: adam
   - loss: NLLLoss

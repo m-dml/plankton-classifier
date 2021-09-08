@@ -1,0 +1,2 @@
+defaults:
+  - simclr_base

@@ -10,7 +10,8 @@ class PlanktonDataLoader:
     _recursive_: bool = False
     train_transforms: Any = MISSING
     valid_transforms: Any = MISSING
-    # transform: Any = None
+    dataset: Any = MISSING
+
     excluded_labels: Any = None
     batch_size: int = 16
     num_workers: int = 0
