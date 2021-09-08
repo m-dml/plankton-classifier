@@ -3,6 +3,22 @@ from typing import Any
 
 from omegaconf import MISSING
 
+import src.utils.DataLoader
+
+
+@dataclass
+class PlanktonDataSet:
+    _target_: str = "src.utils.DataLoader.PlanktonDataSet"
+    final_image_size: int = 500
+    preload_dataset: bool = False
+
+
+@dataclass
+class PlanktonDataSetSimCLR:
+    _target_: str = "src.utils.DataLoader.PlanktonDataSetSimCLR"
+    final_image_size: int = 500
+    preload_dataset: bool = False
+
 
 @dataclass
 class PlanktonDataLoader:

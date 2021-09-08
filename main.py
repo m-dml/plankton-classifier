@@ -62,7 +62,10 @@ def main(cfg: Config):
     # Init Lightning datamodule
     log.info(f"Instantiating datamodule <{cfg.datamodule._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(
-        cfg.datamodule, train_transforms=train_transforms, valid_transforms=valid_transforms
+        cfg.datamodule,
+        train_transforms=train_transforms,
+        valid_transforms=valid_transforms,
+        dataset=cfg.datamodule.dataset,
     )
     datamodule.setup()
 

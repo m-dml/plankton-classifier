@@ -202,6 +202,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
             )
+            # self.test_data = PlanktonDataSet(
+            #     test_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
+            # )
 
     def prepare_data_setup(self):
         files = []
