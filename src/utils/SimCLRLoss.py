@@ -8,7 +8,7 @@ class SimCLRLoss(nn.Module):
         super(SimCLRLoss, self).__init__()
         self.temperature = temperature
 
-    def __call__(self, proj_features_combined: torch.Tensor) -> torch.Tensor:
+    def __call__(self, proj_features_combined: torch.Tensor, *args) -> torch.Tensor:
 
         """
         custom_simclr_contrastive_loss(proj_feat1, proj_feat2)

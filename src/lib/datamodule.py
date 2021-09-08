@@ -3,8 +3,6 @@ from typing import Any
 
 from omegaconf import MISSING
 
-import src.utils.DataLoader
-
 
 @dataclass
 class PlanktonDataSet:

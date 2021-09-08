@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: plankton
+  - override /datamodule/dataset: simclr
+  - override /model/classifier: simclr_head
+  - override /loss: simclr_loss
+  - override /datamodule/train_transforms: simclr
+  - override /datamodule/valid_transforms: simclr
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: simclr_head
+  - override /hydra/launcher: local
+
+debug: true
+
+trainer:
+  fast_dev_run: true
+  num_sanity_val_steps: 5
+  max_epochs: 3
+  gpus: 0
+  val_check_interval: 5
+  limit_train_batches: 10
+  limit_val_batches: 10
+
+logger:
+  tensorboard:
+    default_hp_metric: False
+
+datamodule:
+  num_workers: 0
+  batch_size: 4
+
+lightning_module:
+  log_confusion_matrices: false
+  log_images: false

@@ -8,7 +8,7 @@ defaults:
   - model/classifier: linear
   - trainer: default
   - optimizer: adam
-  - loss: NLLLoss
+  - loss: nll_loss
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
 

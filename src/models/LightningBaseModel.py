@@ -41,8 +41,9 @@ class LightningModel(pl.LightningModule):
 
         self.feature_extractor = hydra.utils.instantiate(feature_extractor)
         self.classifier = hydra.utils.instantiate(classifier, num_classes=len(self.class_labels))
-        self.model = concat_feature_extractor_and_classifier(feature_extractor=self.feature_extractor,
-                                                             classifier=self.classifier)
+        self.model = concat_feature_extractor_and_classifier(
+            feature_extractor=self.feature_extractor, classifier=self.classifier
+        )
 
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
@@ -100,7 +101,10 @@ class LightningModel(pl.LightningModule):
         targets = labels.detach().view(-1).to(torch.int).cpu()
 
         loss = self.loss_func(class_log_probabilities, labels.view(-1).long())
-        accuracy = self.accuracy_func(class_probabilities, targets)
+        try:
+            accuracy = self.accuracy_func(class_probabilities, targets)
+        except RuntimeError:
+            accuracy = 0
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"NLL {step}", loss)
@@ -201,4 +205,4 @@ class LightningModel(pl.LightningModule):
         )
 
         # save the feature_extractor_weights:
-        torch.save(self.feature_extractor.state_dict(), PATH)
+        torch.save(self.feature_extractor.state_dict(), os.path.join(folder, "feature_extractor_weights.ckpt"))

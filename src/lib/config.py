@@ -9,7 +9,7 @@ from src.lib.datamodule import PlanktonDataLoader, PlanktonDataSet, PlanktonData
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import NLLLoss, SimCLRLoss
-from src.lib.model import Classifier, ResNet
+from src.lib.model import Classifier, ResNet, SimCLRFeatureExtractor
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
 
@@ -21,6 +21,8 @@ def register_configs() -> None:
 
     # the model:
     cs.store(name="resnet_base", node=ResNet, group="model/feature_extractor")
+    cs.store(name="simclr_base", node=SimCLRFeatureExtractor, group="model/feature_extractor")
+
     cs.store(name="classifier_base", node=Classifier, group="model/classifier")
 
     # data:
@@ -47,8 +49,8 @@ def register_configs() -> None:
     cs.store(name="rmsprop", node=RMSprop, group="optimizer")
 
     # loss:
-    cs.store(name="NLLLoss", node=NLLLoss, group="loss")
-    cs.store(name="SimCLRLoss", node=SimCLRLoss, group="loss")
+    cs.store(name="nll_loss", node=NLLLoss, group="loss")
+    cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
 
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)

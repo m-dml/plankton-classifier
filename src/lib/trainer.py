@@ -34,7 +34,7 @@ class Trainer:
     accelerator: Any = None
     sync_batchnorm: bool = False
     precision: int = 32
-    weights_summary: str = "top"
+    weights_summary: Any = None
     weights_save_path: Any = None
     num_sanity_val_steps: int = 2
     truncated_bptt_steps: Any = None

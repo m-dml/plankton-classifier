@@ -4,7 +4,7 @@ import os
 import pathlib
 import random
 from abc import abstractmethod
-from typing import Union, Any
+from typing import Any, List, Union
 
 import PIL.PngImagePlugin
 import pytorch_lightning as pl
@@ -39,8 +39,8 @@ class ParentDataSet(Dataset):
         return len(self.files)
 
     @abstractmethod
-    def __getitem__(self, index) -> (Any, Union[torch.Tensor, None], str):
-        return Any, Union[torch.Tensor, None], str
+    def __getitem__(self, index) -> (Any, Union[torch.Tensor, List], str):
+        return Any, Union[torch.Tensor, List], str
 
 
 class PlanktonDataSet(ParentDataSet):
@@ -70,11 +70,14 @@ class PlanktonDataSetSimCLR(ParentDataSet):
 
     def __getitem__(self, item):
         image, label_name = self.files[item]
+        if not self.preload_dataset:
+            image = self.load_file(image)
         image_copy = image.copy()
 
         image = self.transform(image)
         image_copy = self.transform(image_copy)
-        assert image != image_copy, "Images are the same"
+
+        assert not torch.equal(image, image_copy), "Images are the same"
 
         return (image, image_copy), None, None
 

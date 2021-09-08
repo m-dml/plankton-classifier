@@ -18,28 +18,27 @@ class Classifier(nn.Module):
         self.activation = activation
         self.hidden_layers.insert(0, input_features)
 
-        self.model = nn.Sequential(
-            *[
-                self.activation(nn.Linear(self.hidden_layers[i], self.hidden_layers[i + 1]))
-                for i in range(len(self.hidden_layers) - 1)
-            ]
-            + [nn.Linear(self.hidden_layers[-1], num_classes)]
-        )
+        modules = []
+        for i in range(len(self.hidden_layers) - 1):
+            modules.append(nn.Linear(self.hidden_layers[i], self.hidden_layers[i + 1]))
+            modules.append(activation)
+
+        modules.append(nn.Linear(self.hidden_layers[-1], num_classes))
+        self.model = nn.Sequential(*modules)
 
     def forward(self, x):
         return self.model(x)
 
 
 class SimCLRFeatureExtractor(nn.Module):
-    def __init__(self, model, device):
+    def __init__(self, model):
         super(SimCLRFeatureExtractor, self).__init__()
         self.model = model
-        self.device = device
 
     def forward(self, image_tuples):
-        image_transformations_1, image_transformations_2 = list(zip(*image_tuples))
-        features_1 = self.model(torch.tensor(image_transformations_1, device=self.device))
-        features_2 = self.model(torch.tensor(image_transformations_2, device=self.device))
+        image_transformations_1, image_transformations_2 = image_tuples
+        features_1 = self.model(image_transformations_1)
+        features_2 = self.model(image_transformations_2)
         proj_features = torch.cat([features_1, features_2], dim=0)
         return proj_features
 

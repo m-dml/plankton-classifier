@@ -12,6 +12,12 @@ class ResNet:
 
 
 @dataclass
+class SimCLRFeatureExtractor:
+    _target_: str = "src.models.BaseModels.SimCLRFeatureExtractor"
+    model: Any = MISSING
+
+
+@dataclass
 class Classifier:
     _target_: str = "src.models.BaseModels.Classifier"
     hidden_layers: list = (1000, 1000)
