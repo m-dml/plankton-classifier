@@ -84,7 +84,7 @@ def main(cfg: Config):
         loss=cfg.loss,
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
-        example_input_array=example_input,
+        example_input_array=torch.stack(example_input).detach().cpu(),
     )
 
     # log hparam metrics to tensorboard:

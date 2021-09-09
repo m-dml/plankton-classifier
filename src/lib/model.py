@@ -23,3 +23,4 @@ class Classifier:
     hidden_layers: list = (1000, 1000)
     activation: Any = MISSING
     input_features: int = 1000
+    num_classes: Any = None

@@ -30,7 +30,7 @@ class LightningModel(pl.LightningModule):
 
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["example_input_array", "all_labels"])
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
@@ -40,7 +40,10 @@ class LightningModel(pl.LightningModule):
         self.accuracy_func = pl_metrics.Accuracy()
 
         self.feature_extractor = hydra.utils.instantiate(feature_extractor)
-        self.classifier = hydra.utils.instantiate(classifier, num_classes=len(self.class_labels))
+        # if num_classes in the config is set to None then use the number of classes found in the dataloader:
+        self.classifier = hydra.utils.instantiate(
+            classifier, num_classes=classifier.num_classes or len(self.class_labels)
+        )
         self.model = concat_feature_extractor_and_classifier(
             feature_extractor=self.feature_extractor, classifier=self.classifier
         )
@@ -107,8 +110,8 @@ class LightningModel(pl.LightningModule):
             accuracy = 0
 
         # lets log some values for inspection (for example in tensorboard):
-        self.log(f"NLL {step}", loss)
-        self.log(f"Accuracy {step}", accuracy)
+        self.log(f"loss/{step}", loss)
+        self.log(f"Accuracy/{step}", accuracy)
 
         if self.log_confusion_matrices:
             self._update_accuracy_matrices(step, targets, labels_est)
@@ -137,7 +140,7 @@ class LightningModel(pl.LightningModule):
         conditional_probabilities = cm / np.maximum(1.0, cm.sum(axis=0))  # conditional probabilities for best guess
         conditional_accuracy = np.diag(conditional_probabilities)
         for L, ca in zip(self.class_labels, conditional_accuracy):
-            self.log(f"Cond. Acc. {L} {datagroup}", ca)
+            self.log(f"Cond. Acc/{L} {datagroup}", ca)
 
         self.plot_confusion_matrix(cm, self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
         self.plot_confusion_matrix(
