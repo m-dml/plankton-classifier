@@ -87,6 +87,12 @@ def main(cfg: Config):
         example_input_array=torch.stack(example_input).detach().cpu(),
     )
 
+    if cfg.load_state_dict is not None:
+        model = model.load_from_checkpoint(cfg.load_state_dict,
+                                            class_labels=datamodule.unique_labels,
+                                            all_labels=datamodule.all_labels,
+                                            example_input_array=torch.stack(example_input).detach().cpu())
+
     # log hparam metrics to tensorboard:
     log.info("Logging hparams to tensorboard")
     hydra_params = utils.log_hyperparameters(config=cfg, model=model)

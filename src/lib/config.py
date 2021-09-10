@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Union
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
@@ -71,3 +71,4 @@ class Config:
     print_config: bool = True
     debug: bool = False
     ignore_warnings: bool = False
+    load_state_dict: Any = None  # if loading from state dict provide path to ckpt file as string here
