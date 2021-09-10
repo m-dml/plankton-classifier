@@ -40,7 +40,6 @@ class PlanktonDataLoader:
     use_canadian_data: bool = False
     super_classes: Any = None
     oversample_data: bool = True
-    final_image_size: Any = (512, 512)
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
     klas_data_path: str = data_base_path + "new_data/4David/M160/Sorted"
     planktonnet_data_path: str = data_base_path + "PlanktonNet/DYB-PlanktonNet_V1.0_EN"

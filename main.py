@@ -88,6 +88,7 @@ def main(cfg: Config):
     )
 
     # log hparam metrics to tensorboard:
+    log.info("Logging hparams to tensorboard")
     hydra_params = utils.log_hyperparameters(config=cfg, model=model)
     for this_logger in logger:
         if "tensorboard" in str(this_logger):
@@ -97,7 +98,7 @@ def main(cfg: Config):
             this_logger.log_hyperparams(hydra_params)
 
     # Send some parameters from config to all lightning loggers
-    log.info("Logging hyperparameters!")
+    log.info("Logging hyperparameters to lightning!")
     model.hydra_params = hydra_params
 
     # Init Trainer:
@@ -105,6 +106,7 @@ def main(cfg: Config):
     trainer: Trainer = instantiate(cfg.trainer, logger=logger, callbacks=callbacks, _convert_="partial")
 
     # trainer.tune(model, data_module)
+    log.info("Starting training")
     trainer.fit(model, datamodule)
 
     # Print path to best checkpoint

@@ -16,6 +16,8 @@ from torchsampler import ImbalancedDatasetSampler
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
+from src.utils import utils
+
 
 class ParentDataSet(Dataset):
     def __init__(self, files, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
@@ -25,6 +27,8 @@ class ParentDataSet(Dataset):
         self.transform = transform
         self.preload_dataset = preload_dataset
         self.final_image_size = final_image_size
+
+        self.console_logger = utils.get_logger(__name__)
 
     def get_labels(self):  # this is used by the torchsampler
         _, label_names = zip(*self.files)
@@ -77,7 +81,8 @@ class PlanktonDataSetSimCLR(ParentDataSet):
         image = self.transform(image)
         image_copy = self.transform(image_copy)
 
-        assert not torch.equal(image, image_copy), "Images are the same"
+        if torch.equal(image, image_copy):
+            self.console_logger.warning(f"Sampled Images are the same at index {item}")
 
         return (image, image_copy), torch.tensor(list()), ""
 
@@ -99,7 +104,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         use_canadian_data,
         super_classes,
         oversample_data,
-        final_image_size,
         klas_data_path,
         planktonnet_data_path,
         canadian_data_path,
@@ -140,7 +144,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.use_canadian_data = use_canadian_data
         self.super_classes = super_classes
         self.oversample_data = oversample_data
-        self.final_image_size = final_image_size
         self.random_seed = random_seed
         self.cfg_dataset = dataset
 
@@ -183,9 +186,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 integer_labels=self.integer_class_label_dict,
                 transform=self.train_transforms,
             )
-            # self.train_data = PlanktonDataSet(
-            #     train_subset, transform=self.train_transforms, integer_labels=self.integer_class_label_dict
-            # )
+
             logging.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -193,9 +194,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
             )
-            # self.valid_data = PlanktonDataSet(
-            #     valid_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
-            # )
+
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == "test" or stage is None:
@@ -205,9 +204,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
             )
-            # self.test_data = PlanktonDataSet(
-            #     test_subset, transform=self.valid_transforms, integer_labels=self.integer_class_label_dict
-            # )
 
     def prepare_data_setup(self):
         files = []
@@ -236,7 +232,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_canadian_data:
             return files, test_files
 
-        return files
+        return files[:100]
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
