@@ -15,6 +15,12 @@ with `conda env create -f environment.yaml`.
 You can get a list of all options using `python main.py --help`.
 For more information on configuration see the hydra docs: https://hydra.cc/
 
+
+pre-commit
+---------
+Just use `pre-commit run --all-files` at the top level of this repo, to 
+let precommit handle the files.
+
 Quick refresher on git and github
 ---------------------------------
 

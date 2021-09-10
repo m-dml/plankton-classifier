@@ -3,6 +3,8 @@ from typing import List
 import torch
 import torch.nn as nn
 
+from src.lib.model import CustomResnet
+
 
 class Classifier(nn.Module):
     def __init__(
@@ -30,10 +32,22 @@ class Classifier(nn.Module):
         return self.model(x)
 
 
-class SimCLRFeatureExtractor(nn.Module):
-    def __init__(self, model):
-        super(SimCLRFeatureExtractor, self).__init__()
+class CustomResnet(nn.Module):
+    def __init__(self, model, kernel_size=7, stride=2, channels=3):
+        super(CustomResnet, self).__init__()
         self.model = model
+        conv1_out_channels = self.model.conv1.out_channels
+        self.model.conv1 = nn.Conv2d(
+            channels, conv1_out_channels, kernel_size=kernel_size, stride=stride, padding=3, bias=False
+        )
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class SimCLRFeatureExtractor(CustomResnet):
+    def __init__(self, model, **kwargs):
+        super(SimCLRFeatureExtractor, self).__init__(model, **kwargs)
 
     def forward(self, image_tuples):
         image_transformations_1, image_transformations_2 = image_tuples

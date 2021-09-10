@@ -232,7 +232,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_canadian_data:
             return files, test_files
 
-        return files
+        return files[:100]
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []

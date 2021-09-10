@@ -5,3 +5,8 @@ model:
   _target_: "torchvision.models.resnet18"
   num_classes: ${model.classifier.input_features}
   pretrained: false
+
+# define settings for first layer of the resnet:
+kernel_size: 7 # default is 7
+stride: 2 # default is 2
+channels: 3 # default is 3

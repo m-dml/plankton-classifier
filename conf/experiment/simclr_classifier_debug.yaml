@@ -6,7 +6,7 @@ defaults:
   - override /loss: nll_loss
   - override /datamodule/train_transforms: simclr
   - override /datamodule/valid_transforms: simclr
-  - override /model/feature_extractor: simclr_resnet
+  - override /model/feature_extractor: resnet
   - override /model/classifier: simclr_classifier
   - override /hydra/launcher: local
 
@@ -33,7 +33,6 @@ datamodule:
 lightning_module:
   log_confusion_matrices: true
   log_images: true
-
 
 model:
   classifier:

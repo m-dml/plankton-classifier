@@ -209,5 +209,7 @@ class LightningModel(pl.LightningModule):
 
         # save the feature_extractor_weights:
         torch.save(self.model.state_dict(), os.path.join(folder, f"complete_model_{self.global_step}.ckpt"))
-        torch.save(self.feature_extractor.state_dict(),
-                   os.path.join(folder, f"feature_extractor_weights_{self.global_step}.ckpt"))
+        torch.save(
+            self.feature_extractor.state_dict(),
+            os.path.join(folder, f"feature_extractor_weights_{self.global_step}.ckpt"),
+        )

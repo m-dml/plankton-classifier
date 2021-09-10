@@ -12,7 +12,15 @@ class ResNet:
 
 
 @dataclass
-class SimCLRFeatureExtractor:
+class CustomResnet:
+    _target_: str = "src.models.BaseModels.CustomResnet"
+    kernel_size: int = 7
+    stride: int = 2
+    channels: int = 3
+
+
+@dataclass
+class SimCLRFeatureExtractor(CustomResnet):
     _target_: str = "src.models.BaseModels.SimCLRFeatureExtractor"
     model: Any = MISSING
 

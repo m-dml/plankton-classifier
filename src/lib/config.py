@@ -9,7 +9,7 @@ from src.lib.datamodule import PlanktonDataLoader, PlanktonDataSet, PlanktonData
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import NLLLoss, SimCLRLoss
-from src.lib.model import Classifier, ResNet, SimCLRFeatureExtractor
+from src.lib.model import Classifier, CustomResnet, ResNet, SimCLRFeatureExtractor
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
 
@@ -22,6 +22,7 @@ def register_configs() -> None:
     # the model:
     cs.store(name="resnet_base", node=ResNet, group="model/feature_extractor")
     cs.store(name="simclr_base", node=SimCLRFeatureExtractor, group="model/feature_extractor")
+    cs.store(name="custom_resnet_base", node=CustomResnet, group="model/feature_extractor")
 
     cs.store(name="classifier_base", node=Classifier, group="model/classifier")
 
