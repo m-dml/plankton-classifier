@@ -1,0 +1,14 @@
+defaults:
+  - cifar10_datamodule
+  - dataset: simclr_cifar10
+
+batch_size: 16
+num_workers: 0
+train_split: 0.8
+validation_split: 0.1
+shuffle_train_dataset: true
+shuffle_validation_dataset: false
+shuffle_test_dataset: false
+#data_path: /gpfs/work/zinchenk/cifar10-dataset
+data_path: /Users/vadimzinchenko/Documents/tmp/cifar10-dataset
+random_seed: ${random_seed}

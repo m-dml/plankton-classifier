@@ -5,7 +5,13 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
 from src.lib.callbacks import CheckpointCallback, GPUMonitur
-from src.lib.datamodule import PlanktonDataLoader, PlanktonDataSet, PlanktonDataSetSimCLR
+from src.lib.datamodule import (
+    CIFAR10DataLoader,
+    CIFAR10Dataset,
+    PlanktonDataLoader,
+    PlanktonDataSet,
+    PlanktonDataSetSimCLR,
+)
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import NLLLoss, SimCLRLoss
@@ -28,9 +34,11 @@ def register_configs() -> None:
 
     # data:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
+    cs.store(name="cifar10_datamodule", node=CIFAR10DataLoader, group="datamodule")
 
     cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group="datamodule/dataset")
     cs.store(name="default_base", node=PlanktonDataSet, group="datamodule/dataset")
+    cs.store(name="simclr_cifar10", node=CIFAR10Dataset, group="datamodule/dataset")
 
     # external objects:
     cs.store(name="base_trainer", node=Trainer, group="trainer")

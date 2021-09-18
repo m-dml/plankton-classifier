@@ -2,10 +2,12 @@ import glob
 import logging
 import os
 import pathlib
+import pickle
 import random
 from abc import abstractmethod
-from typing import Any, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
 import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
@@ -305,3 +307,100 @@ class PlanktonDataLoader(pl.LightningDataModule):
         for i, label in enumerate(self.unique_labels):
             integer_class_labels[label] = i
         return integer_class_labels
+
+
+class CIFAR10DataSet(Dataset):
+    def __init__(self, ds_dict: Dict, indexes: List[int], transform=None, shuffle: bool = True):
+        self.ds_dict: Dict = ds_dict
+        self.labels: List[str] = ds_dict["labels"]
+        self.integer_labels = {lbl: i for i, lbl in enumerate(self.labels)}
+        self.indexes: List[Tuple] = [(self.integer_labels[lbl], i) for lbl in self.labels for i in indexes]
+        if shuffle:
+            random.shuffle(indexes)
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.indexes)
+
+    def __getitem__(self, item):
+        label_name, index = self.indexes[item]
+        label = self.integer_labels[label_name]
+        image = self.ds_dict[label][index]
+
+        if self.transform is not None:
+            image = self.transform(image)
+
+        return image, label, label_name
+
+
+class CIFAR10DataLoader(pl.LightningDataModule):
+    def __init__(
+        self,
+        file: str,
+        batch_size: int,
+        num_workers: int,
+        train_split: float,
+        valid_split: float,
+        train_transforms,
+        valid_transforms,
+        shuffle_train_dataset: bool = True,
+        shuffle_valid_dataset: bool = False,
+        shuffle_test_dataset: bool = False,
+        random_seed: int = 0,
+    ):
+        super().__init__()
+
+        self.file = file
+
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+        self.train_split = train_split
+        self.valid_split = valid_split
+        self.train_transforms = train_transforms
+        self.valid_transforms = valid_transforms
+        self.shuffle_train_dataset = shuffle_train_dataset
+        self.shuffle_valid_dataset = shuffle_valid_dataset
+        self.shuffle_test_dataset = shuffle_test_dataset
+        self.random_seed = random_seed
+
+    def setup(self, stage=None):
+        train_indexes, valid_indexes, test_indexes = self.prepare_data_setup()
+
+        if stage == "fit" or stage is None:
+            self.train_data = CIFAR10DataSet(
+                self.dataset, train_indexes, transform=self.train_transforms, shuffle=self.shuffle_train_dataset
+            )
+            logging.debug(f"Number of training samples: {len(self.train_data)}")
+            self.valid_data = CIFAR10DataSet(
+                self.dataset, valid_indexes, transform=self.valid_transforms, shuffle=self.shuffle_valid_dataset
+            )
+            logging.debug(f"Number of validation samples: {len(self.valid_data)}")
+
+        if stage == "test" or stage is None:
+            self.test_data = CIFAR10DataSet(
+                self.dataset, test_indexes, transform=self.valid_transforms, shuffle=self.shuffle_test_dataset
+            )
+
+    def prepare_data_setup(self):
+        with open(self.file, "rb") as f:
+            self.dataset = pickle.load(f)
+
+        labels = self.dataset["labels"]
+        indexes = np.arange(len(self.dataset[random.choice(labels)]))
+        length = len(indexes)
+
+        train_split_start = 0
+        train_split_end = int(length * self.train_split)
+        valid_split_start = train_split_end
+        valid_split_end = int(length * self.valid_split)
+        test_split_start = valid_split_end
+        test_split_end = length
+
+        random.seed(self.random_seed)
+        random.shuffle(indexes)
+        train_indexes = indexes[train_split_start:train_split_end]
+        valid_indexes = indexes[valid_split_start:valid_split_end]
+        test_indexes = indexes[test_split_start:test_split_end]
+        return train_indexes, valid_indexes, test_indexes
