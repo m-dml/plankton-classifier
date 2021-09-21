@@ -6,21 +6,21 @@ from omegaconf import MISSING
 
 @dataclass
 class PlanktonDataSet:
-    _target_: str = "src.utils.DataLoader.PlanktonDataSet"
+    _target_: str = "src.datamodule.DataLoader.PlanktonDataSet"
     final_image_size: int = 500
     preload_dataset: bool = False
 
 
 @dataclass
 class PlanktonDataSetSimCLR:
-    _target_: str = "src.utils.DataLoader.PlanktonDataSetSimCLR"
+    _target_: str = "src.datamodule.DataLoader.PlanktonDataSetSimCLR"
     final_image_size: int = 500
     preload_dataset: bool = False
 
 
 @dataclass
 class PlanktonDataLoader:
-    _target_: str = "src.utils.DataLoader.PlanktonDataLoader"
+    _target_: str = "src.datamodule.DataLoader.PlanktonDataLoader"
     _recursive_: bool = False
     train_transforms: Any = MISSING
     valid_transforms: Any = MISSING
@@ -49,21 +49,29 @@ class PlanktonDataLoader:
 
 @dataclass
 class CIFAR10Dataset:
-    _target_: str = "src.utils.DataLoader.CIFAR10DataSet"
+    _target_: str = "torchvision.CIFAR10.CIFAR10"
+    download: bool = True
+    root: str = MISSING  # path where to save downloaded data
+
+
+@dataclass
+class CIFAR10DatasetSimClr:
+    _target_: str = "src.datamodule.CIFAR10.CIFAR10SimClrDataSet"
+    download: bool = True
+    root: str = MISSING  # path where to save downloaded data
 
 
 @dataclass
 class CIFAR10DataLoader:
-    _target_: str = "src.utils.DataLoader.CIFAR10DataLoader"
+    _target_: str = "src.datamodule.CIFAR10.CIFAR10DataLoader"
     _recursive_: bool = False
+
+    dataset: Any = MISSING
     train_transforms: Any = MISSING
     valid_transforms: Any = MISSING
     batch_size: int = 16
     num_workers: int = 0
-    train_split: float = 0.8
-    validation_split: float = 0.1
     shuffle_train_dataset: bool = True
     shuffle_validation_dataset: bool = False
     shuffle_test_dataset: bool = False
-    random_seed: int = 0
-    data_path: str = "/gpfs/work/zinchenk/cifar10-dataset"
+    data_base_path: str = "/gpfs/work/zinchenk/cifar10-dataset"

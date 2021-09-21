@@ -3,8 +3,6 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from src.lib.model import CustomResnet
-
 
 class Classifier(nn.Module):
     def __init__(

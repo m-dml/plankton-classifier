@@ -1,4 +1,4 @@
 defaults:
-  - cifar10simclr_base
+  - cifar10_base
 
 root: ${datamodule.data_base_path} # path where to save downloaded data

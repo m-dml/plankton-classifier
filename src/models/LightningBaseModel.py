@@ -35,7 +35,6 @@ class LightningModel(pl.LightningModule):
         self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
-        self.label_weight_tensor = self.get_label_weights()
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = pl_metrics.Accuracy()
 
@@ -52,23 +51,6 @@ class LightningModel(pl.LightningModule):
         self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
-
-    def get_label_weights(self):
-        label_weights_dict = dict()
-
-        for label in self.all_labels:
-            if label in label_weights_dict.keys():
-                label_weights_dict[label] += 1
-            else:
-                label_weights_dict[label] = 1
-
-        weights = []
-        for label in self.class_labels:
-            weights.append(1 / label_weights_dict[label])
-
-        weight_tensor = torch.tensor(weights, dtype=torch.float32, device=self.device)
-
-        return weight_tensor
 
     def forward(self, images, *args, **kwargs):
         predictions = self.model(images)
@@ -181,12 +163,14 @@ class LightningModel(pl.LightningModule):
         return figure
 
     def on_validation_epoch_end(self):
-        self._log_accuracy_matrices("Validation")
-        # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
-        self._log_accuracy_matrices("Training")
+        if self.log_confusion_matrices:
+            self._log_accuracy_matrices("Validation")
+            # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
+            self._log_accuracy_matrices("Training")
 
     def on_test_epoch_end(self):
-        self._log_accuracy_matrices("Testing")
+        if self.log_confusion_matrices:
+            self._log_accuracy_matrices("Testing")
 
     def on_save_checkpoint(self, checkpoint) -> None:
         # save model to onnx:

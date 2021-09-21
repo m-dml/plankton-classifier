@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
@@ -8,6 +8,7 @@ from src.lib.callbacks import CheckpointCallback, GPUMonitur
 from src.lib.datamodule import (
     CIFAR10DataLoader,
     CIFAR10Dataset,
+    CIFAR10DatasetSimClr,
     PlanktonDataLoader,
     PlanktonDataSet,
     PlanktonDataSetSimCLR,
@@ -26,19 +27,22 @@ def register_configs() -> None:
     cs.store(name="base_lightning_module", node=LitModule, group="lightning_module")
 
     # the model:
-    cs.store(name="resnet_base", node=ResNet, group="model/feature_extractor")
-    cs.store(name="simclr_base", node=SimCLRFeatureExtractor, group="model/feature_extractor")
-    cs.store(name="custom_resnet_base", node=CustomResnet, group="model/feature_extractor")
+    feature_extractor_group = "model/feature_extractor"
+    cs.store(name="resnet_base", node=ResNet, group=feature_extractor_group)
+    cs.store(name="simclr_base", node=SimCLRFeatureExtractor, group=feature_extractor_group)
+    cs.store(name="custom_resnet_base", node=CustomResnet, group=feature_extractor_group)
 
     cs.store(name="classifier_base", node=Classifier, group="model/classifier")
 
     # data:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
-    cs.store(name="cifar10_datamodule", node=CIFAR10DataLoader, group="datamodule")
+    cs.store(name="cifar10_datamodule_base", node=CIFAR10DataLoader, group="datamodule")
 
-    cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group="datamodule/dataset")
-    cs.store(name="default_base", node=PlanktonDataSet, group="datamodule/dataset")
-    cs.store(name="simclr_cifar10", node=CIFAR10Dataset, group="datamodule/dataset")
+    dataset_group = "datamodule/dataset"
+    cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group=dataset_group)
+    cs.store(name="default_base", node=PlanktonDataSet, group=dataset_group)
+    cs.store(name="cifar10_base", node=CIFAR10Dataset, group=dataset_group)
+    cs.store(name="cifar10simclr_base", node=CIFAR10DatasetSimClr, group=dataset_group)
 
     # external objects:
     cs.store(name="base_trainer", node=Trainer, group="trainer")
@@ -53,9 +57,10 @@ def register_configs() -> None:
     cs.store(name="gpu_monitoring", node=GPUMonitur, group="callbacks/gpu_monitoring")
 
     # optimizer:
-    cs.store(name="adam", node=Adam, group="optimizer")
-    cs.store(name="sgd", node=SGD, group="optimizer")
-    cs.store(name="rmsprop", node=RMSprop, group="optimizer")
+    optimizer_group = "optimizer"
+    cs.store(name="adam", node=Adam, group=optimizer_group)
+    cs.store(name="sgd", node=SGD, group=optimizer_group)
+    cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
 
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
