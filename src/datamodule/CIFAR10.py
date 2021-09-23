@@ -42,6 +42,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         shuffle_train_dataset: bool = True,
         shuffle_valid_dataset: bool = False,
         shuffle_test_dataset: bool = False,
+        pin_memory: bool = False,
         **kwargs,
     ):
         super(CIFAR10DataLoader, self).__init__()
@@ -61,6 +62,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         self.shuffle_train_dataset = shuffle_train_dataset
         self.shuffle_valid_dataset = shuffle_valid_dataset
         self.shuffle_test_dataset = shuffle_test_dataset
+        self.pin_memory = pin_memory
 
         # for integration with the plankton structure:
         self.unique_labels = []  # noqa
@@ -85,7 +87,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             self.train_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_train_dataset,
         )
 
@@ -94,7 +96,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             self.valid_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_valid_dataset,
         )
 
@@ -104,5 +106,5 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=self.shuffle_test_dataset,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
         )

@@ -111,6 +111,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         train_transforms,
         valid_transforms,
         dataset,
+        pin_memory=False,
         **kwargs,
     ):
         super().__init__()
@@ -146,6 +147,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.oversample_data = oversample_data
         self.random_seed = random_seed
         self.cfg_dataset = dataset
+        self.pin_memory = pin_memory
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -263,14 +265,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
             sampler = ImbalancedDatasetSampler(self.train_data)
             # the imbalanced dataloader only works correctly with 0 workers!
             return DataLoader(
-                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=True, sampler=sampler
+                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=self.pin_memory, sampler=sampler
             )
         else:
             return DataLoader(
                 self.train_data,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                pin_memory=True,
+                pin_memory=self.pin_memory,
                 shuffle=self.shuffle_train_dataset,
             )
 
@@ -279,7 +281,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             self.valid_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_validation_dataset,
         )
 
@@ -289,7 +291,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=self.shuffle_test_dataset,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
         )
 
     @staticmethod
