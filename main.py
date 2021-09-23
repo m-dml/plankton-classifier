@@ -76,6 +76,8 @@ def main(cfg: Config):
             example_input = torch.stack(example_input).detach().cpu()
         break
 
+    log.info(f"Size of one batch is: {example_input.element_size() * example_input.nelement() / 2**20} mb")
+
     # Init Lightning model
     log.info(f"Instantiating model <{cfg.lightning_module._target_}>")
     model: LightningModule = hydra.utils.instantiate(
