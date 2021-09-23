@@ -7,4 +7,4 @@ num_workers: 0
 shuffle_train_dataset: true
 shuffle_validation_dataset: false
 shuffle_test_dataset: false
-data_base_path: /Users/vadimzinchenko/Documents/tmp/cifar10-dataset
+data_base_path: /gpfs/work/machnitz/cifar_simclr
