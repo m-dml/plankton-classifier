@@ -12,7 +12,7 @@ defaults:
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
 
-  - override hydra/launcher: local
+  - override hydra/launcher: strand
 
   # enable color logging
   - override hydra/hydra_logging: colorlog
