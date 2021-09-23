@@ -40,6 +40,6 @@ model:
       num_classes: ${model.classifier.input_features}
       pretrained: false
       # first conv layer:
-      kernel_size: 3 # default is 7
-      stride: 1 # default is 2
-      channels: 3 # default is 3
+    kernel_size: 3 # default is 7
+    stride: 1 # default is 2
+    channels: 3 # default is 3

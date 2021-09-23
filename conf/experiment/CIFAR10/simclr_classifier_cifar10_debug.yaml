@@ -11,7 +11,7 @@ defaults:
   - override /hydra/launcher: local
 
 debug: false
-load_state_dict: "C:/Users/Tobias/PycharmProjects/plankton-classifier/outputs/2021-09-23/10-13-52/logs/checkpoints/complete_model_49.weights"
+load_state_dict: "C:/Users/Tobias/PycharmProjects/plankton-classifier/outputs/2021-09-23/10-59-53/logs/checkpoints/complete_model_49.weights"
 
 trainer:
   fast_dev_run: false
@@ -42,3 +42,7 @@ model:
       _target_: "torchvision.models.resnet18"
       num_classes: ${model.classifier.input_features}
       pretrained: false
+      # first conv layer:
+    kernel_size: 3 # default is 7
+    stride: 1 # default is 2
+    channels: 3 # default is 3
