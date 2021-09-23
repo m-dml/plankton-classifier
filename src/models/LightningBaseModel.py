@@ -61,26 +61,36 @@ class LightningModel(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
-        images, labels = batch
-        if len(labels) == 2:
-            labels, label_names = labels
-        else:
-            label_names = torch.tensor(["" for _ in range(len(labels))])
+        images, labels, label_names = self._pre_process_batch(batch)
         log_images = self.log_images and batch_idx == 0
         loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
         return loss
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
-        images, labels, label_names = batch
+        images, labels, label_names = self._pre_process_batch(batch)
+
         log_images = self.log_images and batch_idx == 0
         loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
         return loss
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
-        images, labels, label_names = batch
+        images, labels, label_names = self._pre_process_batch(batch)
 
         loss, acc = self._do_step(images, labels, label_names, step="Testing", log_images=False)
         return loss
+
+    @staticmethod
+    def _pre_process_batch(batch):
+        images, labels = batch
+        if isinstance(images, (tuple, list)):
+            images = torch.stack(images)
+
+        if len(labels) == 2:
+            labels, label_names = labels
+        else:
+            label_names = torch.tensor([0 for _ in range(len(labels))])
+
+        return images, labels, label_names
 
     def _do_step(self, images, labels, label_names, step, log_images=False):
 
@@ -103,7 +113,7 @@ class LightningModel(pl.LightningModule):
             self._update_accuracy_matrices(step, targets, labels_est)
 
         if log_images:
-            self.log_images(images, label_names)
+            self.console_logger.warning()
 
         return loss, accuracy
 
@@ -196,8 +206,9 @@ class LightningModel(pl.LightningModule):
         )
 
         # save the feature_extractor_weights:
-        torch.save(self.model.state_dict(), os.path.join(folder, f"complete_model_{self.global_step}.ckpt"))
-        torch.save(
-            self.feature_extractor.state_dict(),
-            os.path.join(folder, f"feature_extractor_weights_{self.global_step}.ckpt"),
-        )
+        state_dict = self.model.state_dict()
+        renamed_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key.replace("0.model.", "0.")
+            renamed_state_dict[new_key] = value
+        torch.save(renamed_state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))

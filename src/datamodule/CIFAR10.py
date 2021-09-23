@@ -27,7 +27,7 @@ class CIFAR10SimClrDataSet(CIFAR10):
         if torch.equal(image, image_copy):
             self.console_logger.warning(f"Sampled Images are the same at index {index}")
 
-        return (image, image_copy), torch.tensor(list()), ""
+        return (image, image_copy), (torch.tensor(list()), "")
 
 
 class CIFAR10DataLoader(pl.LightningDataModule):

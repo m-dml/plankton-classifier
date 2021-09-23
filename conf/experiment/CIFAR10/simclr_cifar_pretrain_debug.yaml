@@ -17,8 +17,8 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 1
   gpus: 0
-  val_check_interval: 2
-  limit_train_batches: 5
+  val_check_interval: 50
+  limit_train_batches: 50
   limit_val_batches: 2
 
 logger:
