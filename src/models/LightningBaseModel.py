@@ -61,7 +61,11 @@ class LightningModel(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
-        images, labels, label_names = batch
+        images, labels = batch
+        if len(labels) == 2:
+            labels, label_names = labels
+        else:
+            label_names = torch.tensor(["" for _ in range(len(labels))])
         log_images = self.log_images and batch_idx == 0
         loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
         return loss

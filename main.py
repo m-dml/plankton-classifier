@@ -71,7 +71,9 @@ def main(cfg: Config):
 
     # generate example input array:
     for batch in datamodule.train_dataloader():
-        example_input, _, _ = batch
+        example_input, _ = batch
+        if isinstance(example_input, tuple):
+            example_input = torch.stack(example_input).detach().cpu()
         break
 
     # Init Lightning model
@@ -84,7 +86,7 @@ def main(cfg: Config):
         loss=cfg.loss,
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
-        example_input_array=torch.stack(example_input).detach().cpu(),
+        example_input_array=example_input.detach().cpu(),
     )
 
     if cfg.load_state_dict is not None:
@@ -92,7 +94,7 @@ def main(cfg: Config):
             cfg.load_state_dict,
             class_labels=datamodule.unique_labels,
             all_labels=datamodule.all_labels,
-            example_input_array=torch.stack(example_input).detach().cpu(),
+            example_input_array=example_input.detach().cpu(),
         )
 
     # log hparam metrics to tensorboard:

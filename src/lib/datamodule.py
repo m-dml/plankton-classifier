@@ -49,7 +49,7 @@ class PlanktonDataLoader:
 
 @dataclass
 class CIFAR10Dataset:
-    _target_: str = "torchvision.CIFAR10.CIFAR10"
+    _target_: str = "torchvision.datasets.CIFAR10"
     download: bool = True
     root: str = MISSING  # path where to save downloaded data
 

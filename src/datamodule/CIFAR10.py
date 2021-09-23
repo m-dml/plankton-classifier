@@ -71,12 +71,14 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         if stage == "fit" or stage is None:
             self.train_data: Dataset = instantiate(self.cfg_dataset, transform=self.train_transforms, train=True)
             logging.debug(f"Number of training samples: {len(self.train_data)}")
+            self.unique_labels = self.train_data.classes
 
             self.valid_data: Dataset = instantiate(self.cfg_dataset, transform=self.train_transforms, train=False)
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         if stage == "test" or stage is None:
             self.test_data: Dataset = instantiate(self.cfg_dataset, transform=self.train_transforms, train=False)
+            self.unique_labels = self.test_data.classes
 
     def train_dataloader(self):
         return DataLoader(
