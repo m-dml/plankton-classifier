@@ -3,7 +3,7 @@ defaults:
   - submitit_slurm
 
 timeout_min: 4000 # maximum time for the job in minutes
-cpus_per_task: 10
+cpus_per_task: 40
 tasks_per_node: 1
 nodes: 1
 name: ${hydra.job.name}
