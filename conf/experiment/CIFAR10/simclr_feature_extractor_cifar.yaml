@@ -1,0 +1,44 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: cifar10
+  - override /datamodule/dataset: simclr_cifar10
+  - override /loss: simclr_loss
+  - override /datamodule/train_transforms: simclr
+  - override /datamodule/valid_transforms: simclr
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: simclr_head
+  - override /hydra/launcher: strand
+
+debug: false
+
+trainer:
+  fast_dev_run: false
+  num_sanity_val_steps: 5
+  max_epochs: 100
+  gpus: 1
+
+logger:
+  tensorboard:
+    default_hp_metric: False
+
+datamodule:
+  num_workers: 40
+  batch_size: 1024
+
+lightning_module:
+  log_confusion_matrices: false
+  log_images: false
+
+model:
+  classifier:
+    num_classes: 1000
+  feature_extractor:
+    model:
+      _target_: "torchvision.models.wide_resnet50_2"
+      num_classes: ${model.classifier.input_features}
+      pretrained: false
+      # first conv layer:
+      kernel_size: 3 # default is 7
+      stride: 1 # default is 2
+      channels: 3 # default is 3

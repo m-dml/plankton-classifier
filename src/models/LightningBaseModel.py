@@ -10,6 +10,7 @@ import torch
 import torch.nn.functional as F
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
+from src.utils import utils
 
 
 class LightningModel(pl.LightningModule):
@@ -51,6 +52,7 @@ class LightningModel(pl.LightningModule):
         self.log_confusion_matrices = log_confusion_matrices
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
+        self.console_logger = utils.get_logger("LightningBaseModel")
 
     def forward(self, images, *args, **kwargs):
         predictions = self.model(images)
@@ -113,7 +115,7 @@ class LightningModel(pl.LightningModule):
             self._update_accuracy_matrices(step, targets, labels_est)
 
         if log_images:
-            self.console_logger.warning()
+            self.console_logger.warning("Logging of images is deprecated.")
 
         return loss, accuracy
 
@@ -207,8 +209,4 @@ class LightningModel(pl.LightningModule):
 
         # save the feature_extractor_weights:
         state_dict = self.model.state_dict()
-        renamed_state_dict = {}
-        for key, value in state_dict.items():
-            new_key = key.replace("0.model.", "0.")
-            renamed_state_dict[new_key] = value
-        torch.save(renamed_state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
+        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))

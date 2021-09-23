@@ -17,6 +17,7 @@ class CustomResnet:
     kernel_size: int = 7
     stride: int = 2
     channels: int = 3
+    model: Any = None
 
 
 @dataclass
