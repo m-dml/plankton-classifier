@@ -38,7 +38,7 @@ model:
     num_classes: null
   feature_extractor:
     model:
-      _target_: "torchvision.models.resnet50"
+      _target_: "torchvision.models.wide_resnet50_2"
       num_classes: ${model.classifier.input_features}
       pretrained: false
       # first conv layer:
