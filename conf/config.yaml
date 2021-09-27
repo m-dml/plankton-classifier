@@ -1,5 +1,4 @@
 defaults:
-  - _self_
   - base_config
   - lightning_module: default
   - datamodule: plankton
@@ -18,6 +17,8 @@ defaults:
   # enable color logging
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
+
+  - _self_
 
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs
 
