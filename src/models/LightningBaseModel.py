@@ -8,6 +8,9 @@ import pytorch_lightning as pl
 import pytorch_lightning.metrics as pl_metrics
 import torch
 import torch.nn.functional as F
+from sklearn.manifold import TSNE
+import pandas as pd
+import seaborn as sns
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
@@ -21,6 +24,7 @@ class LightningModel(pl.LightningModule):
         example_input_array,
         log_images,
         log_confusion_matrices,
+        log_tsne_image,
         optimizer,
         feature_extractor,
         classifier,
@@ -50,6 +54,7 @@ class LightningModel(pl.LightningModule):
 
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
+        self.log_tsne_image = log_tsne_image
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
         self.console_logger = utils.get_logger("LightningBaseModel")
@@ -65,21 +70,21 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         log_images = self.log_images and batch_idx == 0
-        loss, acc = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
-        return loss
+        loss, acc, features = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
+        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
         log_images = self.log_images and batch_idx == 0
-        loss, acc = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
-        return loss
+        loss, acc, features = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
+        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
-        loss, acc = self._do_step(images, labels, label_names, step="Testing", log_images=False)
-        return loss
+        loss, acc, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
+        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
 
     @staticmethod
     def _pre_process_batch(batch):
@@ -104,7 +109,7 @@ class LightningModel(pl.LightningModule):
         loss = self.loss_func(class_log_probabilities, labels.view(-1).long())
         try:
             accuracy = self.accuracy_func(class_probabilities, targets)
-        except RuntimeError:
+        except (RuntimeError, ValueError):
             accuracy = 0
 
         # lets log some values for inspection (for example in tensorboard):
@@ -117,7 +122,7 @@ class LightningModel(pl.LightningModule):
         if log_images:
             self.console_logger.warning("Logging of images is deprecated.")
 
-        return loss, accuracy
+        return loss, accuracy, class_log_probabilities.detach()
 
     def _update_accuracy_matrices(self, datagroup, labels_true, labels_est):
         # sum over batch to update confusion matrix
@@ -178,15 +183,45 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
         return figure
 
-    def on_validation_epoch_end(self):
+    def validation_epoch_end(self, outputs):
         if self.log_confusion_matrices:
             self._log_accuracy_matrices("Validation")
             # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
             self._log_accuracy_matrices("Training")
 
-    def on_test_epoch_end(self):
+        if self.log_tsne_image:
+            self._create_tsne_image(outputs)
+
+    def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
             self._log_accuracy_matrices("Testing")
+        if self.log_tsne_image:
+            self._create_tsne_image(outputs)
+
+    def _create_tsne_image(self, outputs):
+        res = dict()
+        for key in outputs[0]:
+            res[key] = []
+            for ele in outputs:
+                res[key].append(ele[key])
+        features = torch.cat(res["features"], dim=0).detach().cpu().numpy()
+        labels = torch.stack(res["labels"], dim=0).detach().cpu().numpy()
+        tsne = TSNE().fit_transform(features)
+
+        tx, ty = tsne[:, 0], tsne[:, 1]
+        tx = (tx - np.min(tx)) / (np.max(tx) - np.min(tx))
+        ty = (ty - np.min(ty)) / (np.max(ty) - np.min(ty))
+
+        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": labels.flatten()})
+
+        sns.set()
+        fig, ax = plt.subplots(figsize=(16, 12))
+
+        sns.scatterplot(x="x", y="y", hue="label", data=df, ax=ax, palette="deep")
+        ax.legend(loc=4)
+        plt.gca().invert_yaxis()
+        self.logger.experiment[0].add_figure("TSNE Plot", fig, self.global_step)
+        plt.close("all")
 
     def on_save_checkpoint(self, checkpoint) -> None:
         # save model to onnx:

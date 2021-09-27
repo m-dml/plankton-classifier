@@ -16,7 +16,7 @@ class CIFAR10SimClrDataSet(CIFAR10):
         assert self.transform is not None, "Transform must be set"
 
     def __getitem__(self, index: int):
-        img, _ = self.data[index], self.targets[index]
+        img, targets = self.data[index], self.targets[index]
 
         image = Image.fromarray(img)
         image_copy = image.copy()
@@ -27,7 +27,7 @@ class CIFAR10SimClrDataSet(CIFAR10):
         if torch.equal(image, image_copy):
             self.console_logger.warning(f"Sampled Images are the same at index {index}")
 
-        return (image, image_copy), (torch.tensor(list()), "")
+        return (image, image_copy), (torch.tensor(targets), "")
 
 
 class CIFAR10DataLoader(pl.LightningDataModule):

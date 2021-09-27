@@ -2,5 +2,5 @@ defaults:
   - base_lightning_module
   - _self_
 
-_target_: "src.models.LightningBaseModel.LightningModel"
 optimizer: ${optimizer}
+log_tsne_image: true
