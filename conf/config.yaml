@@ -19,6 +19,15 @@ defaults:
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
+output_dir_base_path: /gpfs/work/machnitz/plankton_logs
+
 logger:
   tensorboard:
     default_hp_metric: False # important to be False, when we want to use own hp_metrics
+
+
+hydra:
+  sweep:
+    subdir: ${output_dir_base_path}/multirun/${hydra.job.num}_${hydra.job.num}_${hydra.job.override_dirname}
+  run:
+    dir: ${output_dir_base_path}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

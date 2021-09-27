@@ -86,3 +86,4 @@ class Config:
     debug: bool = False
     ignore_warnings: bool = False
     load_state_dict: Any = None  # if loading from state dict provide path to ckpt file as string here
+    output_dir_base_path: str = "."
