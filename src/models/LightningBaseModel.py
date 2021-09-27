@@ -205,7 +205,7 @@ class LightningModel(pl.LightningModule):
             for ele in outputs:
                 res[key].append(ele[key])
         features = torch.cat(res["features"], dim=0).detach().cpu().numpy()
-        labels = torch.stack(res["labels"], dim=0).detach().cpu().numpy()
+        labels = torch.cat(res["labels"], dim=0).detach().cpu().numpy()
         tsne = TSNE().fit_transform(features)
 
         tx, ty = tsne[:, 0], tsne[:, 1]
