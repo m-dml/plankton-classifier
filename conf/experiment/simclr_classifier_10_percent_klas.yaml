@@ -9,6 +9,7 @@ defaults:
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: simclr_classifier
   - override /hydra/launcher: strand
+  - _self_
 
 debug: false
 load_state_dict:

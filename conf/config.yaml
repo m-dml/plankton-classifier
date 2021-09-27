@@ -18,7 +18,7 @@ defaults:
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-  - _self_
+  - _self_  # should be last in defaults list to override everything in structured config with here defined values
 
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs
 

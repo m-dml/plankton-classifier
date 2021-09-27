@@ -1,2 +1,3 @@
 defaults:
   - simclr_base
+  - _self_

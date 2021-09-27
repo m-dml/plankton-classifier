@@ -1,5 +1,6 @@
 defaults:
   - base_trainer
+  - _self_
 
 gpus: 1
 min_epochs: 5

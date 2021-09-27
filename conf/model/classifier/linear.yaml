@@ -1,5 +1,6 @@
 defaults:
   - classifier_base
+  - _self_
 
 hidden_layers: []
 input_features: 1000
