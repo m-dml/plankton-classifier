@@ -10,7 +10,7 @@ deterministic: false
 precision: 32
 
 # if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
-plugins: "ddp_sharded"
+plugins: null
 
 # Choose whether to use a distributed backend (For multi-GPU training) or not:
 accelerator: "ddp" # [null, "ddp", "ddp2", "ddp_cpu"]
