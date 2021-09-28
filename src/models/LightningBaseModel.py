@@ -36,7 +36,7 @@ class LightningModel(pl.LightningModule):
 
         super().__init__()
 
-        self.lr = self.cfg_optimizer.lr
+        self.lr = optimizer.lr
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
         self.cfg_scheduler = scheduler
