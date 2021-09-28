@@ -218,7 +218,12 @@ class LightningModel(pl.LightningModule):
         tx = (tx - np.min(tx)) / (np.max(tx) - np.min(tx))
         ty = (ty - np.min(ty)) / (np.max(ty) - np.min(ty))
 
-        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": labels.flatten()})
+        class_label_dict = dict()
+        for i, label in enumerate(self.class_labels):
+            class_label_dict[i] = label
+
+        class_names = [class_label_dict[label] for label in labels]
+        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names})
 
         sns.set()
         fig, ax = plt.subplots(figsize=(16, 12))
