@@ -3,7 +3,7 @@
 defaults:
   - override /datamodule: cifar10
   - override /datamodule/dataset: cifar10
-  - override /loss: nll_loss
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: simclr
   - override /datamodule/valid_transforms: simclr_classifier
   - override /model/feature_extractor: resnet

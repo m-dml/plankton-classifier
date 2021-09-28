@@ -79,14 +79,7 @@ def extras(config: DictConfig) -> None:
 @rank_zero_only
 def print_config(
     config: DictConfig,
-    fields: Sequence[str] = (
-        "trainer",
-        "model",
-        "datamodule",
-        "callbacks",
-        "logger",
-        "lightning_module",
-    ),
+    fields: Sequence[str] = ("trainer", "model", "datamodule", "callbacks", "logger", "lightning_module", "loss"),
     resolve: bool = True,
 ) -> None:
     """Prints content of DictConfig using Rich library and its tree structure.
