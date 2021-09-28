@@ -21,7 +21,7 @@ auto_tune: true
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 50
+  max_epochs: 1000
   gpus: 1
   auto_lr_find: true
 
