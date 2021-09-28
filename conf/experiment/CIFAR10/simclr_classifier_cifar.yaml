@@ -5,7 +5,7 @@ defaults:
   - override /datamodule/dataset: cifar10
   - override /loss: nll_loss
   - override /datamodule/train_transforms: simclr
-  - override /datamodule/valid_transforms: simclr
+  - override /datamodule/valid_transforms: simclr_classifier
   - override /model/feature_extractor: resnet
   - override /model/classifier: simclr_classifier
   - override /trainer: strand
@@ -13,12 +13,12 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: "C:/Users/Tobias/PycharmProjects/plankton-classifier/outputs/2021-09-23/08-40-10/logs/checkpoints/complete_model_49.weights"
+load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2021-09-27/17-36-04/0/logs/checkpoints/complete_model_4899.weights
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 10
+  max_epochs: 50
   gpus: 1
 
 logger:
@@ -32,6 +32,7 @@ datamodule:
 lightning_module:
   log_confusion_matrices: true
   log_images: false
+  freeze_feature_extractor: true
 
 model:
   classifier:

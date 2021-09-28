@@ -4,3 +4,4 @@ defaults:
 
 optimizer: ${optimizer}
 log_tsne_image: true
+freeze_feature_extractor: false

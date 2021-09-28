@@ -29,12 +29,14 @@ class LightningModel(pl.LightningModule):
         feature_extractor,
         classifier,
         loss,
+        freeze_feature_extractor
     ):
 
         super().__init__()
 
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
+        self.freeze_feature_extractor = freeze_feature_extractor
         self.save_hyperparameters(ignore=["example_input_array", "all_labels"])
 
         self.example_input_array = example_input_array
@@ -64,7 +66,11 @@ class LightningModel(pl.LightningModule):
         return predictions
 
     def configure_optimizers(self):
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters())
+        if self.freeze_feature_extractor:
+            params = self.classifier.parameters()
+        else:
+            params = self.model.parameters()
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=params)
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):

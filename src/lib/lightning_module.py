@@ -13,3 +13,4 @@ class LitModule:
     log_images: bool = False
     log_tsne_image: bool = True
     optimizer: Optimizer = MISSING
+    freeze_feature_extractor: bool = False
