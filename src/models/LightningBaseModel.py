@@ -36,6 +36,7 @@ class LightningModel(pl.LightningModule):
 
         super().__init__()
 
+        self.lr = self.cfg_optimizer.lr
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
         self.cfg_scheduler = scheduler
@@ -71,7 +72,7 @@ class LightningModel(pl.LightningModule):
         return predictions
 
     def configure_optimizers(self):
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters())
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
             scheduler = hydra.utils.instantiate(self.cfg_scheduler, optimizer=optimizer)
             return [optimizer], [scheduler]
