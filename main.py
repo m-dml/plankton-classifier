@@ -84,6 +84,7 @@ def main(cfg: Config):
     model: LightningModule = hydra.utils.instantiate(
         cfg.lightning_module,
         optimizer=cfg.optimizer,
+        scheduler=cfg.scheduler,
         feature_extractor=cfg.model.feature_extractor,
         classifier=cfg.model.classifier,
         loss=cfg.loss,
@@ -153,6 +154,9 @@ def main(cfg: Config):
     # Init Trainer:
     log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
     trainer: Trainer = instantiate(cfg.trainer, logger=logger, callbacks=callbacks, _convert_="partial")
+
+    if cfg.auto_tune:
+        trainer.tune(model, datamodule)
 
     # trainer.tune(model, data_module)
     log.info("Starting training")

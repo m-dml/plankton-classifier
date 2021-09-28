@@ -18,6 +18,7 @@ from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet, SimCLRFeatureExtractor
 from src.lib.optimizer import SGD, Adam, RMSprop
+from src.lib.scheduler import CyclicLR
 from src.lib.trainer import Trainer
 
 
@@ -62,6 +63,9 @@ def register_configs() -> None:
     cs.store(name="sgd", node=SGD, group=optimizer_group)
     cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
 
+    # learning rate scheduler
+    cs.store(name="cyclic_learning_rate", node=CyclicLR, group="scheduler")
+
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
     cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
@@ -81,6 +85,7 @@ class Config:
     callbacks: Any = MISSING
     optimizer: Any = MISSING
     loss: Any = MISSING
+    scheduler: Any = None
 
     random_seed: int = 42
     print_config: bool = True
@@ -88,3 +93,4 @@ class Config:
     ignore_warnings: bool = False
     load_state_dict: Any = None  # if loading from state dict provide path to ckpt file as string here
     output_dir_base_path: str = MISSING
+    auto_tune: bool = False  # if true runs trainer.tune() before trainer.fit()

@@ -1,6 +1,7 @@
 # @package _global_
 
 defaults:
+  - /scheduler: cyclic_learning_rate
   - override /datamodule: cifar10
   - override /datamodule/dataset: cifar10
   - override /loss: cross_entropy_loss
@@ -8,19 +9,21 @@ defaults:
   - override /datamodule/valid_transforms: simclr_classifier
   - override /model/feature_extractor: resnet
   - override /model/classifier: linear
-  - override /optimizer: adam
+  - override /optimizer: sgd
   - override /trainer: strand
   - override /hydra/launcher: strand
   - _self_
 
 debug: false
 load_state_dict: null
+auto_tune: true
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 50
   gpus: 1
+  auto_lr_find: true
 
 logger:
   tensorboard:
@@ -28,7 +31,7 @@ logger:
 
 datamodule:
   num_workers: 40
-  batch_size: 32
+  batch_size: 128
 
 lightning_module:
   log_confusion_matrices: true

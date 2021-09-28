@@ -27,6 +27,7 @@ class LightningModel(pl.LightningModule):
         log_confusion_matrices,
         log_tsne_image,
         optimizer,
+        scheduler,
         feature_extractor,
         classifier,
         loss,
@@ -37,6 +38,7 @@ class LightningModel(pl.LightningModule):
 
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
+        self.cfg_scheduler = scheduler
         self.freeze_feature_extractor = freeze_feature_extractor
         self.save_hyperparameters(ignore=["example_input_array", "all_labels"])
 
@@ -70,6 +72,9 @@ class LightningModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters())
+        if self.cfg_scheduler:
+            scheduler = hydra.utils.instantiate(self.cfg_scheduler, optimizer=optimizer)
+            return [optimizer], [scheduler]
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
