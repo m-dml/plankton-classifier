@@ -126,13 +126,14 @@ def main(cfg: Config):
         if state_dict_error_count > 0:
             log.warning(
                 f"{state_dict_error_count} state entries are the same after init. (From a total of {len_old_state_dict} items)")
-        model.model = copy.deepcopy(net)
+
         if cfg.lightning_module.freeze_feature_extractor:
-            for name, module in model.named_modules():
-                if name == "feature_extractor":
+            for name, module in net.named_modules():
+                if name.startswith("feature_extractor"):
                     for param in module.parameters():
                         param.requires_grad = False
-        del net
+        model.model = copy.deepcopy(net)
+        del net, model.feature_extractor, model.classifier
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
 
     # log hparam metrics to tensorboard:
