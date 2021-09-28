@@ -60,5 +60,7 @@ def load_state_dict(model, checkpoint):
 
 
 def concat_feature_extractor_and_classifier(feature_extractor, classifier):
-    model = nn.Sequential(feature_extractor, classifier)
+    model = nn.Sequential()
+    model.add_module("feature_extractor", feature_extractor)
+    model.add_module("classifier", classifier)
     return model

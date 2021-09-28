@@ -4,13 +4,14 @@ import os
 import hydra
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import pytorch_lightning.metrics as pl_metrics
+import seaborn as sns
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.manifold import TSNE
-import pandas as pd
-import seaborn as sns
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
@@ -45,9 +46,11 @@ class LightningModel(pl.LightningModule):
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = pl_metrics.Accuracy()
 
-        self.feature_extractor = hydra.utils.instantiate(feature_extractor)
+        self.feature_extractor: nn.Module = hydra.utils.instantiate(feature_extractor)
+        if self.freeze_feature_extractor:
+            self.feature_extractor.eval()
         # if num_classes in the config is set to None then use the number of classes found in the dataloader:
-        self.classifier = hydra.utils.instantiate(
+        self.classifier: nn.Module = hydra.utils.instantiate(
             classifier, num_classes=classifier.num_classes or len(self.class_labels)
         )
         self.model = concat_feature_extractor_and_classifier(
@@ -66,42 +69,39 @@ class LightningModel(pl.LightningModule):
         return predictions
 
     def configure_optimizers(self):
-        if self.freeze_feature_extractor:
-            params = self.classifier.parameters()
-        else:
-            params = self.model.parameters()
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=params)
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters())
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         log_images = self.log_images and batch_idx == 0
         loss, acc, features = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
-        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
+        return {"loss": loss, "features": features, "labels": labels}
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
         log_images = self.log_images and batch_idx == 0
         loss, acc, features = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
-        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
+        return {"loss": loss, "features": features, "labels": labels}
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
         loss, acc, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
-        return {"loss": loss, "features": features, "labels": torch.cat([labels, labels], dim=0)}
+        return {"loss": loss, "features": features, "labels": labels}
 
     @staticmethod
     def _pre_process_batch(batch):
         images, labels = batch
-        if isinstance(images, (tuple, list)):
-            images = torch.stack(images)
-
         if len(labels) == 2:
             labels, label_names = labels
         else:
             label_names = torch.tensor([0 for _ in range(len(labels))])
+
+        if isinstance(images, (tuple, list)):
+            images = torch.stack(images)
+            labels = torch.cat([labels, labels], dim=0)
 
         return images, labels, label_names
 

@@ -5,6 +5,7 @@ from typing import List
 import hydra
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 from hydra.utils import instantiate
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
@@ -12,6 +13,8 @@ from torchvision.transforms import Compose
 
 from src.lib.config import Config, register_configs
 from src.utils import utils
+
+import copy
 
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
 if platform.system() == "Windows":
@@ -92,27 +95,44 @@ def main(cfg: Config):
     )
 
     # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):
+
     if cfg.load_state_dict is not None:
+        log.info(f"Loading model weights from {cfg.load_state_dict}")
+        net = copy.deepcopy(model.model.cpu())
         # check state dict before loading:
         this_state_dict = model.model.state_dict().copy()
+        len_old_state_dict = len(this_state_dict)
+        log.info(f"Old state dict has {len_old_state_dict} entries.")
         new_state_dict = torch.load(cfg.load_state_dict)
         for key in new_state_dict.keys():
             # make sure feature extractor weights are the same format:
-            if key not in this_state_dict and not key.startswith("1."):
+            if key not in this_state_dict and not key.startswith("classifier."):
                 # trigger complete traceback error if feature extractor weights are not the same
-                model.model.load_state_dict(new_state_dict, strict=True)
+                net.load_state_dict(new_state_dict, strict=True)
 
         keys_to_drop = list(this_state_dict.keys())[-2:]
         [new_state_dict.pop(key_to_drop) for key_to_drop in keys_to_drop]
-        missing_keys, unexpected_keys = model.model.load_state_dict(new_state_dict, strict=False)
+        missing_keys, unexpected_keys = net.load_state_dict(new_state_dict, strict=False)
         log.warning(f"Missing keys: {missing_keys}")
         log.warning(f"Unexpected keys: {unexpected_keys}")
-        for state_key, state in model.model.state_dict().items():
+        state_dict_error_count = 0
+        for state_key, state in net.state_dict().items():
             if this_state_dict[state_key].allclose(state, atol=1e-12, rtol=1e-12):
                 log.error(
                     f"Loaded state dict params for layer '{state_key}' are same as random initialized one ("
                     f"Might be due to caching, if you just restarted the same model twice!)"
                 )
+                state_dict_error_count += 1
+        if state_dict_error_count > 0:
+            log.warning(
+                f"{state_dict_error_count} state entries are the same after init. (From a total of {len_old_state_dict} items)")
+        model.model = copy.deepcopy(net)
+        if cfg.lightning_module.freeze_feature_extractor:
+            for name, module in model.named_modules():
+                if name == "feature_extractor":
+                    for param in module.parameters():
+                        param.requires_grad = False
+        del net
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
 
     # log hparam metrics to tensorboard:
