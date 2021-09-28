@@ -18,14 +18,13 @@ defaults:
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-  - _self_  # should be last in defaults list to override everything in structured config with here defined values
+  - _self_ # should be last in defaults list to override everything in structured config with here defined values
 
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs
 
 logger:
   tensorboard:
     default_hp_metric: False # important to be False, when we want to use own hp_metrics
-
 
 hydra:
   sweep:

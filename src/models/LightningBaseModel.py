@@ -30,7 +30,7 @@ class LightningModel(pl.LightningModule):
         feature_extractor,
         classifier,
         loss,
-        freeze_feature_extractor
+        freeze_feature_extractor,
     ):
 
         super().__init__()

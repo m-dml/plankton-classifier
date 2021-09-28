@@ -1,3 +1,4 @@
+import copy
 import os
 import platform
 from typing import List
@@ -5,7 +6,6 @@ from typing import List
 import hydra
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 from hydra.utils import instantiate
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
@@ -13,8 +13,6 @@ from torchvision.transforms import Compose
 
 from src.lib.config import Config, register_configs
 from src.utils import utils
-
-import copy
 
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
 if platform.system() == "Windows":
@@ -125,7 +123,9 @@ def main(cfg: Config):
                 state_dict_error_count += 1
         if state_dict_error_count > 0:
             log.warning(
-                f"{state_dict_error_count} state entries are the same after init. (From a total of {len_old_state_dict} items)")
+                f"{state_dict_error_count} state entries are the same after init. "
+                f"(From a total of {len_old_state_dict} items)"
+            )
 
         if cfg.lightning_module.freeze_feature_extractor:
             for name, module in net.named_modules():
