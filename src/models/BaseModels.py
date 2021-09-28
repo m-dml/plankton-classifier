@@ -51,8 +51,8 @@ class SimCLRFeatureExtractor(CustomResnet):
         image_transformations_1, image_transformations_2 = image_tuples
         features_1 = self.model(image_transformations_1)
         features_2 = self.model(image_transformations_2)
-        proj_features = torch.cat([features_1, features_2], dim=0)
-        return proj_features
+        features = torch.cat([features_1, features_2], dim=0)
+        return features
 
 
 def load_state_dict(model, checkpoint):
