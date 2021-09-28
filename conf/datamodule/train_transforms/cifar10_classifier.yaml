@@ -1,0 +1,17 @@
+_target_: torchvision.transforms.Compose
+
+transforms:
+  - _target_: torchvision.transforms.ColorJitter
+    brightness: 0.5
+    contrast: 0.3
+    saturation: 0.3
+    hue: 0.3
+
+  - _target_: torchvision.transforms.RandomHorizontalFlip
+
+  - _target_: torchvision.transforms.RandomVerticalFlip
+
+  - _target_: torchvision.transforms.RandomRotation
+    degrees: 360
+
+  - _target_: torchvision.transforms.ToTensor
