@@ -11,6 +11,7 @@ defaults:
   - loss: nll_loss
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
+  - callbacks/early_stopping: early_stopping
 
   - override hydra/launcher: strand
 
