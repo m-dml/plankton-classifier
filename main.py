@@ -156,6 +156,7 @@ def main(cfg: Config):
     trainer: Trainer = instantiate(cfg.trainer, logger=logger, callbacks=callbacks, _convert_="partial")
 
     if cfg.auto_tune:
+        log.info("Starting tuning the model")
         trainer.tune(model, datamodule)
 
     # trainer.tune(model, data_module)

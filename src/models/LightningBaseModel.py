@@ -241,6 +241,9 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
 
     def on_save_checkpoint(self, checkpoint) -> None:
+        if self.automatic_optimization and (self.current_epoch == 0):
+            return
+
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
         onnx_file_generator = os.path.join(folder, f"complete_model_{self.global_step}.onnx")
