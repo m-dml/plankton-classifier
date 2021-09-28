@@ -19,10 +19,10 @@ class GPUMonitur:
 
 
 @dataclass
-class EarlyStopipingCallback:
-    _target_: str = "pytorch_lightning.callbacks.early_stopping.EarlyStopping"
-    monitor = "Accuracy/Validation"
-    min_delta = 0.00
-    patience = 10
-    verbose = True
-    mode = "max"
+class EarlyStoppingCallback:
+    _target_: str = "pytorch_lightning.callbacks.EarlyStopping"
+    monitor: str = "Accuracy/Validation"
+    min_delta: float = 0.00
+    patience: int = 20
+    verbose: bool = True
+    mode: str = "max"
