@@ -80,6 +80,9 @@ def main(cfg: Config):
 
     log.info(f"Size of one batch is: {example_input.element_size() * example_input.nelement() / 2**20} mb")
 
+    is_in_simclr_mode = example_input.shape[0] == 2  # if first dimension is 2, then it is in simclr mode -> True
+    log.info(f"Model is in simclr mode?: <{is_in_simclr_mode}>")
+
     # Init Lightning model
     log.info(f"Instantiating model <{cfg.lightning_module._target_}>")
     model: LightningModule = hydra.utils.instantiate(
@@ -92,7 +95,7 @@ def main(cfg: Config):
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
         example_input_array=example_input.detach().cpu(),
-        is_in_simclr_mode=example_input.shape[0] == 2  # if first dimension is 2, then it is in simclr mode -> True
+        is_in_simclr_mode=is_in_simclr_mode
     )
 
     # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):

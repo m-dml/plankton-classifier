@@ -115,7 +115,6 @@ class LightningModel(pl.LightningModule):
             label_names = torch.tensor([0 for _ in range(len(labels))])
 
         if isinstance(images, (tuple, list)):
-            self.is_in_simclr_mode = True
             labels = torch.cat([labels, labels], dim=0)
 
         return images, labels, label_names
