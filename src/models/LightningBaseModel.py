@@ -70,7 +70,12 @@ class LightningModel(pl.LightningModule):
         self.is_in_simclr_mode = is_in_simclr_mode
 
     def setup(self, *args, **kwargs):
-        self.logger.experiment[0].add_graph(self.model, self.example_input_array)
+        if self.is_in_simclr_mode:
+            example_input = self.example_input_array[0]
+        else:
+            example_input = self.example_input_array
+        self.console_logger.info("Logging model graph")
+        self.logger.experiment[0].add_graph(self.model, example_input)
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
