@@ -69,6 +69,9 @@ class LightningModel(pl.LightningModule):
         self.console_logger = utils.get_logger("LightningBaseModel")
         self.is_in_simclr_mode = is_in_simclr_mode
 
+    def setup(self, *args, **kwargs):
+        self.logger.experiment[0].add_graph(self.model, self.example_input_array)
+
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
             class_log_probabilities_0 = self.model(images[0])
