@@ -13,6 +13,7 @@ from torchvision.transforms import Compose
 
 from src.lib.config import Config, register_configs
 from src.utils import utils
+from src.models.BaseModels import concat_feature_extractor_and_classifier
 
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
 if platform.system() == "Windows":
@@ -91,10 +92,11 @@ def main(cfg: Config):
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
         example_input_array=example_input.detach().cpu(),
+        is_in_simclr_mode=example_input.shape[0] == 2  # if first dimension is 2, then it is in simclr mode -> True
     )
 
     # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):
-
+    device = "cuda" if cfg.trainer.gpus > 0 else "cpu"
     if cfg.load_state_dict is not None:
         log.info(f"Loading model weights from {cfg.load_state_dict}")
         net = copy.deepcopy(model.model.cpu())
@@ -102,7 +104,7 @@ def main(cfg: Config):
         this_state_dict = model.model.state_dict().copy()
         len_old_state_dict = len(this_state_dict)
         log.info(f"Old state dict has {len_old_state_dict} entries.")
-        new_state_dict = torch.load(cfg.load_state_dict)
+        new_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
         for key in new_state_dict.keys():
             # make sure feature extractor weights are the same format:
             if key not in this_state_dict and not key.startswith("classifier."):
@@ -133,8 +135,10 @@ def main(cfg: Config):
                 if name.startswith("feature_extractor"):
                     for param in module.parameters():
                         param.requires_grad = False
-        model.model = copy.deepcopy(net)
-        del net, model.feature_extractor, model.classifier
+        model.feature_extractor = copy.deepcopy(net.feature_extractor)
+        model.classifier = copy.deepcopy(net.classifier)
+        model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
+        del net
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
 
     # log hparam metrics to tensorboard:

@@ -1,5 +1,5 @@
 defaults:
-  - simclr_base
+  - custom_resnet_base
   - _self_
 
 model:

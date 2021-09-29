@@ -16,7 +16,7 @@ from src.lib.datamodule import (
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss
-from src.lib.model import Classifier, CustomResnet, ResNet, SimCLRFeatureExtractor
+from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.scheduler import CyclicLR
 from src.lib.trainer import Trainer
@@ -30,7 +30,6 @@ def register_configs() -> None:
     # the model:
     feature_extractor_group = "model/feature_extractor"
     cs.store(name="resnet_base", node=ResNet, group=feature_extractor_group)
-    cs.store(name="simclr_base", node=SimCLRFeatureExtractor, group=feature_extractor_group)
     cs.store(name="custom_resnet_base", node=CustomResnet, group=feature_extractor_group)
 
     cs.store(name="classifier_base", node=Classifier, group="model/classifier")

@@ -1,6 +1,5 @@
 from typing import List
 
-import torch
 import torch.nn as nn
 
 
@@ -41,19 +40,6 @@ class CustomResnet(nn.Module):
 
     def forward(self, x):
         return self.model(x)
-
-
-class SimCLRFeatureExtractor(CustomResnet):
-    def __init__(self, model, **kwargs):
-        super(SimCLRFeatureExtractor, self).__init__(model, **kwargs)
-
-    def forward(self, image_tuples):
-        image_transformations_1, image_transformations_2 = image_tuples
-        features_1 = self.model(image_transformations_1)
-        features_2 = self.model(image_transformations_2)
-        features = torch.cat([features_1, features_2], dim=0)
-        return features
-
 
 def load_state_dict(model, checkpoint):
     return model.load_state_dict(checkpoint, strict=True)

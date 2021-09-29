@@ -32,6 +32,7 @@ class LightningModel(pl.LightningModule):
         classifier,
         loss,
         freeze_feature_extractor,
+        is_in_simclr_mode
     ):
 
         super().__init__()
@@ -66,9 +67,15 @@ class LightningModel(pl.LightningModule):
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
         self.console_logger = utils.get_logger("LightningBaseModel")
+        self.is_in_simclr_mode = is_in_simclr_mode
 
     def forward(self, images, *args, **kwargs):
-        predictions = self.model(images)
+        if self.is_in_simclr_mode:
+            class_log_probabilities_0 = self.model(images[0])
+            class_log_probabilities_1 = self.model(images[1])
+            predictions = torch.cat([class_log_probabilities_0, class_log_probabilities_1], dim=0)
+        else:
+            predictions = self.model(images)
         return predictions
 
     def configure_optimizers(self):
@@ -97,8 +104,7 @@ class LightningModel(pl.LightningModule):
         loss, acc, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
         return {"loss": loss, "features": features, "labels": labels}
 
-    @staticmethod
-    def _pre_process_batch(batch):
+    def _pre_process_batch(self, batch):
         images, labels = batch
         if len(labels) == 2:
             labels, label_names = labels
@@ -106,7 +112,7 @@ class LightningModel(pl.LightningModule):
             label_names = torch.tensor([0 for _ in range(len(labels))])
 
         if isinstance(images, (tuple, list)):
-            images = torch.stack(images)
+            self.is_in_simclr_mode = True
             labels = torch.cat([labels, labels], dim=0)
 
         return images, labels, label_names

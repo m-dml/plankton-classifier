@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: "C:/Users/Tobias/PycharmProjects/plankton-classifier/outputs/2021-09-23/10-59-53/logs/checkpoints/complete_model_49.weights"
+load_state_dict: C:/Users/Machnitz/PycharmProjects/plankton-classifier/outputs/complete_model_4899.weights
 
 trainer:
   fast_dev_run: false
@@ -40,7 +40,7 @@ model:
     num_classes: null
   feature_extractor:
     model:
-      _target_: "torchvision.models.resnet18"
+      _target_: "torchvision.models.wide_resnet50_2"
       num_classes: ${model.classifier.input_features}
       pretrained: false
       # first conv layer:
