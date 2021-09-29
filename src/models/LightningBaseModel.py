@@ -229,9 +229,8 @@ class LightningModel(pl.LightningModule):
             class_label_dict[i] = label
 
         class_names = [class_label_dict[label] for label in labels]
-        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names})
+        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names}).sort_values(by="label")
 
-        sns.set()
         fig, ax = plt.subplots(figsize=(16, 12))
 
         sns.scatterplot(x="x", y="y", hue="label", data=df, ax=ax, palette="deep")
