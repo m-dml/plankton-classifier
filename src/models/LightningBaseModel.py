@@ -255,9 +255,13 @@ class LightningModel(pl.LightningModule):
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
         onnx_file_generator = os.path.join(folder, f"complete_model_{self.global_step}.onnx")
+        if self.is_in_simclr_mode:
+            example_input = self.example_input_array[0]
+        else:
+            example_input = self.example_input_array
         torch.onnx.export(
             model=self.model,
-            args=self.example_input_array.to(self.device),
+            args=example_input.to(self.device),
             f=onnx_file_generator,
             opset_version=12,
             verbose=False,
