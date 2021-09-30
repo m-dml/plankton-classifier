@@ -77,12 +77,16 @@ class LightningModel(pl.LightningModule):
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
-            class_log_probabilities_0 = self.model(images[0])
-            class_log_probabilities_1 = self.model(images[1])
+            features_0 = self.feature_extractor(images[0])
+            features_1 = self.feature_extractor(images[1])
+            class_log_probabilities_0 = self.classifier(features_0)
+            class_log_probabilities_1 = self.classifier(features_1)
             predictions = torch.cat([class_log_probabilities_0, class_log_probabilities_1], dim=0)
+            features = torch.cat([features_0, features_1], dim=0)
         else:
-            predictions = self.model(images)
-        return predictions
+            features = self.feature_extractor(images)
+            predictions = self.classifier(features)
+        return features, predictions
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
@@ -94,21 +98,21 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         log_images = self.log_images and batch_idx == 0
-        loss, acc, features = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
-        return {"loss": loss, "features": features, "labels": labels}
+        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
+        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
         log_images = self.log_images and batch_idx == 0
-        loss, acc, features = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
-        return {"loss": loss, "features": features, "labels": labels}
+        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
+        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
 
-        loss, acc, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
-        return {"loss": loss, "features": features, "labels": labels}
+        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
+        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def _pre_process_batch(self, batch):
         images, labels = batch
@@ -124,12 +128,12 @@ class LightningModel(pl.LightningModule):
 
     def _do_step(self, images, labels, label_names, step, log_images=False):
 
-        class_log_probabilities = self(images)
-        class_probabilities = F.softmax(class_log_probabilities.detach(), dim=1).detach().cpu()
-        labels_est = class_log_probabilities.detach().argmax(dim=-1).cpu()
+        features, classifier_outputs = self(images)
+        class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
+        labels_est = classifier_outputs.detach().argmax(dim=-1).cpu()
         targets = labels.detach().view(-1).to(torch.int).cpu()
 
-        loss = self.loss_func(class_log_probabilities, labels.view(-1).long())
+        loss = self.loss_func(classifier_outputs, labels.view(-1).long())
         try:
             accuracy = self.accuracy_func(class_probabilities, targets)
         except (RuntimeError, ValueError):
@@ -145,7 +149,7 @@ class LightningModel(pl.LightningModule):
         if log_images:
             self.console_logger.warning("Logging of images is deprecated.")
 
-        return loss, accuracy, class_log_probabilities.detach()
+        return loss, accuracy, classifier_outputs.detach(), features.detach()
 
     def _update_accuracy_matrices(self, datagroup, labels_true, labels_est):
         # sum over batch to update confusion matrix
@@ -213,22 +217,32 @@ class LightningModel(pl.LightningModule):
             self._log_accuracy_matrices("Training")
 
         if self.log_tsne_image:
-            self._create_tsne_image(outputs)
+            self.plot_tsne_images(outputs)
 
     def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
             self._log_accuracy_matrices("Testing")
-        if self.log_tsne_image:
-            self._create_tsne_image(outputs)
 
-    def _create_tsne_image(self, outputs):
+        if self.log_tsne_image:
+            self.plot_tsne_images(outputs)
+
+    def plot_tsne_images(self, outputs):
+        if isinstance(outputs[0], list):
+            outputs = [item for sublist in outputs for item in sublist]
+
         res = dict()
         for key in outputs[0]:
             res[key] = []
             for ele in outputs:
                 res[key].append(ele[key])
-        features = torch.cat(res["features"], dim=0).detach().cpu().numpy()
+
         labels = torch.cat(res["labels"], dim=0).detach().cpu().numpy()
+        features = torch.cat(res["features"], dim=0).detach().cpu().numpy()
+        classifier_outputs = torch.cat(res["classifier"], dim=0).detach().cpu().numpy()
+        self._create_tsne_image(labels, classifier_outputs, "Classifier")
+        self._create_tsne_image(labels, features, "Feature Extractor")
+
+    def _create_tsne_image(self, labels, features, name):
         tsne = TSNE().fit_transform(features)
 
         tx, ty = tsne[:, 0], tsne[:, 1]
@@ -241,22 +255,12 @@ class LightningModel(pl.LightningModule):
 
         class_names = [class_label_dict[label] for label in labels]
         df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names}).sort_values(by="label")
-
-        fig, ax1 = plt.subplots(figsize=(8, 8))
         num_points = len(df)
-        g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax1, palette="deep", kind='kde', fill=True,
-                          joint_kws={'alpha': 0.4})
-        plt.tight_layout()
-        self.logger.experiment[0].add_figure("TSNE KDE", g.fig, self.global_step)
-        plt.close("all")
-
-        del fig, g
-
         fig, ax2 = plt.subplots(figsize=(8, 8))
         g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax2, palette="deep", marginal_ticks=True, s=10)
-        plt.suptitle(f"TSNE regression | {num_points} points")
+        plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         plt.tight_layout()
-        self.logger.experiment[0].add_figure("TSNE Scatter", g.fig, self.global_step)
+        self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 
     def on_save_checkpoint(self, checkpoint) -> None:
