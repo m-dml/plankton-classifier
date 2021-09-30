@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: C:/Users/Machnitz/PycharmProjects/plankton-classifier/outputs/complete_model_4899.weights
+load_state_dict: C:/Users/Machnitz/PycharmProjects/plankton-classifier/outputs/complete_model_2596.weights
 
 trainer:
   fast_dev_run: false

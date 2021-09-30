@@ -14,7 +14,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2021-09-27/17-36-04/0/logs/checkpoints/complete_model_4899.weights
+load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2021-09-30/09-56-43/0/logs/checkpoints/complete_model_2596.weights
 
 trainer:
   fast_dev_run: false
