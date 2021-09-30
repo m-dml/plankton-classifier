@@ -242,23 +242,22 @@ class LightningModel(pl.LightningModule):
         class_names = [class_label_dict[label] for label in labels]
         df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names}).sort_values(by="label")
 
-        fig, ax1= plt.subplots(figsize=(8, 8))
+        fig, ax1 = plt.subplots(figsize=(8, 8))
         num_points = len(df)
-        sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax1, palette="deep", kind='kde', fill=True,
-                      joint_kws={'alpha': 0.4})
-        ax1.legend(loc=4)
+        g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax1, palette="deep", kind='kde', fill=True,
+                          joint_kws={'alpha': 0.4})
         plt.tight_layout()
-        self.logger.experiment[0].add_figure("TSNE KDE", fig, self.global_step)
+        self.logger.experiment[0].add_figure("TSNE KDE", g.fig, self.global_step)
         plt.close("all")
 
-        del fig
+        del fig, g
 
-        fig, ax2= plt.subplots(figsize=(8, 8))
-        sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax2, palette="deep", marginal_ticks=True)
-        ax2.legend(loc=4)
+        fig, ax2 = plt.subplots(figsize=(8, 8))
+        g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax2, palette="deep", marginal_ticks=True,
+                      joint_kws={'alpha': 0.4})
         plt.suptitle(f"TSNE regression | {num_points} points")
         plt.tight_layout()
-        self.logger.experiment[0].add_figure("TSNE Scatter", fig, self.global_step)
+        self.logger.experiment[0].add_figure("TSNE Scatter", g.fig, self.global_step)
         plt.close("all")
 
     def on_save_checkpoint(self, checkpoint) -> None:
