@@ -133,16 +133,24 @@ def main(cfg: Config):
                 f"(From a total of {len_old_state_dict} items)"
             )
 
-        if cfg.lightning_module.freeze_feature_extractor:
-            for name, module in net.named_modules():
-                if name.startswith("feature_extractor"):
-                    for param in module.parameters():
-                        param.requires_grad = False
         model.feature_extractor = copy.deepcopy(net.feature_extractor)
         model.classifier = copy.deepcopy(net.classifier)
         model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
         del net
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
+
+    # freeze the weights of the feature extractor to only train the classifier
+    if cfg.lightning_module.freeze_feature_extractor:
+        log.info("Freezing the weights of the feature extractor")
+        net = copy.deepcopy(model.model.cpu())
+        for name, module in net.named_modules():
+            if name.startswith("feature_extractor"):
+                for param in module.parameters():
+                    param.requires_grad = False
+        model.feature_extractor = copy.deepcopy(net.feature_extractor)
+        model.classifier = copy.deepcopy(net.classifier)
+        model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
+        del net
 
     # log hparam metrics to tensorboard:
     log.info("Logging hparams to tensorboard")
