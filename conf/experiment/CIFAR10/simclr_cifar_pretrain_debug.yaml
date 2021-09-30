@@ -24,7 +24,7 @@ trainer:
 
 logger:
   tensorboard:
-    default_hp_metric: False
+    default_hp_metric: false
 
 datamodule:
   num_workers: 0
