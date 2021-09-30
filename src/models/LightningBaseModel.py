@@ -72,7 +72,7 @@ class LightningModel(pl.LightningModule):
     def setup(self, *args, **kwargs):
         self.model = self.model.to(self.device)
         self.console_logger.info("Logging model graph")
-        self.logger.experiment[0].add_graph(self, self.example_input_array.to(self.device))
+        self.logger.experiment[0].add_graph(self.to("cpu"), self.example_input_array.to("cpu"))
         self.console_logger.info("Successful saved model graph")
 
     def forward(self, images, *args, **kwargs):
