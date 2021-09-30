@@ -75,7 +75,7 @@ class LightningModel(pl.LightningModule):
         else:
             example_input = self.example_input_array
         self.console_logger.info("Logging model graph")
-        self.logger.experiment[0].add_graph(self.model, example_input)
+        self.logger.experiment[0].add_graph(self.model, example_input.to(self.device))
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:

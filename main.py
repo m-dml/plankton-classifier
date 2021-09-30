@@ -133,8 +133,8 @@ def main(cfg: Config):
                 f"(From a total of {len_old_state_dict} items)"
             )
 
-        model.feature_extractor = copy.deepcopy(net.feature_extractor)
-        model.classifier = copy.deepcopy(net.classifier)
+        model.feature_extractor = copy.deepcopy(net.feature_extractor.to(device))
+        model.classifier = copy.deepcopy(net.classifier.to(device))
         model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
         del net
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
@@ -147,8 +147,8 @@ def main(cfg: Config):
             if name.startswith("feature_extractor"):
                 for param in module.parameters():
                     param.requires_grad = False
-        model.feature_extractor = copy.deepcopy(net.feature_extractor)
-        model.classifier = copy.deepcopy(net.classifier)
+        model.feature_extractor = copy.deepcopy(net.feature_extractor.to(device))
+        model.classifier = copy.deepcopy(net.classifier.to(device))
         model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
         del net
 
