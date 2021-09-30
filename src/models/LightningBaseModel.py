@@ -71,12 +71,8 @@ class LightningModel(pl.LightningModule):
 
     def setup(self, *args, **kwargs):
         self.model = self.model.to(self.device)
-        if self.is_in_simclr_mode:
-            example_input = self.example_input_array[0]
-        else:
-            example_input = self.example_input_array
         self.console_logger.info("Logging model graph")
-        self.logger.experiment[0].add_graph(self.model, example_input.to(self.device))
+        self.logger.experiment[0].add_graph(self, self.example_input_array.to(self.device))
         self.console_logger.info("Successful saved model graph")
 
     def forward(self, images, *args, **kwargs):
