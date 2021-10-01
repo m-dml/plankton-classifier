@@ -51,7 +51,7 @@ optimizer:
 
 callbacks:
   early_stopping:
-    monitor: "Loss/Validation"
+    monitor: "loss/Validation"
     patience: 50
     verbose: true
     mode: "min"
