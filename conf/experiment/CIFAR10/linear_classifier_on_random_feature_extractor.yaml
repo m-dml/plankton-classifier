@@ -14,7 +14,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: ""
+load_state_dict: null
 
 trainer:
   fast_dev_run: false
