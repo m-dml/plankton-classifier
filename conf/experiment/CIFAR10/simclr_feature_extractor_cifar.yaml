@@ -18,7 +18,7 @@ debug: false
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 100
+  max_epochs: 1000
   gpus: 1
 
 logger:
@@ -48,3 +48,10 @@ model:
 
 optimizer:
   lr: 0.02
+
+callbacks:
+  early_stopping:
+    monitor: "Loss/Validation"
+    patience: int = 50
+    verbose: bool = True
+    mode: str = "min"
