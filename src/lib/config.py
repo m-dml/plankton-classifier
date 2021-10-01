@@ -15,7 +15,7 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss
+from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss, NTXentLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import SGD, Adam, RMSprop
 from src.lib.scheduler import CyclicLR
@@ -70,6 +70,7 @@ def register_configs() -> None:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
     cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
     cs.store(name="cross_entropy_loss", node=CrossEntropyLoss, group="loss")
+    cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
 
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)

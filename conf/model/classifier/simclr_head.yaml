@@ -2,7 +2,8 @@ defaults:
   - classifier_base
   - _self_
 
-hidden_layers: [1000, 1000]
-input_features: 1000
+hidden_layers: [2048]
+input_features: 2048
+normalize: true
 activation:
   _target_: torch.nn.ReLU

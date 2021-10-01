@@ -67,7 +67,7 @@ class LightningModel(pl.LightningModule):
         self.log_tsne_image = log_tsne_image
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
-        self.console_logger = utils.get_logger("LightningBaseModel", level=logging.DEBUG)
+        self.console_logger = utils.get_logger("LightningBaseModel", level=logging.INFO)
         self.is_in_simclr_mode = is_in_simclr_mode
 
     def forward(self, images, *args, **kwargs):
@@ -92,7 +92,7 @@ class LightningModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        classifier_outputs, features = self._do_gpu_parallel_step(images)
+        features, classifier_outputs = self._do_gpu_parallel_step(images)
 
         return features, labels, classifier_outputs
 
@@ -104,7 +104,7 @@ class LightningModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
-        classifier_outputs, features = self._do_gpu_parallel_step(images)
+        features, classifier_outputs = self._do_gpu_parallel_step(images)
 
         return features, labels, classifier_outputs
 
@@ -116,7 +116,7 @@ class LightningModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        classifier_outputs, features = self._do_gpu_parallel_step(images)
+        features, classifier_outputs = self._do_gpu_parallel_step(images)
 
         return features, labels, classifier_outputs
 
@@ -139,7 +139,7 @@ class LightningModel(pl.LightningModule):
 
     def _do_gpu_parallel_step(self, images):
         features, classifier_outputs = self(images)
-        return classifier_outputs, features
+        return features, classifier_outputs
 
     def _do_gpu_accumulated_step(self, classifier_outputs, labels, step):
         class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()

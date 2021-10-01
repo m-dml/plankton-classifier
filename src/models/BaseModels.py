@@ -1,6 +1,7 @@
 from typing import List
 
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class Classifier(nn.Module):
@@ -10,8 +11,10 @@ class Classifier(nn.Module):
         hidden_layers: List[int] = (1000, 1000),
         activation=nn.ReLU(),
         input_features: int = 1000,
+        normalize: bool = False,
     ):
         super(Classifier, self).__init__()
+        self.normalize = normalize
         self.hidden_layers = hidden_layers
         self.num_classes = num_classes
         self.activation = activation
@@ -20,13 +23,18 @@ class Classifier(nn.Module):
         modules = []
         for i in range(len(self.hidden_layers) - 1):
             modules.append(nn.Linear(self.hidden_layers[i], self.hidden_layers[i + 1]))
+            modules.append(nn.BatchNorm1d(self.hidden_layers[i + 1]))
             modules.append(activation)
 
         modules.append(nn.Linear(self.hidden_layers[-1], num_classes))
         self.model = nn.Sequential(*modules)
 
     def forward(self, x):
-        return self.model(x)
+        if self.normalize:
+            x = self.model(x)
+            return F.normalize(x, dim=1)
+        else:
+            return self.model(x)
 
 
 class CustomResnet(nn.Module):
@@ -40,6 +48,7 @@ class CustomResnet(nn.Module):
 
     def forward(self, x):
         return self.model(x)
+
 
 def load_state_dict(model, checkpoint):
     return model.load_state_dict(checkpoint, strict=True)

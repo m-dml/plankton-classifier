@@ -27,3 +27,4 @@ class Classifier:
     activation: Any = MISSING
     input_features: int = 1000
     num_classes: Any = None
+    normalize: bool = False
