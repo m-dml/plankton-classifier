@@ -95,7 +95,8 @@ def main(cfg: Config):
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
         example_input_array=example_input.detach().cpu(),
-        is_in_simclr_mode=is_in_simclr_mode
+        is_in_simclr_mode=is_in_simclr_mode,
+        batch_size=cfg.datamodule.batch_size,
     )
 
     # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):

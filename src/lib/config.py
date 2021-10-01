@@ -17,8 +17,8 @@ from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss, NTXentLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
-from src.lib.optimizer import SGD, Adam, RMSprop
-from src.lib.scheduler import CyclicLR
+from src.lib.optimizer import SGD, Adam, RMSprop, LARS
+from src.lib.scheduler import CyclicLR, LinearWarmupDecay
 from src.lib.trainer import Trainer
 
 
@@ -62,9 +62,11 @@ def register_configs() -> None:
     cs.store(name="adam", node=Adam, group=optimizer_group)
     cs.store(name="sgd", node=SGD, group=optimizer_group)
     cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
+    cs.store(name="lars", node=LARS, group=optimizer_group)
 
     # learning rate scheduler
     cs.store(name="cyclic_learning_rate", node=CyclicLR, group="scheduler")
+    cs.store(name="linear_warmup_decay_base", node=LinearWarmupDecay, group="scheduler")
 
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")

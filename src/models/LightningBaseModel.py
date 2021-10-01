@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.manifold import TSNE
+from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
@@ -33,7 +34,8 @@ class LightningModel(pl.LightningModule):
         classifier,
         loss,
         freeze_feature_extractor,
-        is_in_simclr_mode
+        is_in_simclr_mode,
+        batch_size
     ):
 
         super().__init__()
@@ -69,6 +71,7 @@ class LightningModel(pl.LightningModule):
         self._init_accuracy_matrices()
         self.console_logger = utils.get_logger("LightningBaseModel", level=logging.INFO)
         self.is_in_simclr_mode = is_in_simclr_mode
+        self.batch_size = batch_size
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -86,8 +89,18 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
-            scheduler = hydra.utils.instantiate(self.cfg_scheduler, optimizer=optimizer)
+            global_batch_size = self.trainer.num_nodes * self.trainer.gpus * self.batch_size if self.trainer.gpus > 0 else self.batch_size
+            train_iters_per_epoch = len(self.all_labels) // global_batch_size
+            warmup_steps = train_iters_per_epoch * 10
+            total_steps = train_iters_per_epoch * self.trainer.max_epochs
+            scheduler = {
+                "scheduler": torch.optim.lr_scheduler.LambdaLR(optimizer,
+                                                    linear_warmup_decay(warmup_steps, total_steps, cosine=True)),
+                "interval": "step",
+                "frequency": 1,
+            }
             return [optimizer], [scheduler]
+
         return optimizer
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
