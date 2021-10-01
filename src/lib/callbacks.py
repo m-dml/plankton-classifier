@@ -26,3 +26,9 @@ class EarlyStoppingCallback:
     patience: int = 20
     verbose: bool = True
     mode: str = "max"
+
+
+@dataclass
+class LRMonitor:
+    _target_: str = "pytorch_lightning.callbacks.lr_monitor.LearningRateMonitor"
+    logging_interval: str = "step"

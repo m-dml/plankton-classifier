@@ -12,6 +12,7 @@ defaults:
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
   - callbacks/early_stopping: early_stopping
+  - callbacks/lr_monitor: lr_monitor
 
   - override hydra/launcher: strand
 
