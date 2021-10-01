@@ -1,4 +1,5 @@
 import itertools
+import logging
 import os
 
 import hydra
@@ -66,14 +67,8 @@ class LightningModel(pl.LightningModule):
         self.log_tsne_image = log_tsne_image
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
-        self.console_logger = utils.get_logger("LightningBaseModel")
+        self.console_logger = utils.get_logger("LightningBaseModel", level=logging.DEBUG)
         self.is_in_simclr_mode = is_in_simclr_mode
-
-    # def setup(self, *args, **kwargs):
-    #     self.model = self.model.to(self.device)
-    #     self.console_logger.info("Logging model graph")
-    #     self.logger.experiment[0].add_graph(self.to("cpu"), self.example_input_array.to("cpu"))
-    #     self.console_logger.info("Successful saved model graph")
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -97,21 +92,37 @@ class LightningModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        log_images = self.log_images and batch_idx == 0
-        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Training", log_images=log_images)
+        classifier_outputs, features = self._do_gpu_parallel_step(images)
+
+        return features, labels, classifier_outputs
+
+    def training_step_end(self, training_step_outputs, *args, **kwargs):
+        features, labels, classifier_outputs = training_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Training")
         return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
+        self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
+        classifier_outputs, features = self._do_gpu_parallel_step(images)
 
-        log_images = self.log_images and batch_idx == 0
-        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Validation", log_images=log_images)
+        return features, labels, classifier_outputs
+
+    def validation_step_end(self, validation_step_outputs, *args, **kwargs):
+        features, labels, classifier_outputs = validation_step_outputs
+        self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
+        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Validation")
         return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
+        classifier_outputs, features = self._do_gpu_parallel_step(images)
 
-        loss, acc, classifier_outputs, features = self._do_step(images, labels, label_names, step="Testing", log_images=False)
+        return features, labels, classifier_outputs
+
+    def test_step_end(self, test_step_outputs, *args, **kwargs):
+        features, labels, classifier_outputs = test_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Testing")
         return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def _pre_process_batch(self, batch):
@@ -126,9 +137,11 @@ class LightningModel(pl.LightningModule):
 
         return images, labels, label_names
 
-    def _do_step(self, images, labels, label_names, step, log_images=False):
-
+    def _do_gpu_parallel_step(self, images):
         features, classifier_outputs = self(images)
+        return classifier_outputs, features
+
+    def _do_gpu_accumulated_step(self, classifier_outputs, labels, step):
         class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
         labels_est = classifier_outputs.detach().argmax(dim=-1).cpu()
         targets = labels.detach().view(-1).to(torch.int).cpu()
@@ -146,10 +159,7 @@ class LightningModel(pl.LightningModule):
         if self.log_confusion_matrices:
             self._update_accuracy_matrices(step, targets, labels_est)
 
-        if log_images:
-            self.console_logger.warning("Logging of images is deprecated.")
-
-        return loss, accuracy, classifier_outputs.detach(), features.detach()
+        return loss, accuracy
 
     def _update_accuracy_matrices(self, datagroup, labels_true, labels_est):
         # sum over batch to update confusion matrix
