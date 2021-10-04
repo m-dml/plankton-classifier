@@ -18,16 +18,29 @@ debug: false
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 1000
-  gpus: 1
+  max_epochs: 400
+  gpus: 2
+  accelerator: ddp
+  plugins: null
+  precision: 16
+  num_nodes: 2
+  sync_batchnorm: true
+
+hydra:
+  launcher:
+    partition: p2GPU32
+    cpus_per_task: 20
+    tasks_per_node: ${trainer.gpus} # == gpus_per_node
+    nodes: ${trainer.num_nodes}
+
 
 logger:
   tensorboard:
     default_hp_metric: false
 
 datamodule:
-  num_workers: 40
-  batch_size: 1024
+  num_workers: 20
+  batch_size: 256
 
 lightning_module:
   log_confusion_matrices: false
@@ -47,11 +60,11 @@ model:
     channels: 3 # default is 3
 
 optimizer:
-  lr: 0.02
+  lr: 4.8
 
 callbacks:
   early_stopping:
     monitor: "loss/Validation"
-    patience: 50
+    patience: 400
     verbose: true
     mode: "min"
