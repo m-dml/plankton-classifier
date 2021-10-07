@@ -2,10 +2,12 @@ import logging
 
 import pytorch_lightning as pl
 import torch
-from hydra.utils import instantiate
 from PIL import Image
+from hydra.utils import instantiate
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CIFAR10
+
+from src.utils import utils
 
 
 class CIFAR10SimClrDataSet(CIFAR10):
@@ -14,6 +16,7 @@ class CIFAR10SimClrDataSet(CIFAR10):
         self.transform = transform
 
         assert self.transform is not None, "Transform must be set"
+        self.console_logger = utils.get_logger("CIFAR10Dataset", level=logging.INFO)
 
     def __getitem__(self, index: int):
         img, targets = self.data[index], self.targets[index]
