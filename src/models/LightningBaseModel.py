@@ -17,6 +17,7 @@ from sklearn.manifold import TSNE
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
+from sklearn.linear_model import SGDClassifier
 
 
 class LightningModel(pl.LightningModule):
@@ -271,8 +272,17 @@ class LightningModel(pl.LightningModule):
         labels = torch.cat(res["labels"], dim=0).detach().cpu().numpy()
         features = torch.cat(res["features"], dim=0).detach().cpu().numpy()
         classifier_outputs = torch.cat(res["classifier"], dim=0).detach().cpu().numpy()
+
         self._create_tsne_image(labels, classifier_outputs, "Classifier")
         self._create_tsne_image(labels, features, "Feature Extractor")
+        self._log_online_accuracy(features, labels)
+
+    def _log_online_accuracy(self, x, y):
+        train_size = int(len(x) / 2)
+        clf = SGDClassifier(max_iter=1000, tol=1e-3)
+        clf.fit(x[:train_size], y[:train_size])
+        mean_acc = clf.score(x[train_size:], y[train_size:])
+        self.log("Online Linear ACC", mean_acc)
 
     def _create_tsne_image(self, labels, features, name):
         tsne = TSNE().fit_transform(features)
