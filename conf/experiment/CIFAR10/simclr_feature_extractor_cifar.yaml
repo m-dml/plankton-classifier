@@ -34,7 +34,6 @@ hydra:
     tasks_per_node: ${trainer.gpus} # == gpus_per_node
     nodes: ${trainer.num_nodes}
 
-
 logger:
   tensorboard:
     default_hp_metric: false

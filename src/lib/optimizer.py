@@ -22,11 +22,11 @@ class RMSprop(Optimizer):
     _target_: str = "torch.optim.RMSprop"
     momentum: float = 0
 
+
 @dataclass
 class LARS(Optimizer):
     _target_: str = "pl_bolts.optimizers.lars.LARS"
-    lr : float = 4.8
+    lr: float = 4.8
     momentum: float = 0.9
     trust_coefficient: float = 0.001
     weight_decay: float = 1e-6
-

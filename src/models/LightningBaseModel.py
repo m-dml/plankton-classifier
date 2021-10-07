@@ -12,8 +12,8 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.manifold import TSNE
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
+from sklearn.manifold import TSNE
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
@@ -35,7 +35,7 @@ class LightningModel(pl.LightningModule):
         loss,
         freeze_feature_extractor,
         is_in_simclr_mode,
-        batch_size
+        batch_size,
     ):
 
         super().__init__()
@@ -89,13 +89,18 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
-            global_batch_size = self.trainer.num_nodes * self.trainer.gpus * self.batch_size if self.trainer.gpus > 0 else self.batch_size
+            global_batch_size = (
+                self.trainer.num_nodes * self.trainer.gpus * self.batch_size
+                if self.trainer.gpus > 0
+                else self.batch_size
+            )
             train_iters_per_epoch = len(self.all_labels) // global_batch_size
             warmup_steps = train_iters_per_epoch * 10
             total_steps = train_iters_per_epoch * self.trainer.max_epochs
             scheduler = {
-                "scheduler": torch.optim.lr_scheduler.LambdaLR(optimizer,
-                                                    linear_warmup_decay(warmup_steps, total_steps, cosine=True)),
+                "scheduler": torch.optim.lr_scheduler.LambdaLR(
+                    optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
+                ),
                 "interval": "step",
                 "frequency": 1,
             }

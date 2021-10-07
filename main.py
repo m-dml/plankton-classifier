@@ -12,8 +12,8 @@ from pytorch_lightning.loggers import LightningLoggerBase
 from torchvision.transforms import Compose
 
 from src.lib.config import Config, register_configs
-from src.utils import utils
 from src.models.BaseModels import concat_feature_extractor_and_classifier
+from src.utils import utils
 
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
 if platform.system() == "Windows":

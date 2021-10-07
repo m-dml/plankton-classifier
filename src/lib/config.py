@@ -4,7 +4,7 @@ from typing import Any
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
-from src.lib.callbacks import CheckpointCallback, GPUMonitur, EarlyStoppingCallback, LRMonitor
+from src.lib.callbacks import CheckpointCallback, EarlyStoppingCallback, GPUMonitur, LRMonitor
 from src.lib.datamodule import (
     CIFAR10DataLoader,
     CIFAR10Dataset,
@@ -15,9 +15,9 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import CrossEntropyLoss, NLLLoss, SimCLRLoss, NTXentLoss
+from src.lib.loss import CrossEntropyLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
-from src.lib.optimizer import SGD, Adam, RMSprop, LARS
+from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.scheduler import CyclicLR, LinearWarmupDecay
 from src.lib.trainer import Trainer
 

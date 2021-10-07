@@ -16,7 +16,7 @@ class Resize:
 @dataclass
 class RandomRotation:
     _target_: str = "torchvision.transforms.RandomRotation"
-    degrees: float = 360.
+    degrees: float = 360.0
 
 
 @dataclass

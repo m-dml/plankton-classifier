@@ -1,7 +1,6 @@
 _target_: torchvision.transforms.Compose
 
 transforms:
-
   - _target_: torchvision.transforms.RandomApply
     p: 0.5 # each of the following transformations has this chance of being applied
     transforms:
