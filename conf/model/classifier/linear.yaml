@@ -3,6 +3,6 @@ defaults:
   - _self_
 
 hidden_layers: []
-input_features: 1000
+input_features: 2048
 activation:
   _target_: torch.nn.ReLU

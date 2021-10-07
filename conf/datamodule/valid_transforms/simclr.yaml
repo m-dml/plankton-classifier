@@ -7,17 +7,14 @@ transforms:
     transforms:
       - _target_: torchvision.transforms.RandomCrop
         size:
-          - 26
-          - 26
+          - 22
+          - 22
 
   - _target_: torchvision.transforms.ColorJitter
     brightness: 0.5
-    contrast: 0.3
-    saturation: 0.3
-    hue: 0.3
-
-  - _target_: torchvision.transforms.GaussianBlur
-    kernel_size: 5
+    contrast: 0.5
+    saturation: 0.5
+    hue: 0.5
 
   - _target_: torchvision.transforms.Resize
     size:

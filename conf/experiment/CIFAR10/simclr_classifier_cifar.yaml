@@ -49,4 +49,4 @@ model:
     channels: 3 # default is 3
 
 optimizer:
-  lr: 0.001
+  lr: 0.02
