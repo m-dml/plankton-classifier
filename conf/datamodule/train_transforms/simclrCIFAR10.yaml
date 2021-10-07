@@ -16,12 +16,7 @@ transforms:
     saturation: 0.5
     hue: 0.5
 
-  - _target_: torchvision.transforms.GaussianBlur
-    kernel_size: 5
-
-  - _target_: torchvision.transforms.Resize
-    size:
-      - 32
-      - 32
+  - _target_: torchvision.transforms.RandomRotation
+    degrees: 45
 
   - _target_: torchvision.transforms.ToTensor
