@@ -95,12 +95,14 @@ class LightningModel(pl.LightningModule):
                 else self.batch_size
             )
             self.console_logger.info("global batch size is {}".format(global_batch_size))
-            train_iters_per_epoch = len(self.all_labels) // global_batch_size
+            train_iters_per_epoch = self.train_dataloader().sampler.num_samples // global_batch_size
+            self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = train_iters_per_epoch * 10
             total_steps = train_iters_per_epoch * self.trainer.max_epochs
             scheduler = {
                 "scheduler": torch.optim.lr_scheduler.LambdaLR(
-                    optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
+                    optimizer,
+                    linear_warmup_decay(warmup_steps, total_steps, cosine=True)
                 ),
                 "interval": "step",
                 "frequency": 1,
