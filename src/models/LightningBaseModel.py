@@ -94,6 +94,7 @@ class LightningModel(pl.LightningModule):
                 if self.trainer.gpus > 0
                 else self.batch_size
             )
+            self.console_logger.info("global batch size is {}".format(global_batch_size))
             train_iters_per_epoch = len(self.all_labels) // global_batch_size
             warmup_steps = train_iters_per_epoch * 10
             total_steps = train_iters_per_epoch * self.trainer.max_epochs
