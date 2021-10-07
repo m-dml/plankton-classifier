@@ -1,6 +1,7 @@
 # @package _global_
 
 defaults:
+  - /scheduler: linear_warmup_decay
   - override /datamodule: cifar10
   - override /datamodule/dataset: simclr_cifar10
   - override /loss: nt_xent_loss

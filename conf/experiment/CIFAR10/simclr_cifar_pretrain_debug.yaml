@@ -5,8 +5,8 @@ defaults:
   - override /datamodule: cifar10
   - override /datamodule/dataset: simclr_cifar10
   - override /loss: nt_xent_loss
-  - override /datamodule/train_transforms: simclr
-  - override /datamodule/valid_transforms: simclr
+  - override /datamodule/train_transforms: simclrCIFAR10
+  - override /datamodule/valid_transforms: simclrCIFAR10
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: simclr_head
   - override /hydra/launcher: local
