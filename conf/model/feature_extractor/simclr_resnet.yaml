@@ -11,3 +11,4 @@ model:
 kernel_size: 7 # default is 7
 stride: 2 # default is 2
 channels: 3 # default is 3
+maxpool1: true

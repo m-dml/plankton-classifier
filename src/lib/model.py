@@ -18,6 +18,7 @@ class CustomResnet:
     stride: int = 2
     channels: int = 3
     model: Any = None
+    maxpool1: bool = True
 
 
 @dataclass
@@ -28,3 +29,4 @@ class Classifier:
     input_features: int = 1000
     num_classes: Any = None
     normalize: bool = False
+    bias_in_last_layer: bool = True

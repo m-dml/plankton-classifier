@@ -4,6 +4,8 @@ defaults:
 
 hidden_layers: [2048]
 input_features: 2048
+num_classes: 128
 normalize: true
 activation:
   _target_: torch.nn.ReLU
+bias_in_last_layer: false
