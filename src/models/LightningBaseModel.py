@@ -86,26 +86,8 @@ class LightningModel(pl.LightningModule):
             predictions = self.classifier(features)
         return features, predictions
 
-    def _exclude_from_wt_decay(self, named_params, weight_decay, skip_list=("bias", "bn")):
-        params = []
-        excluded_params = []
-
-        for name, param in named_params:
-            if not param.requires_grad:
-                continue
-            elif any(layer_name in name for layer_name in skip_list):
-                excluded_params.append(param)
-            else:
-                params.append(param)
-
-        return [
-            {"params": params, "weight_decay": weight_decay},
-            {"params": excluded_params, "weight_decay": 0.0},
-        ]
-
     def configure_optimizers(self):
-        params = self._exclude_from_wt_decay(self.named_parameters(), weight_decay=self.cfg_optimizer.weight_decay)
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=params, lr=self.lr, _convert_="all")
+        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
             global_batch_size = (
                 self.trainer.num_nodes * self.trainer.gpus * self.batch_size
@@ -121,6 +103,7 @@ class LightningModel(pl.LightningModule):
                 ),
                 "interval": "step",
                 "frequency": 1,
+                "name": "Lars"
             }
             return [optimizer], [scheduler]
 
