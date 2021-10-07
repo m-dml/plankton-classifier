@@ -61,7 +61,7 @@ model:
     maxpool1: false
 
 optimizer:
-  lr: 4.8
+  lr: 6
 
 callbacks:
   early_stopping:
