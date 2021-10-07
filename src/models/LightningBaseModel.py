@@ -112,6 +112,7 @@ class LightningModel(pl.LightningModule):
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_outputs = self._do_gpu_parallel_step(images)
+        self.log("Learning Rate", self.optimizers().optimizer.param_groups[0]["lr"])
 
         return features, labels, classifier_outputs
 
