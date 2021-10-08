@@ -41,6 +41,7 @@ logger:
 datamodule:
   num_workers: 20
   batch_size: 256
+  oversample_data: true
 
 lightning_module:
   log_confusion_matrices: false
@@ -49,6 +50,7 @@ lightning_module:
 model:
   classifier:
     num_classes: 128  # size of the projection head
+    input_features: 2048
   feature_extractor:
     model:
       _target_: "torchvision.models.wide_resnet101_2"
@@ -66,6 +68,6 @@ optimizer:
 callbacks:
   early_stopping:
     monitor: "loss/Validation"
-    patience: 400
+    patience: 800
     verbose: true
     mode: "min"
