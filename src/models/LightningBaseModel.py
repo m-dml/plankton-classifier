@@ -291,6 +291,9 @@ class LightningModel(pl.LightningModule):
         self._log_online_accuracy(features, labels)
 
     def _log_online_accuracy(self, x, y):
+        if len(np.unique(y)) < 2:
+            self.console_logger.warning("Not enough classes to evaluate classifier in online mode")
+            return
         train_size = int(len(x) / 2)
         clf = SGDClassifier(max_iter=1000, tol=1e-3)
         clf.fit(x[:train_size], y[:train_size])
@@ -308,7 +311,7 @@ class LightningModel(pl.LightningModule):
         for i, label in enumerate(self.class_labels):
             class_label_dict[i] = label
 
-        class_names = [class_label_dict[label] for label in labels]
+        class_names = [class_label_dict[label] for label in labels.flatten().tolist()]
         df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names}).sort_values(by="label")
         num_points = len(df)
         fig, ax2 = plt.subplots(figsize=(8, 8))

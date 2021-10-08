@@ -84,7 +84,7 @@ class PlanktonDataSetSimCLR(ParentDataSet):
         if torch.equal(image, image_copy):
             self.console_logger.warning(f"Sampled Images are the same at index {item}")
 
-        return (image, image_copy), (torch.tensor(list()), "")
+        return (image, image_copy), (torch.tensor(self.integer_labels[label_name]))
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
