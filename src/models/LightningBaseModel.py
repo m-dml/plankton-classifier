@@ -13,13 +13,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
+from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
+from sklearn.metrics import balanced_accuracy_score
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
-from sklearn.linear_model import SGDClassifier
-from sklearn.utils.class_weight import compute_sample_weight
-from sklearn.metrics import balanced_accuracy_score
 
 
 class LightningModel(pl.LightningModule):
