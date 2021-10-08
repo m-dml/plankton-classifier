@@ -164,11 +164,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
 
-        if self.use_canadian_data:
+        if self.use_canadian_data and (not self.use_klas_data and not self.use_planktonnet_data):
             train_subset = training_pairs[0]
             valid_subset = training_pairs[1]
             test_subset = training_pairs[1]  # This is only to not brake the code if a test-dataloader is needed.
+
         else:
+            if self.use_canadian_data:
+                training_pairs = [*training_pairs[0], *training_pairs[1]]
             train_split = self.train_split
             valid_split = train_split + self.validation_split
             length = len(training_pairs)
@@ -181,11 +184,11 @@ class PlanktonDataLoader(pl.LightningDataModule):
             test_split_end = length
 
             train_subset = training_pairs[train_split_start:train_split_end]
-            self.console_logger.info(f"There are {len(train_subset)} training files")
             valid_subset = training_pairs[valid_split_start:valid_split_end]
-            self.console_logger.info(f"There are {len(valid_subset)} validation files")
             test_subset = training_pairs[test_split_start:test_split_end]
 
+        self.console_logger.info(f"There are {len(train_subset)} training files")
+        self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit" or stage is None:
             self.train_data: Dataset = instantiate(
                 self.cfg_dataset,
