@@ -12,7 +12,7 @@ class Classifier(nn.Module):
         activation=nn.ReLU(),
         input_features: int = 1000,
         normalize: bool = False,
-        bias_in_last_layer: bool = True
+        bias_in_last_layer: bool = True,
     ):
         super(Classifier, self).__init__()
         self.normalize = normalize

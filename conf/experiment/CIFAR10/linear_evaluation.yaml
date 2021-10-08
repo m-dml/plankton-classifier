@@ -64,9 +64,9 @@ model:
     maxpool1: false
 
 optimizer:
-    nesterov: false
-    momentum: 0.9
-    lr: 0.3
+  nesterov: false
+  momentum: 0.9
+  lr: 0.3
 
 callbacks:
   early_stopping:

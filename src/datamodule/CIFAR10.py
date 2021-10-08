@@ -2,8 +2,8 @@ import logging
 
 import pytorch_lightning as pl
 import torch
-from PIL import Image
 from hydra.utils import instantiate
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CIFAR10
 

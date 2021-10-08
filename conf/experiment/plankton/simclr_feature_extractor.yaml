@@ -55,7 +55,7 @@ lightning_module:
 
 model:
   classifier:
-    num_classes: 128  # size of the projection head
+    num_classes: 128 # size of the projection head
     input_features: 2048
   feature_extractor:
     model:

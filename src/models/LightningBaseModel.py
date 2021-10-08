@@ -104,25 +104,24 @@ class LightningModel(pl.LightningModule):
             if self.cfg_scheduler == "linear_warmup_decay":
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.LambdaLR(
-                        optimizer,
-                        linear_warmup_decay(warmup_steps, total_steps, cosine=True)
+                        optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
                     ),
                     "interval": "step",
                     "frequency": 1,
-                    "name": "Lars-LR"
+                    "name": "Lars-LR",
                 }
             elif self.cfg_scheduler == "cosine":
                 scheduler = {
-                    "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                                            total_steps,
-                                                                            eta_min=0.0),
+                    "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_steps, eta_min=0.0),
                     "interval": "step",
                     "frequency": 1,
-                    "name": "Cosine LR"
+                    "name": "Cosine LR",
                 }
             else:
-                raise NotImplementedError(f"The scheduler {self.cfg_scheduler} is not implemented. Please use one of "
-                                          f"[linear_warmup_decay, cosine] or none.")
+                raise NotImplementedError(
+                    f"The scheduler {self.cfg_scheduler} is not implemented. Please use one of "
+                    f"[linear_warmup_decay, cosine] or none."
+                )
             return [optimizer], [scheduler]
 
         return optimizer
