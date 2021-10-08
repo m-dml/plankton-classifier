@@ -20,7 +20,7 @@ scheduler: "linear_warmup_decay"
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 800
+  max_epochs: 400
   gpus: 2
   accelerator: ddp
   plugins: null
