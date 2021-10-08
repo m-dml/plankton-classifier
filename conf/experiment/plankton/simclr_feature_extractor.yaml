@@ -44,7 +44,7 @@ datamodule:
   batch_size: 128
   oversample_data: false
   pin_memory: false
-  retuce_blurry: true # use just 10.000 blurry images
+  reduce_blurry: true # use just 10.000 blurry images
 
 lightning_module:
   log_confusion_matrices: false
