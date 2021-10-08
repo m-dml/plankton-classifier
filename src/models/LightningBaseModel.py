@@ -320,9 +320,17 @@ class LightningModel(pl.LightningModule):
         num_points = len(df)
         fig, ax2 = plt.subplots(figsize=(8, 8))
         g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax2, palette="deep", marginal_ticks=True, s=10)
-        g.fig.axes[0].legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=2)
+
+        box = g.fig.axes[0].get_position()
+        g.fig.axes[0].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
+
+        box = g.fig.axes[2].get_position()
+        g.fig.axes[2].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
+
+        g.fig.axes[0].legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3)
+        g.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.show()
         self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
