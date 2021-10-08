@@ -18,6 +18,8 @@ from sklearn.manifold import TSNE
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
 from sklearn.linear_model import SGDClassifier
+from sklearn.utils.class_weight import compute_sample_weight
+from sklearn.metrics import balanced_accuracy_score
 
 
 class LightningModel(pl.LightningModule):
@@ -297,8 +299,12 @@ class LightningModel(pl.LightningModule):
         train_size = int(len(x) / 2)
         clf = SGDClassifier(max_iter=1000, tol=1e-3)
         clf.fit(x[:train_size], y[:train_size])
+        predictions = clf.predict(x[train_size:])
+        balanced_acc = balanced_accuracy_score(y_true=y[train_size:], y_pred=predictions)
+
         mean_acc = clf.score(x[train_size:], y[train_size:])
         self.log("Online Linear ACC", mean_acc)
+        self.log("Online Linear balanced ACC", balanced_acc)
 
     def _create_tsne_image(self, labels, features, name):
         tsne = TSNE().fit_transform(features)
