@@ -148,6 +148,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.random_seed = random_seed
         self.cfg_dataset = dataset
         self.pin_memory = pin_memory
+        self.console_logger = utils.get_logger(__name__)
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -178,7 +179,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
             test_split_end = length
 
             train_subset = training_pairs[train_split_start:train_split_end]
+            self.console_logger.info(f"There are {len(train_subset)} training files")
             valid_subset = training_pairs[valid_split_start:valid_split_end]
+            self.console_logger.info(f"There are {len(valid_subset)} validation files")
             test_subset = training_pairs[test_split_start:test_split_end]
 
         if stage == "fit" or stage is None:
@@ -234,7 +237,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_canadian_data:
             return files, test_files
 
-        return files[:100]
+        files = files
+        return files
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
