@@ -50,6 +50,7 @@ class PlanktonDataLoader(ParentDataloader):
     planktonnet_data_path: str = data_base_path + "PlanktonNet/DYB-PlanktonNet_V1.0_EN"
     canadian_data_path: str = data_base_path + "canadian_dataset"
     random_seed: int = 0
+    reduce_blurry: bool = False
 
 
 @dataclass

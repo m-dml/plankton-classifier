@@ -111,6 +111,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         train_transforms,
         valid_transforms,
         dataset,
+        reduce_blurry,
         pin_memory=False,
         **kwargs,
     ):
@@ -148,6 +149,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.random_seed = random_seed
         self.cfg_dataset = dataset
         self.pin_memory = pin_memory
+        self.reduce_blurry = reduce_blurry
         self.console_logger = utils.get_logger(__name__)
 
     def setup(self, stage=None):
@@ -252,6 +254,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
             if label not in self.unique_labels:
                 self.unique_labels.append(label)
 
+        if folder.strip().lower() == "blurry" and self.reduce_blurry:
+            return files[:10000]
         return files
 
     def _find_super_class(self, label):
