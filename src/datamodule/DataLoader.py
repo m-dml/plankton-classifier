@@ -255,7 +255,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 self.unique_labels.append(label)
 
         if len(files) > 10000 and self.reduce_data:
-            self.console_logger.info(f"using only 10k blurry images from orig={len(files)}")
+            self.console_logger.info(f"using only 10k {folder} images from orig={len(files)}")
             return files[:10000]
         return files
 
