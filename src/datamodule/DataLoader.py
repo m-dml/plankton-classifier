@@ -237,7 +237,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_canadian_data:
             return files, test_files
 
-        files = files
+        # files = files
         return files
 
     def _add_data_from_folder(self, folder, file_ext="png"):
