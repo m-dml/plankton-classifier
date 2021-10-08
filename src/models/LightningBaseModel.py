@@ -113,7 +113,7 @@ class LightningModel(pl.LightningModule):
             elif self.cfg_scheduler == "cosine":
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                                            self.trainer.max_epochs,
+                                                                            total_steps,
                                                                             eta_min=0.0),
                     "interval": "step",
                     "frequency": 1,
