@@ -1,7 +1,0 @@
-defaults:
-  - linear_warmup_decay_base
-
-lr_lambda:
-  _target_: "pl_bolts.optimizers.lr_scheduler.linear_warmup_decay"
-  cosine: true
-  linear: false

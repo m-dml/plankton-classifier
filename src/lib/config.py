@@ -18,7 +18,6 @@ from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
-from src.lib.scheduler import CyclicLR, LinearWarmupDecay
 from src.lib.trainer import Trainer
 
 
@@ -65,10 +64,6 @@ def register_configs() -> None:
     cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
     cs.store(name="lars", node=LARS, group=optimizer_group)
 
-    # learning rate scheduler
-    cs.store(name="cyclic_learning_rate", node=CyclicLR, group="scheduler")
-    cs.store(name="linear_warmup_decay_base", node=LinearWarmupDecay, group="scheduler")
-
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
     cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
@@ -89,8 +84,8 @@ class Config:
     callbacks: Any = MISSING
     optimizer: Any = MISSING
     loss: Any = MISSING
-    scheduler: Any = None
 
+    scheduler: Any = None
     random_seed: int = 42
     print_config: bool = True
     debug: bool = False

@@ -14,7 +14,10 @@ class Adam(Optimizer):
 @dataclass
 class SGD(Optimizer):
     _target_: str = "torch.optim.SGD"
-    momentum: float = 0
+    nesterov: bool = False
+    momentum: float = 0.9
+    weight_decay: float = 1e-6
+    lr: float = 0.3
 
 
 @dataclass
