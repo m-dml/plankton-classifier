@@ -165,6 +165,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
 
         if self.use_canadian_data and (not self.use_klas_data and not self.use_planktonnet_data):
+            self.console_logger.info("Using only canadian data")
             train_subset = training_pairs[0]
             valid_subset = training_pairs[1]
             test_subset = training_pairs[1]  # This is only to not brake the code if a test-dataloader is needed.
@@ -172,6 +173,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
         else:
             if self.use_canadian_data:
                 training_pairs = [*training_pairs[0], *training_pairs[1]]
+                self.console_logger.info(f"Using canadian data in some combination. Combined training pairs are "
+                                         f"{len(training_pairs)}")
+            else:
+                self.console_logger.info("Not using canadian data")
             train_split = self.train_split
             valid_split = train_split + self.validation_split
             length = len(training_pairs)
