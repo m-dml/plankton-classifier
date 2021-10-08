@@ -41,10 +41,13 @@ logger:
 
 datamodule:
   num_workers: 20
-  batch_size: 128
+  batch_size: 512
   oversample_data: false
   pin_memory: false
-  reduce_data: true # use just 10.000 blurry images
+  reduce_data: true # use max 10.000 images from each class
+  use_klas_data: true
+  use_canadian_data: true
+  use_planktonnet_data: true
 
 lightning_module:
   log_confusion_matrices: false
