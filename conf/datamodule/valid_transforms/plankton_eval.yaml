@@ -1,6 +1,6 @@
 _target_: torchvision.transforms.Compose
 transforms:
-  - _target_: torchvision.transforms.
+  - _target_: torchvision.transforms.Resize
     size:
       - 128
       - 128
