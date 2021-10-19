@@ -79,7 +79,6 @@ def extras(config: DictConfig) -> None:
 @rank_zero_only
 def print_config(
     config: DictConfig,
-    fields: Sequence[str] = ("trainer", "model", "datamodule", "callbacks", "logger", "lightning_module", "loss"),
     resolve: bool = True,
 ) -> None:
     """Prints content of DictConfig using Rich library and its tree structure.
@@ -93,7 +92,7 @@ def print_config(
     style = "dim"
     tree = rich.tree.Tree(":gear: CONFIG", style=style, guide_style=style)
 
-    for field in fields:
+    for field in config.keys():
         branch = tree.add(field, style=style, guide_style=style)
 
         config_section = config.get(field)

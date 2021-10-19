@@ -180,9 +180,8 @@ def main(cfg: Config):
     try:
         trainer.fit(model, datamodule)
     except:
-        log.exception("Model Failed")
+        log.exception("!!! Model Failed !!!")
         raise
-
 
     # Print path to best checkpoint
     if trainer.checkpoint_callback.best_model_path is not None:
