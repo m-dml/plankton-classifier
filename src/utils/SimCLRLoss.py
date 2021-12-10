@@ -35,7 +35,9 @@ class SimCLRLoss(nn.Module):
         # 0 indicates that 2 images are NOT a pair (either positive or negative, depending on the indicator type)
         # 1 indices that 2 images ARE a pair (either positive or negative, depending on the indicator type)
         pos_sample_indicators = torch.roll(torch.eye(2 * batch_size), batch_size, 1).to(device)
-        neg_sample_indicators = (torch.ones(2 * batch_size) - torch.eye(2 * batch_size)).to(device)
+
+        # have all values but the diagonal components
+        all_sample_indicators = (torch.ones(2 * batch_size) - torch.eye(2 * batch_size)).to(device)
 
         # Calculate the numerator of the Loss expression by selecting the appropriate elements from similarity_matrix.
         # Use the pos_sample_indicators tensor
@@ -44,7 +46,7 @@ class SimCLRLoss(nn.Module):
         # Calculate the denominator of the Loss expression by selecting the appropriate elements from similarity_matrix,
         # and summing over pairs for each item.
         # Use the neg_sample_indicators tensor
-        denominator = torch.sum(torch.exp(similarity_matrix / self.temperature) * neg_sample_indicators, dim=1)
+        denominator = torch.sum(torch.exp(similarity_matrix / self.temperature) * all_sample_indicators, dim=1)
 
         if (denominator < 1e-8).any():  # clamp to avoid division by 0
             denominator = torch.clamp(denominator, 1e-8)

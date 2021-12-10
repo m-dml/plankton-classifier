@@ -5,6 +5,13 @@ from omegaconf import MISSING
 
 
 @dataclass
+class ParentDataloader:
+    pin_memory: bool = False
+    batch_size: int = 16
+    num_workers: int = 0
+
+
+@dataclass
 class PlanktonDataSet:
     _target_: str = "src.datamodule.DataLoader.PlanktonDataSet"
     final_image_size: int = 500
@@ -19,7 +26,7 @@ class PlanktonDataSetSimCLR:
 
 
 @dataclass
-class PlanktonDataLoader:
+class PlanktonDataLoader(ParentDataloader):
     _target_: str = "src.datamodule.DataLoader.PlanktonDataLoader"
     _recursive_: bool = False
     train_transforms: Any = MISSING
@@ -27,8 +34,6 @@ class PlanktonDataLoader:
     dataset: Any = MISSING
 
     excluded_labels: Any = None
-    batch_size: int = 16
-    num_workers: int = 0
     train_split: float = 0.8
     validation_split: float = 0.1
     shuffle_train_dataset: bool = True
@@ -45,6 +50,7 @@ class PlanktonDataLoader:
     planktonnet_data_path: str = data_base_path + "PlanktonNet/DYB-PlanktonNet_V1.0_EN"
     canadian_data_path: str = data_base_path + "canadian_dataset"
     random_seed: int = 0
+    reduce_data: bool = False
 
 
 @dataclass
@@ -62,15 +68,13 @@ class CIFAR10DatasetSimClr:
 
 
 @dataclass
-class CIFAR10DataLoader:
+class CIFAR10DataLoader(ParentDataloader):
     _target_: str = "src.datamodule.CIFAR10.CIFAR10DataLoader"
     _recursive_: bool = False
 
     dataset: Any = MISSING
     train_transforms: Any = MISSING
     valid_transforms: Any = MISSING
-    batch_size: int = 16
-    num_workers: int = 0
     shuffle_train_dataset: bool = True
     shuffle_validation_dataset: bool = False
     shuffle_test_dataset: bool = False

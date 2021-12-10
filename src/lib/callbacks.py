@@ -16,3 +16,19 @@ class CheckpointCallback:
 @dataclass
 class GPUMonitur:
     _target_: str = "pytorch_lightning.callbacks.GPUStatsMonitor"
+
+
+@dataclass
+class EarlyStoppingCallback:
+    _target_: str = "pytorch_lightning.callbacks.EarlyStopping"
+    monitor: str = "Accuracy/Validation"
+    min_delta: float = 0.00
+    patience: int = 20
+    verbose: bool = True
+    mode: str = "max"
+
+
+@dataclass
+class LRMonitor:
+    _target_: str = "pytorch_lightning.callbacks.lr_monitor.LearningRateMonitor"
+    logging_interval: str = "step"

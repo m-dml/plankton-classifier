@@ -7,6 +7,8 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CIFAR10
 
+from src.utils import utils
+
 
 class CIFAR10SimClrDataSet(CIFAR10):
     def __init__(self, transform=None, *args, **kwargs):
@@ -14,9 +16,10 @@ class CIFAR10SimClrDataSet(CIFAR10):
         self.transform = transform
 
         assert self.transform is not None, "Transform must be set"
+        self.console_logger = utils.get_logger("CIFAR10Dataset", level=logging.INFO)
 
     def __getitem__(self, index: int):
-        img, _ = self.data[index], self.targets[index]
+        img, targets = self.data[index], self.targets[index]
 
         image = Image.fromarray(img)
         image_copy = image.copy()
@@ -27,7 +30,7 @@ class CIFAR10SimClrDataSet(CIFAR10):
         if torch.equal(image, image_copy):
             self.console_logger.warning(f"Sampled Images are the same at index {index}")
 
-        return (image, image_copy), (torch.tensor(list()), "")
+        return (image, image_copy), (torch.tensor(targets), "")
 
 
 class CIFAR10DataLoader(pl.LightningDataModule):
@@ -42,6 +45,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         shuffle_train_dataset: bool = True,
         shuffle_valid_dataset: bool = False,
         shuffle_test_dataset: bool = False,
+        pin_memory: bool = False,
         **kwargs,
     ):
         super(CIFAR10DataLoader, self).__init__()
@@ -61,6 +65,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         self.shuffle_train_dataset = shuffle_train_dataset
         self.shuffle_valid_dataset = shuffle_valid_dataset
         self.shuffle_test_dataset = shuffle_test_dataset
+        self.pin_memory = pin_memory
 
         # for integration with the plankton structure:
         self.unique_labels = []  # noqa
@@ -85,7 +90,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             self.train_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_train_dataset,
         )
 
@@ -94,7 +99,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             self.valid_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_valid_dataset,
         )
 
@@ -104,5 +109,5 @@ class CIFAR10DataLoader(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=self.shuffle_test_dataset,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
         )

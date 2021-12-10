@@ -1,34 +1,26 @@
 _target_: torchvision.transforms.Compose
 
 transforms:
-  # 1. resize and make a squre:
-  - _target_: torchvision.transforms.Resize
-    size:
-      - 64
-      - 64
-
-  # 2. apply some randomly chosen transformations:
   - _target_: torchvision.transforms.RandomApply
     p: 0.5 # each of the following transformations has this chance of being applied
     transforms:
       - _target_: torchvision.transforms.RandomCrop
         size:
-          - 48
-          - 48
+          - 22
+          - 22
 
   - _target_: torchvision.transforms.ColorJitter
     brightness: 0.5
-    contrast: 0.3
-    saturation: 0.3
-    hue: 0.3
+    contrast: 0.5
+    saturation: 0.5
+    hue: 0.5
 
   - _target_: torchvision.transforms.GaussianBlur
     kernel_size: 5
 
-  # 3. resize again to make sure all inputs to the NN have the same size
   - _target_: torchvision.transforms.Resize
     size:
-      - 64
-      - 64
+      - 32
+      - 32
 
   - _target_: torchvision.transforms.ToTensor

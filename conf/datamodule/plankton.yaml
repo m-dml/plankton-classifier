@@ -13,7 +13,7 @@ shuffle_test_dataset: false
 preload_dataset: false
 use_planktonnet_data: false
 use_klas_data: true
-use_canadian_data: False
+use_canadian_data: false
 super_classes:
   {
     MarineSnow:

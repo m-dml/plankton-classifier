@@ -84,7 +84,7 @@ class PlanktonDataSetSimCLR(ParentDataSet):
         if torch.equal(image, image_copy):
             self.console_logger.warning(f"Sampled Images are the same at index {item}")
 
-        return (image, image_copy), (torch.tensor(list()), "")
+        return (image, image_copy), (torch.tensor(self.integer_labels[label_name]))
 
 
 class PlanktonDataLoader(pl.LightningDataModule):
@@ -111,6 +111,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         train_transforms,
         valid_transforms,
         dataset,
+        reduce_data,
+        pin_memory=False,
         **kwargs,
     ):
         super().__init__()
@@ -146,6 +148,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.oversample_data = oversample_data
         self.random_seed = random_seed
         self.cfg_dataset = dataset
+        self.pin_memory = pin_memory
+        self.reduce_data = reduce_data
+        self.console_logger = utils.get_logger(__name__)
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -159,11 +164,19 @@ class PlanktonDataLoader(pl.LightningDataModule):
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
 
-        if self.use_canadian_data:
+        if self.use_canadian_data and (not self.use_klas_data and not self.use_planktonnet_data):
+            self.console_logger.info("Using only canadian data")
             train_subset = training_pairs[0]
             valid_subset = training_pairs[1]
             test_subset = training_pairs[1]  # This is only to not brake the code if a test-dataloader is needed.
+
         else:
+            if self.use_canadian_data:
+                training_pairs = [*training_pairs[0], *training_pairs[1]]
+                self.console_logger.info(f"Using canadian data in some combination. Combined training pairs are "
+                                         f"{len(training_pairs)}")
+            else:
+                self.console_logger.info("Not using canadian data")
             train_split = self.train_split
             valid_split = train_split + self.validation_split
             length = len(training_pairs)
@@ -179,6 +192,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
             valid_subset = training_pairs[valid_split_start:valid_split_end]
             test_subset = training_pairs[test_split_start:test_split_end]
 
+        self.console_logger.info(f"There are {len(train_subset)} training files")
+        self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit" or stage is None:
             self.train_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -232,7 +247,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_canadian_data:
             return files, test_files
 
-        return files[:100]
+        # files = files
+        return files
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
@@ -246,6 +262,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
             if label not in self.unique_labels:
                 self.unique_labels.append(label)
 
+        if len(files) > 10000 and self.reduce_data:
+            self.console_logger.info(f"using only 10k {folder} images from orig={len(files)}")
+            return files[:10000]
         return files
 
     def _find_super_class(self, label):
@@ -263,14 +282,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
             sampler = ImbalancedDatasetSampler(self.train_data)
             # the imbalanced dataloader only works correctly with 0 workers!
             return DataLoader(
-                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=True, sampler=sampler
+                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=self.pin_memory, sampler=sampler
             )
         else:
             return DataLoader(
                 self.train_data,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                pin_memory=True,
+                pin_memory=self.pin_memory,
                 shuffle=self.shuffle_train_dataset,
             )
 
@@ -279,7 +298,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             self.valid_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             shuffle=self.shuffle_validation_dataset,
         )
 
@@ -289,7 +308,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=self.shuffle_test_dataset,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
         )
 
     @staticmethod

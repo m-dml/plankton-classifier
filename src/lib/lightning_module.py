@@ -11,4 +11,6 @@ class LitModule:
     _recursive_: bool = False
     log_confusion_matrices: bool = True
     log_images: bool = False
+    log_tsne_image: bool = True
     optimizer: Optimizer = MISSING
+    freeze_feature_extractor: bool = False

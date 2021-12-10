@@ -17,12 +17,8 @@ class CustomResnet:
     kernel_size: int = 7
     stride: int = 2
     channels: int = 3
-
-
-@dataclass
-class SimCLRFeatureExtractor(CustomResnet):
-    _target_: str = "src.models.BaseModels.SimCLRFeatureExtractor"
-    model: Any = MISSING
+    model: Any = None
+    maxpool1: bool = True
 
 
 @dataclass
@@ -32,3 +28,5 @@ class Classifier:
     activation: Any = MISSING
     input_features: int = 1000
     num_classes: Any = None
+    normalize: bool = False
+    bias_in_last_layer: bool = True
