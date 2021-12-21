@@ -49,5 +49,5 @@ class Trainer:
     prepare_data_per_node: bool = True
     plugins: Any = None
     amp_backend: str = "native"
-    amp_level: str = "O2"
+    amp_level: Any = None
     move_metrics_to_cpu: bool = False
