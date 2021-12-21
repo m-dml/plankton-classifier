@@ -41,7 +41,7 @@ logger:
     default_hp_metric: false
 
 datamodule:
-  num_workers: ${hydra.launcher.cpus_per_task}
+  num_workers: ${hydra/launcher.cpus_per_task}
   batch_size: 200 # batch size per GPU
   oversample_data: false
   pin_memory: false
