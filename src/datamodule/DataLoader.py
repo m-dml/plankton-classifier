@@ -262,14 +262,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
         return files
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):
-        logging.warning(f"folder: {folder}")
-        logging.warning(f"Recusion depth: {recursion_depth}")
+        logging.debug(f"folder: {folder}")
+        logging.debug(f"Recusion depth: {recursion_depth}")
 
         all_sys_elements = glob.glob(os.path.join(folder, "*"))
 
         if self._is_image_folder(folder):
             folder_files = self._add_data_from_folder(folder, file_ext=file_ext)
-            logging.warning(f"=====================================")
+            logging.debug(f"=====================================")
             return folder_files
 
         files = []
@@ -278,8 +278,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
             if os.path.isdir(sys_element):
                 # using recursion to reach all subdirectories:
                 files += self.add_all_images_from_all_subdirectories(sys_element, file_ext, recursion_depth=recursion_depth + 1)
-        logging.warning(f"len files {len(files)}")
-        logging.warning(f"=====================================")
+        logging.debug(f"len files {len(files)}")
+        logging.debug(f"=====================================")
         return files
 
     @staticmethod
