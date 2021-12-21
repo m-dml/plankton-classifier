@@ -97,7 +97,7 @@ class LightningModel(pl.LightningModule):
                 else self.batch_size
             )
             self.console_logger.info("global batch size is {}".format(global_batch_size))
-            train_iters_per_epoch = self.train_dataloader().sampler.num_samples // global_batch_size
+            train_iters_per_epoch = len(self.trainer.datamodule.train_data) // global_batch_size
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = train_iters_per_epoch * 10
             total_steps = train_iters_per_epoch * self.trainer.max_epochs
@@ -331,7 +331,6 @@ class LightningModel(pl.LightningModule):
         g.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         # plt.tight_layout()
-        plt.show()
         self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 

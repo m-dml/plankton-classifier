@@ -14,7 +14,6 @@ class Trainer:
     gpus: int = 0
     auto_select_gpus: bool = False
     tpu_cores: Any = None
-    log_gpu_memory: bool = 0
     enable_progress_bar: bool = True
     overfit_batches: float = 0.0
     track_grad_norm: int = -1
