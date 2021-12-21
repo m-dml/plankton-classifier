@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
-import pytorch_lightning.metrics as pl_metrics
+import torchmetrics
 import seaborn as sns
 import torch
 import torch.nn as nn
@@ -53,7 +53,7 @@ class LightningModel(pl.LightningModule):
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
-        self.accuracy_func = pl_metrics.Accuracy()
+        self.accuracy_func = torchmetrics.Accuracy()
 
         self.feature_extractor: nn.Module = hydra.utils.instantiate(feature_extractor)
         if self.freeze_feature_extractor:
