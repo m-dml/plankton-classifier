@@ -49,6 +49,7 @@ class PlanktonDataLoader(ParentDataloader):
     klas_data_path: str = data_base_path + "new_data/4David/M160/Sorted"
     planktonnet_data_path: str = data_base_path + "PlanktonNet/DYB-PlanktonNet_V1.0_EN"
     canadian_data_path: str = data_base_path + "canadian_dataset"
+    unlabeled_files_to_append: Any = None
     random_seed: int = 0
     reduce_data: bool = False
 

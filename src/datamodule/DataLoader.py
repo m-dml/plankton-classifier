@@ -113,6 +113,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         dataset,
         reduce_data,
         pin_memory=False,
+        unlabeled_files_to_append=None,
         **kwargs,
     ):
         super().__init__()
@@ -138,12 +139,16 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.shuffle_validation_dataset = shuffle_validation_dataset
         self.shuffle_test_dataset = shuffle_test_dataset
         self.preload_dataset = preload_dataset
+
         self.klas_data_path = klas_data_path
         self.planktonnet_data_path = planktonnet_data_path
         self.canadian_data_path = canadian_data_path
+        self.unlabeled_files_to_append = unlabeled_files_to_append
+
         self.use_planktonnet_data = use_planktonnet_data
         self.use_klas_data = use_klas_data
         self.use_canadian_data = use_canadian_data
+
         self.super_classes = super_classes
         self.oversample_data = oversample_data
         self.random_seed = random_seed
@@ -242,13 +247,50 @@ class PlanktonDataLoader(pl.LightningDataModule):
             ):
                 test_files += self._add_data_from_folder(folder, file_ext="png")
 
+        if self.unlabeled_files_to_append:
+            if isinstance(files, str):
+                files += self.add_all_images_from_all_subdirectories(self.unlabeled_files_to_append)
+            else:
+                for folder_with_unlabeled_files in self.unlabeled_files_to_append:
+                    files += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
+
         random.seed(self.random_seed)
         random.shuffle(files)
         if self.use_canadian_data:
             return files, test_files
 
-        # files = files
         return files
+
+    def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):
+        logging.warning(f"folder: {folder}")
+        logging.warning(f"Recusion depth: {recursion_depth}")
+
+        all_sys_elements = glob.glob(os.path.join(folder, "*"))
+
+        if self._is_image_folder(folder):
+            folder_files = self._add_data_from_folder(folder, file_ext=file_ext)
+            logging.warning(f"=====================================")
+            return folder_files
+
+        files = []
+        # if this folder does not contain images, check if it contains other folders:
+        for sys_element in all_sys_elements:
+            if os.path.isdir(sys_element):
+                # using recursion to reach all subdirectories:
+                files += self.add_all_images_from_all_subdirectories(sys_element, file_ext, recursion_depth=recursion_depth + 1)
+        logging.warning(f"len files {len(files)}")
+        logging.warning(f"=====================================")
+        return files
+
+    @staticmethod
+    def _is_image_folder(folder, file_ext="png") -> bool:
+        all_files = glob.glob(os.path.join(folder, "*"))
+        img_files = glob.glob(os.path.join(folder, "*" + file_ext))
+
+        if (len(all_files) / 2) < len(img_files):  # if more than half of the files in the folder are images:
+            return True
+        else:
+            return False
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
