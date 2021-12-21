@@ -32,7 +32,7 @@ trainer:
 hydra:
   launcher:
     partition: p2GPU32
-    cpus_per_task: 20
+    cpus_per_task: ${datamodule.num_workers}
     tasks_per_node: ${trainer.gpus} # == gpus_per_node
     nodes: ${trainer.num_nodes}
 
@@ -41,7 +41,7 @@ logger:
     default_hp_metric: false
 
 datamodule:
-  num_workers: ${hydra/launcher.cpus_per_task}
+  num_workers: 20
   batch_size: 200 # batch size per GPU
   oversample_data: false
   pin_memory: false
