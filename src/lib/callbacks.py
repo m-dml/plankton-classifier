@@ -15,7 +15,7 @@ class CheckpointCallback:
 
 @dataclass
 class GPUMonitur:
-    _target_: str = "pytorch_lightning.callbacks.GPUStatsMonitor"
+    _target_: str = "pytorch_lightning.callbacks.DeviceStatsMonitor"
 
 
 @dataclass

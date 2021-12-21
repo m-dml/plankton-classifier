@@ -12,7 +12,7 @@ precision: 32
 plugins: null
 
 # Choose whether to use a distributed backend (For multi-GPU training) or not:
-accelerator: null # [null, "ddp", "ddp2", "ddp_cpu"]
+strategy: null # [null, "ddp", "ddp2", "ddp_cpu"]
 
 # interval for logging metrices:
 log_every_n_steps: 10

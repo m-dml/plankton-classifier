@@ -22,7 +22,7 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 800
   gpus: 2
-  accelerator: ddp
+  strategy: ddp
   plugins: null
   precision: 16
   num_nodes: 2
