@@ -37,7 +37,6 @@ class Trainer:
     weights_summary: Any = "top"
     weights_save_path: Any = None
     num_sanity_val_steps: int = 2
-    truncated_bptt_steps: Any = None
     resume_from_checkpoint: Any = None
     profiler: Any = None
     benchmark: bool = False
