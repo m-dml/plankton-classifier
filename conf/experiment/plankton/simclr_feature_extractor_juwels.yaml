@@ -12,7 +12,6 @@ defaults:
   - override /trainer: juwels
   - override /optimizer: lars
 
-  - override hydra/launcher: juwels
   - _self_
 
 debug: false
