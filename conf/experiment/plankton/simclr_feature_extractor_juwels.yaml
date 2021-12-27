@@ -12,11 +12,11 @@ defaults:
   - override /trainer: juwels
   - override /hydra/launcher: juwels
   - override /optimizer: lars
-  - override output_dir_base_path: /p/project/hai_emulator/plankton_logs
   - _self_
 
 debug: false
 scheduler: "linear_warmup_decay"
+output_dir_base_path: /p/project/hai_emulator/plankton_logs
 
 trainer:
   fast_dev_run: false
