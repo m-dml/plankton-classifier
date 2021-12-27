@@ -26,7 +26,7 @@ trainer:
   strategy: ddp
   plugins: null
   precision: 32
-  num_nodes: 2
+  num_nodes: 20
   sync_batchnorm: true
 
 logger:
@@ -45,6 +45,7 @@ datamodule:
   data_base_path: /p/project/hai_emulator/plankton_data/
   unlabeled_files_to_append:
     - "/p/project/hai_emulator/plankton_data/new_data/"
+    - "/p/project/hai_emulator/plankton_data/cpics/"
 
 lightning_module:
   log_confusion_matrices: false
