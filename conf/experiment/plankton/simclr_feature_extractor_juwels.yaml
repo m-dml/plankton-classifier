@@ -10,8 +10,9 @@ defaults:
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: simclr_head
   - override /trainer: juwels
-  - override /hydra/launcher: juwels
   - override /optimizer: lars
+
+  - override hydra/launcher: juwels
   - _self_
 
 debug: false
@@ -28,9 +29,6 @@ trainer:
   precision: 32
   num_nodes: 2
   sync_batchnorm: true
-
-hydra:
-  launcher: juwels
 
 logger:
   tensorboard:
