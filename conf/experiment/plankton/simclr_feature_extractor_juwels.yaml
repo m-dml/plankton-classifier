@@ -30,9 +30,7 @@ trainer:
   sync_batchnorm: true
 
 hydra:
-  launcher:
-    cpus_per_task: ${datamodule.num_workers}
-    nodes: ${trainer.num_nodes}
+  launcher: juwels
 
 logger:
   tensorboard:
