@@ -50,6 +50,7 @@ datamodule:
 lightning_module:
   log_confusion_matrices: false
   log_images: false
+  log_tsne_image: false
 
 model:
   classifier:
