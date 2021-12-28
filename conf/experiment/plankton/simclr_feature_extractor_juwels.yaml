@@ -21,12 +21,12 @@ output_dir_base_path: /p/project/hai_emulator/plankton_logs
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 20
+  max_epochs: 800
   gpus: 4
   strategy: ddp
   plugins: null
   precision: 32
-  num_nodes: 20
+  num_nodes: 4
   sync_batchnorm: true
 
 logger:
@@ -35,7 +35,7 @@ logger:
 
 datamodule:
   num_workers: 10
-  batch_size: 200
+  batch_size: 400
   oversample_data: false
   pin_memory: false
   reduce_data: false # use max 10.000 images from each class
