@@ -16,6 +16,7 @@ defaults:
 debug: false
 load_state_dict: /p/project/hai_emulator/plankton_logs/multirun/2021-12-28/10-24-56/0/logs/checkpoints/complete_model_1239.weights
 scheduler: "cosine"
+output_dir_base_path: /p/project/hai_emulator/plankton_logs
 
 trainer:
   fast_dev_run: false
