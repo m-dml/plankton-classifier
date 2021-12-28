@@ -22,11 +22,11 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 100
-  gpus: 4
-  strategy: ddp
+  gpus: 1
+  strategy: null
   plugins: null
   precision: 32
-  num_nodes: 2
+  num_nodes: 1
   sync_batchnorm: false
 
 logger:
@@ -75,3 +75,4 @@ callbacks:
     patience: 800
     verbose: true
     mode: "min"
+
