@@ -208,6 +208,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=train_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.train_transforms,
+                preload_dataset=self.preload_dataset
             )
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
@@ -217,6 +218,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=valid_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
+                preload_dataset=self.preload_dataset
             )
 
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
@@ -228,6 +230,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=test_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
+                preload_dataset=self.preload_dataset
             )
 
     def prepare_data_setup(self):
