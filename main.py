@@ -68,6 +68,7 @@ def main(cfg: Config):
         train_transforms=train_transforms,
         valid_transforms=valid_transforms,
         dataset=cfg.datamodule.dataset,
+        is_ddp=cfg.trainer.strategy.strip() == "ddp",
     )
     datamodule.setup()
 

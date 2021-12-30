@@ -12,7 +12,7 @@ import torch
 from hydra.utils import instantiate
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-from torchsampler import ImbalancedDatasetSampler
+from catalyst.data.sampler import DistributedSamplerWrapper, BalanceClassSampler
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
@@ -114,6 +114,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         reduce_data,
         pin_memory=False,
         unlabeled_files_to_append=None,
+        is_ddp=False,
         **kwargs,
     ):
         super().__init__()
@@ -156,6 +157,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.pin_memory = pin_memory
         self.reduce_data = reduce_data
         self.console_logger = utils.get_logger(__name__)
+        self.is_ddp = is_ddp
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -321,8 +323,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def train_dataloader(self):
         if self.oversample_data:
-            sampler = ImbalancedDatasetSampler(self.train_data)
-            # the imbalanced dataloader only works correctly with 0 workers!
+            sampler = BalanceClassSampler(self.all_labels, mode="upsampling")
+            if self.is_ddp:
+                sampler = self.ddp_wrap_sampler(sampler)
+
             return DataLoader(
                 self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=self.pin_memory, sampler=sampler
             )
@@ -366,3 +370,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         for i, label in enumerate(self.unique_labels):
             integer_class_labels[label] = i
         return integer_class_labels
+
+    def ddp_wrap_sampler(self, sampler):
+        return DistributedSamplerWrapper(sampler)
