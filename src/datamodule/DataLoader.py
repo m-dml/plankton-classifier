@@ -202,7 +202,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit" or stage is None:
-            self.console_logger.info(f"Instantiating traioning dataset <{self.cfg_dataset._target_}>")
+            self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
             self.train_data: Dataset = instantiate(
                 self.cfg_dataset,
                 files=train_subset,
