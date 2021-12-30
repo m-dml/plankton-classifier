@@ -10,11 +10,8 @@ nodes:  ${trainer.num_nodes}
 name: ${hydra.job.name}
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 partition: booster
-gres: gpu:${trainer.gpus}
+gres: gpu:4
 signal_delay_s: 120
 additional_parameters: { exclusive: true, signal: "SIGUSR1@90", account: "hai_emulator" }
 array_parallelism: 256
-setup: ["source activate hydra",
-        "export CUDA_VISIBLE_DEVICES=0,1,2,3",
-        "export NCCL_P2P_DISABLE=1",
-        "export NCCL_IB_DISABLE=1"]
+setup: ["source activate hydra"]
