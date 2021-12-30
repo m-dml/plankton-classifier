@@ -299,7 +299,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
-        for file in pathlib.Path(folder).rglob(f"*.{file_ext}"):
+        for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}")):
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
             if label in self.excluded_labels:
