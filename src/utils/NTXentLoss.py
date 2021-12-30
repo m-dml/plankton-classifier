@@ -30,8 +30,9 @@ class SyncFunction(torch.autograd.Function):
 
 
 class NTXentLoss(nn.Module):
-    def __init__(self, temperature=0.5):
+    def __init__(self, temperature=0.5, sync_ddp=True):
         super(NTXentLoss, self).__init__()
+        self.sync_ddp = sync_ddp
         self.temperature = temperature
         self.eps = 1e-6
 
@@ -49,7 +50,7 @@ class NTXentLoss(nn.Module):
         # gather representations in case of distributed training
         # out_1_dist: [batch_size * world_size, dim]
         # out_2_dist: [batch_size * world_size, dim]
-        if torch.distributed.is_available() and torch.distributed.is_initialized():
+        if (torch.distributed.is_available() and torch.distributed.is_initialized()) and self.sync_ddp:
             out_1_dist = SyncFunction.apply(out_1)
             out_2_dist = SyncFunction.apply(out_2)
         else:

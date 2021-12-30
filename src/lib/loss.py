@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from pytorch_lightning.utilities.distributed import sync_ddp
+
 
 @dataclass
 class NLLLoss:
@@ -21,3 +23,4 @@ class SimCLRLoss:
 class NTXentLoss:
     _target_: str = "src.utils.NTXentLoss.NTXentLoss"
     temperature: float = 0.5
+    sync_ddp: bool = True
