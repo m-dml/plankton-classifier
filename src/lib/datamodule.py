@@ -16,6 +16,7 @@ class PlanktonDataSet:
     _target_: str = "src.datamodule.DataLoader.PlanktonDataSet"
     final_image_size: int = 500
     preload_dataset: bool = False
+    _convert_: Any = "partial"
 
 
 @dataclass
@@ -23,6 +24,7 @@ class PlanktonDataSetSimCLR:
     _target_: str = "src.datamodule.DataLoader.PlanktonDataSetSimCLR"
     final_image_size: int = 500
     preload_dataset: bool = False
+    _convert_: Any = "partial"
 
 
 @dataclass
