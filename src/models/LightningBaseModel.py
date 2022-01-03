@@ -1,5 +1,4 @@
 import itertools
-import logging
 import os
 
 import hydra
@@ -7,11 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
-import torchmetrics
 import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchmetrics
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
@@ -71,7 +70,8 @@ class LightningModel(pl.LightningModule):
         self.log_tsne_image = log_tsne_image
         self.confusion_matrix = dict()
         self._init_accuracy_matrices()
-        self.console_logger = utils.get_logger("LightningBaseModel", level=logging.INFO)
+        self.console_logger = utils.get_logger("LightningBaseModel")
+        self.console_logger.debug("Test Debug")
         self.is_in_simclr_mode = is_in_simclr_mode
         self.batch_size = batch_size
 

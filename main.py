@@ -23,16 +23,13 @@ if platform.system() == "Windows":
 register_configs()
 
 # set up advanced logging:
-log = utils.get_logger(__name__)
-pl_logger = utils.get_logger("pytorch_lightning")
-pl_logger.handlers = []
-pl_logger.addHandler(log)
 
 
 @hydra.main(config_name="config", config_path="conf")
 def main(cfg: Config):
-
     utils.extras(cfg)
+    utils.set_log_levels(cfg.log_level)
+    log = utils.get_logger(cfg.log_level)
 
     # Pretty print config using Rich library
     if cfg.print_config:

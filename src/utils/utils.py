@@ -1,6 +1,5 @@
 import logging
 import warnings
-from typing import Sequence
 
 import pytorch_lightning as pl
 import rich.syntax
@@ -8,19 +7,34 @@ import rich.tree
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
+from src.utils import LOG_LEVEL
 
-def get_logger(name=__name__, level=logging.INFO) -> logging.Logger:
+
+def get_logger(name=__name__, level=None) -> logging.Logger:
     """Initializes multi-GPU-friendly python logger."""
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+    new_logger = logging.getLogger(name)
+    if not level:
+        level_obj = logging.getLevelName(LOG_LEVEL.log_level.strip().upper())
+    else:
+        level_obj = logging.getLevelName(level.strip().upper())
+    new_logger.setLevel(level_obj)
 
-    # this ensures all logging levels get marked with the rank zero decorator
-    # otherwise logs would get multiplied for each GPU process in multi-GPU setup
-    for level in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
-        setattr(logger, level, rank_zero_only(getattr(logger, level)))
+    return new_logger
 
-    return logger
+
+def set_log_levels(level="INFO"):
+    LOG_LEVEL.log_level = level.strip().upper()
+    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    level_obj = logging.getLevelName(LOG_LEVEL.log_level)
+    debug_loggers = ["hydra", "submitit", "lightning"]
+    for logger in loggers:
+        if LOG_LEVEL.log_level == "DEBUG" and any([logger.name.lower().__contains__(debug_logger_str) for debug_logger_str in debug_loggers]):
+            logger.setLevel(level_obj)
+        else:
+            logger.setLevel(logging.getLevelName("INFO"))
+        for level in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
+            setattr(logger, level, rank_zero_only(getattr(logger, level)))
 
 
 def extras(config: DictConfig) -> None:

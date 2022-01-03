@@ -16,6 +16,7 @@ defaults:
 
 debug: false
 scheduler: "linear_warmup_decay"
+log_level: "DEBUG"
 
 trainer:
   fast_dev_run: false

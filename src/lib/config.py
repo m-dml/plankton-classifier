@@ -93,3 +93,4 @@ class Config:
     load_state_dict: Any = None  # if loading from state dict provide path to ckpt file as string here
     output_dir_base_path: str = MISSING
     auto_tune: bool = False  # if true runs trainer.tune() before trainer.fit()
+    log_level: str = "info"
