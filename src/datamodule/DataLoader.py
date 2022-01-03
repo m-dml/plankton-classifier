@@ -7,12 +7,13 @@ from abc import abstractmethod
 from typing import Any, List, Union
 
 import PIL.PngImagePlugin
+import numpy as np
 import pytorch_lightning as pl
 import torch
-from hydra.utils import instantiate
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
 from catalyst.data.sampler import DistributedSamplerWrapper, BalanceClassSampler
+from hydra.utils import instantiate
+from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
@@ -125,6 +126,11 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.train_data = None
         self.valid_data = None
         self.test_data = None
+
+        self.train_labels = None
+        self.valid_labels = None
+        self.test_labels = None
+
         self.input_channels = None
         self.output_channels = None
         self.unique_labels = []
@@ -198,6 +204,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
             train_subset = training_pairs[train_split_start:train_split_end]
             valid_subset = training_pairs[valid_split_start:valid_split_end]
             test_subset = training_pairs[test_split_start:test_split_end]
+
+            _, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
+            _, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
+            _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
@@ -329,7 +339,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def train_dataloader(self):
         if self.oversample_data:
-            sampler = BalanceClassSampler(self.all_labels, mode="upsampling")
+            sampler = BalanceClassSampler(self.train_labels, mode="upsampling")
             if self.is_ddp:
                 sampler = self.ddp_wrap_sampler(sampler)
 

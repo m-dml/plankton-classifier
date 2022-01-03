@@ -12,6 +12,6 @@ _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 partition: booster
 gres: gpu:4
 signal_delay_s: 120
-additional_parameters: { exclusive: true, signal: "SIGUSR1@90", account: "hai_emulator" }
+additional_parameters: { exclusive: true, signal: "SIGUSR1@240", account: "hai_emulator" }
 array_parallelism: 256
 setup: ["source activate hydra", "export CUDA_VISIBLE_DEVICES=0,1,2,3"]

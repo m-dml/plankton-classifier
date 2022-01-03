@@ -201,24 +201,24 @@ class LightningModel(pl.LightningModule):
         # sum over batch to update confusion matrix
         n_classes = len(self.class_labels)
         idx = labels_true + n_classes * labels_est
-        counts = np.bincount(idx.reshape(-1), minlength=n_classes ** 2)
+        counts = torch.bincount(idx.reshape(-1), minlength=n_classes ** 2)
         self.confusion_matrix[datagroup] += counts.reshape((n_classes, n_classes))
 
     def _init_accuracy_matrices(self):
         n = len(self.class_labels)
         for datagroup in ["Validation", "Training", "Testing"]:
-            self.confusion_matrix[datagroup] = np.zeros((n, n), dtype=np.int64)
+            self.confusion_matrix[datagroup] = torch.zeros(size=(n, n)).int()
 
     def _log_accuracy_matrices(self, datagroup):
         cm = self.confusion_matrix[datagroup]
 
-        accuracy = np.diag(cm).sum() / np.maximum(1.0, cm.sum())  # accuracy average over all data we're now logging
-        conditional_probabilities = cm / np.maximum(1.0, cm.sum(axis=0))  # conditional probabilities for best guess
-        conditional_accuracy = np.diag(conditional_probabilities)
+        accuracy = torch.diag(cm).sum() / torch.maximum(torch.tensor(1.0), cm.sum())  # accuracy average over all data we're now logging
+        conditional_probabilities = cm / torch.maximum(torch.tensor(1.0), cm.sum(axis=0))  # conditional probabilities for best guess
+        conditional_accuracy = torch.diag(conditional_probabilities)
         for L, ca in zip(self.class_labels, conditional_accuracy):
             self.log(f"Cond. Acc/{L} {datagroup}", ca)
 
-        self.plot_confusion_matrix(cm, self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
+        self.plot_confusion_matrix(cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
         self.plot_confusion_matrix(
             conditional_probabilities,
             self.class_labels,
@@ -227,14 +227,14 @@ class LightningModel(pl.LightningModule):
         )
 
         # reset the CM
-        self.confusion_matrix[datagroup] = np.zeros((len(self.class_labels), len(self.class_labels)), dtype=np.int64)
+        self.confusion_matrix[datagroup] = torch.zeros((len(self.class_labels), len(self.class_labels))).int()
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
         figure = plt.figure(figsize=(15, 15))
         plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
         plt.title(title)
         plt.colorbar()
-        tick_marks = np.arange(len(class_names))
+        tick_marks = torch.arange(len(class_names))
         plt.xticks(tick_marks, class_names, rotation=90)
         plt.yticks(tick_marks, class_names)
 
