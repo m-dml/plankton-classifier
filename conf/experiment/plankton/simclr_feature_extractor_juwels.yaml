@@ -26,7 +26,7 @@ trainer:
   strategy: ddp
   plugins: null
   precision: 32
-  num_nodes: 8
+  num_nodes: 2
   sync_batchnorm: true
 
 logger:
@@ -44,8 +44,9 @@ datamodule:
   use_planktonnet_data: false
   data_base_path: /p/project/hai_emulator/plankton_data/
   unlabeled_files_to_append:
-    - "/p/project/hai_emulator/plankton_data/new_data/"
-    - "/p/project/hai_emulator/plankton_data/cpics/"
+    - "/p/project/hai_emulator/plankton_data/cpics/cpics/20210101/20210101_0000"
+#    - "/p/project/hai_emulator/plankton_data/cpics/"
+#    - "/p/project/hai_emulator/plankton_data/new_data/"
 
 lightning_module:
   log_confusion_matrices: false
@@ -58,7 +59,7 @@ model:
     input_features: 2048
   feature_extractor:
     model:
-      _target_: "torchvision.models.resnet50"
+      _target_: "torchvision.models.resnet18"
       num_classes: ${model.classifier.input_features}
       pretrained: false
       # first conv layer:
