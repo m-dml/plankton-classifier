@@ -31,7 +31,7 @@ logger:
 
 hydra:
   sweep:
-    dir: ${output_dir_base_path}/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${output_dir_base_path}/multirun/
     subdir: ${hydra.job.num}
   run:
-    dir: ${output_dir_base_path}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${output_dir_base_path}/outputs/

@@ -43,8 +43,8 @@ datamodule:
   use_planktonnet_data: false
   preload_dataset: false
   unlabeled_files_to_append:
-    - "/p/project/hai_emulator/plankton_data/cpics/"
-    - "/p/project/hai_emulator/plankton_data/new_data/"
+    - "/gpfs/work/machnitz/plankton_dataset/cpics/"
+    - "/gpfs/work/machnitz/plankton_dataset/new_data/"
 
 lightning_module:
   log_confusion_matrices: false
