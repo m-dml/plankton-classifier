@@ -35,3 +35,5 @@ hydra:
     subdir: ${hydra.job.num}
   run:
     dir: ${output_dir_base_path}/outputs/${hydra.job.name}/${hydra.job.num}/
+  launcher:
+    submitit_folder: .submitit/
