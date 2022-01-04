@@ -6,6 +6,7 @@ import rich.syntax
 import rich.tree
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
+from pytorch_lightning.plugins import DDPPlugin
 
 from src.utils import LOG_LEVEL
 
@@ -148,3 +149,11 @@ def log_hyperparameters(
     hparams["model/params_not_trainable"] = sum(p.numel() for p in model.parameters() if not p.requires_grad)
 
     return hparams
+
+
+def replace_cfg_strategy(cfg):
+
+    if cfg.trainer.strategy == "ddp":
+        cfg.trainer.strategy = DDPPlugin(find_unused_parameters=False)
+    return cfg
+

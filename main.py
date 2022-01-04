@@ -27,6 +27,7 @@ register_configs()
 
 @hydra.main(config_name="config", config_path="conf")
 def main(cfg: Config):
+    cfg = utils.replace_cfg_strategy(cfg)
     utils.extras(cfg)
     utils.set_log_levels(cfg.log_level)
     log = utils.get_logger(cfg.log_level)
