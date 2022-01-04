@@ -1,3 +1,5 @@
 defaults:
   - default_base
   - _self_
+
+preload_dataset: ${datamodule.preload_dataset}

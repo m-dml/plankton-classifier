@@ -23,10 +23,11 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 800
+  min_epochs: 799
   gpus: 4
   plugins: null
   precision: 32
-  num_nodes: 1
+  num_nodes: 10
   sync_batchnorm: true
 
 logger:
@@ -35,18 +36,18 @@ logger:
 
 datamodule:
   num_workers: 10
-  batch_size: 100
+  batch_size: 200
   oversample_data: false
-  pin_memory: false
+  pin_memory: true
   reduce_data: false # use max 10.000 images from each class
   use_klas_data: false
   use_canadian_data: false
   use_planktonnet_data: false
   data_base_path: /p/project/hai_emulator/plankton_data/
+  preload_dataset: true
   unlabeled_files_to_append:
-    - "/p/project/hai_emulator/plankton_data/cpics/cpics/20210101/20210101_0000"
-#    - "/p/project/hai_emulator/plankton_data/cpics/"
-#    - "/p/project/hai_emulator/plankton_data/new_data/"
+    - "/p/project/hai_emulator/plankton_data/cpics/"
+    - "/p/project/hai_emulator/plankton_data/new_data/"
 
 lightning_module:
   log_confusion_matrices: false

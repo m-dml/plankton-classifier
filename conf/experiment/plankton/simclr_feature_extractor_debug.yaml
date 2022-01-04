@@ -44,6 +44,7 @@ datamodule:
   use_klas_data: false
   use_canadian_data: false
   use_planktonnet_data: false
+  preload_dataset: true
   unlabeled_files_to_append:
     - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/cpics"
 
