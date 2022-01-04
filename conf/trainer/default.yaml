@@ -11,8 +11,6 @@ precision: 32
 # if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
 plugins: null
 
-# Choose whether to use a distributed backend (For multi-GPU training) or not:
-strategy: null # [null, "ddp", "ddp2", "ddp_cpu"]
 
 # interval for logging metrices:
 log_every_n_steps: 10

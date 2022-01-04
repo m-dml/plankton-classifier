@@ -29,7 +29,6 @@ class Trainer:
     limit_test_batches: float = 1.0
     val_check_interval: float = 1.0
     log_every_n_steps: int = 50
-    strategy: Any = None
     sync_batchnorm: bool = False
     precision: int = 32
     weights_summary: Any = "top"

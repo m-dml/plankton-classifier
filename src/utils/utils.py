@@ -149,11 +149,3 @@ def log_hyperparameters(
     hparams["model/params_not_trainable"] = sum(p.numel() for p in model.parameters() if not p.requires_grad)
 
     return hparams
-
-
-def replace_cfg_strategy(cfg):
-
-    if cfg.trainer.strategy == "ddp":
-        cfg.trainer.strategy = DDPPlugin(find_unused_parameters=False)
-    return cfg
-
