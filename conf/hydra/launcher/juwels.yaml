@@ -3,7 +3,7 @@ defaults:
   - submitit_slurm
   - _self_
 
-timeout_min: 5 # maximum time for the job in minutes
+timeout_min: 1 # maximum time for the job in minutes
 cpus_per_task: ${datamodule.num_workers}
 tasks_per_node: 4 # == gpus_per_node
 nodes:  ${trainer.num_nodes}
@@ -12,6 +12,7 @@ _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 partition: develbooster
 gres: gpu:4
 signal_delay_s: 120
-additional_parameters: { exclusive: true, signal: "SIGUSR1@120", account: "hai_emulator" }
+additional_parameters: { exclusive: true, signal: "SIGUSR1@200", account: "hai_emulator" }
 array_parallelism: 256
 setup: ["source activate hydra", "export CUDA_VISIBLE_DEVICES=0,1,2,3"]
+max_num_timeout: 10
