@@ -345,11 +345,13 @@ class LightningModel(pl.LightningModule):
             example_input = self.example_input_array[0]
         else:
             example_input = self.example_input_array
+
         torch.onnx.export(
             model=self.model,
             args=example_input.to(self.device),
             f=onnx_file_generator,
-            opset_version=12,
+            opset_version=13,
+            do_constant_folding=True,
             verbose=False,
             export_params=True,
             input_names=["input"],

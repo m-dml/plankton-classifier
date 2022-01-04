@@ -24,6 +24,8 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 5
+  limit_train_batches: 5
+  limit_val_batches: 5
   min_epochs: 4
   gpus: 1
   precision: 32
