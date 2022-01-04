@@ -2,6 +2,7 @@
 
 defaults:
   - /callbacks/gpu_monitoring: gpu_monitoring
+  - override /strategy: null
   - override /datamodule: plankton
   - override /datamodule/dataset: simclr
   - override /loss: nt_xent_loss
@@ -12,6 +13,7 @@ defaults:
   - override /trainer: default
   - override /hydra/launcher: local
   - override /optimizer: lars
+
   - _self_
 
 debug: false
@@ -24,7 +26,6 @@ trainer:
   max_epochs: 5
   min_epochs: 4
   gpus: 1
-  strategy: null
   plugins: null
   precision: 32
   sync_batchnorm: true

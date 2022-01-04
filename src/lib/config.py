@@ -19,6 +19,7 @@ from src.lib.loss import CrossEntropyLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.trainer import Trainer
+from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 
 
 def register_configs() -> None:
@@ -70,6 +71,10 @@ def register_configs() -> None:
     cs.store(name="cross_entropy_loss", node=CrossEntropyLoss, group="loss")
     cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
 
+    # pl training strategies:
+    cs.store(name="DDP", node=DDPPlugin, group="strategy")
+    cs.store(name="SingleDevice", node=SingleDevicePlugin, group="strategy")
+
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)
 
@@ -84,6 +89,7 @@ class Config:
     callbacks: Any = MISSING
     optimizer: Any = MISSING
     loss: Any = MISSING
+    strategy: Any = None
 
     scheduler: Any = None
     random_seed: int = 42

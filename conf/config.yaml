@@ -9,6 +9,7 @@ defaults:
   - trainer: default
   - optimizer: adam
   - loss: nll_loss
+  - strategy: SingleDevice
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint
   - callbacks/early_stopping: early_stopping

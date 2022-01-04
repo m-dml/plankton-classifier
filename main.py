@@ -168,7 +168,11 @@ def main(cfg: Config):
 
     # Init Trainer:
     log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
-    trainer: Trainer = instantiate(cfg.trainer, logger=logger, callbacks=callbacks, _convert_="partial")
+    trainer: Trainer = instantiate(cfg.trainer,
+                                   strategy=cfg.strategy,
+                                   logger=logger,
+                                   callbacks=callbacks,
+                                   _convert_="partial")
 
     if cfg.auto_tune:
         log.info("Starting tuning the model")

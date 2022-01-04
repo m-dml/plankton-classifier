@@ -11,7 +11,7 @@ defaults:
   - override /model/classifier: simclr_head
   - override /trainer: juwels
   - override /optimizer: lars
-
+  - override /strategy: DDP
   - _self_
 
 debug: false
@@ -24,7 +24,7 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 800
   gpus: 4
-  strategy: ddp
+  strategy: DDP
   plugins: null
   precision: 32
   num_nodes: 1
