@@ -23,7 +23,6 @@ trainer:
   max_epochs: 800
   min_epochs: 799
   gpus: 2
-  strategy: ddp
   plugins: null
   precision: 32
   num_nodes: 2

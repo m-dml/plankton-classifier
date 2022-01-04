@@ -26,7 +26,6 @@ trainer:
   max_epochs: 5
   min_epochs: 4
   gpus: 1
-  plugins: null
   precision: 32
   sync_batchnorm: true
 

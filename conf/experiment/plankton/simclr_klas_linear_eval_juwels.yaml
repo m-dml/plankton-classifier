@@ -23,7 +23,6 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 100
   gpus: 1
-  strategy: null
   plugins: null
   precision: 32
   num_nodes: 1
