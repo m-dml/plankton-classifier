@@ -6,7 +6,7 @@ defaults:
 timeout_min: 1440 # maximum time for the job in minutes
 cpus_per_task: ${datamodule.num_workers}
 tasks_per_node: 4 # == gpus_per_node
-nodes:  ${trainer.num_nodes}
+nodes: ${trainer.num_nodes}
 name: ${hydra.job.name}
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 partition: booster
