@@ -3,7 +3,7 @@ defaults:
   - submitit_slurm
   - _self_
 
-timeout_min: 10 # maximum time for the job in minutes
+timeout_min: 6 # maximum time for the job in minutes
 cpus_per_task: ${datamodule.num_workers}
 tasks_per_node: 4 # == gpus_per_node
 nodes:  ${trainer.num_nodes}

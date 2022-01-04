@@ -179,11 +179,7 @@ def main(cfg: Config):
 
     # trainer.tune(model, data_module)
     log.info("Starting training")
-    try:
-        trainer.fit(model, datamodule)
-    except:
-        log.exception("!!! Model Failed !!!")
-        raise
+    trainer.fit(model, datamodule)
 
     # Print path to best checkpoint
     if trainer.checkpoint_callback.best_model_path is not None:
@@ -191,4 +187,10 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    main()
+    log = utils.get_logger()
+    log.info("Starting python script")
+    try:
+        main()
+    except:
+        log.exception("!!! Model Failed !!!")
+        raise
