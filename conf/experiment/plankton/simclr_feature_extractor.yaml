@@ -44,8 +44,9 @@ datamodule:
   use_planktonnet_data: false
   preload_dataset: false
   unlabeled_files_to_append:
-    - "/gpfs/work/machnitz/plankton_dataset/cpics/"
-    - "/gpfs/work/machnitz/plankton_dataset/new_data/"
+    - "/gpfs/work/machnitz/plankton_dataset/cpics/20210101/20210101_0000/"
+#    - "/gpfs/work/machnitz/plankton_dataset/cpics/"
+#    - "/gpfs/work/machnitz/plankton_dataset/new_data/"
 
 lightning_module:
   log_confusion_matrices: false
