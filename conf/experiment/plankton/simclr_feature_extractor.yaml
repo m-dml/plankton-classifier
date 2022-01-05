@@ -35,7 +35,7 @@ logger:
 
 datamodule:
   num_workers: 10
-  batch_size: 200
+  batch_size: 4
   oversample_data: false
   pin_memory: false
   reduce_data: false # use max 10.000 images from each class
