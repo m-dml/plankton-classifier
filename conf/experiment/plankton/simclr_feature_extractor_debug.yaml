@@ -30,6 +30,7 @@ trainer:
   gpus: 1
   precision: 32
   sync_batchnorm: true
+  profiler: "pytorch"
 
 logger:
   tensorboard:

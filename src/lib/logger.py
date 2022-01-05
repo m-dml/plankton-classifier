@@ -18,6 +18,7 @@ class TensorBoardLogger(BaseLogger):
     save_dir: str = "./logs/tensorboard"
     default_hp_metric: bool = False
     log_graph: bool = True
+    version: str = "all"
 
 
 @dataclass
