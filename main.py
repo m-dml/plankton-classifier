@@ -27,15 +27,15 @@ register_configs()
 
 @hydra.main(config_name="config", config_path="conf")
 def main(cfg: Config):
-    utils.extras(cfg)
+    utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings
     utils.set_log_levels(cfg.log_level)
     log = utils.get_logger(cfg.log_level)
 
     # Pretty print config using Rich library
     if cfg.print_config:
-        utils.print_config(cfg, resolve=True)
+        utils.print_config(cfg, resolve=True)  # prints the complete hydra config to std-out
 
-    torch.manual_seed(cfg.random_seed)
+    torch.manual_seed(cfg.random_seed)  # set random seed
     pl.seed_everything(cfg.random_seed)
 
     # Init Lightning callbacks
@@ -67,7 +67,7 @@ def main(cfg: Config):
         dataset=cfg.datamodule.dataset,
         is_ddp=cfg.strategy is not None
     )
-    datamodule.setup()
+    datamodule.setup()  # manually set up the datamodule here, so an example batch can be drawn
 
     # generate example input array:
     for batch in datamodule.train_dataloader():
@@ -173,13 +173,13 @@ def main(cfg: Config):
                                    callbacks=callbacks,
                                    _convert_="partial")
 
+    # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
     if cfg.auto_tune:
         log.info("Starting tuning the model")
         trainer.tune(model, datamodule)
 
-    # trainer.tune(model, data_module)
     log.info("Starting training")
-    trainer.fit(model, datamodule)
+    trainer.fit(model, datamodule)  # the actual training of the NN
 
     # Print path to best checkpoint
     if trainer.checkpoint_callback.best_model_path is not None:
