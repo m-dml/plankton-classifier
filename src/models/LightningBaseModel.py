@@ -148,6 +148,9 @@ class LightningModel(pl.LightningModule):
         features, labels, classifier_outputs = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
         loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Validation")
+        self.log("hp/loss", loss)
+        self.log("hp/accuracy", acc)
+        self.log("hp/epoch", self.current_epoch)
         return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
