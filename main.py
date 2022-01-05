@@ -65,7 +65,7 @@ def main(cfg: Config):
         train_transforms=train_transforms,
         valid_transforms=valid_transforms,
         dataset=cfg.datamodule.dataset,
-        is_ddp=cfg.strategy is not None
+        is_ddp=cfg.strategy is not None,
     )
     datamodule.setup()  # manually set up the datamodule here, so an example batch can be drawn
 
@@ -167,11 +167,9 @@ def main(cfg: Config):
 
     # Init Trainer:
     log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
-    trainer: Trainer = instantiate(cfg.trainer,
-                                   strategy=cfg.strategy,
-                                   logger=logger,
-                                   callbacks=callbacks,
-                                   _convert_="partial")
+    trainer: Trainer = instantiate(
+        cfg.trainer, strategy=cfg.strategy, logger=logger, callbacks=callbacks, _convert_="partial"
+    )
 
     # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
     if cfg.auto_tune:
@@ -191,6 +189,6 @@ if __name__ == "__main__":
     log.info("Starting python script")
     try:
         main()
-    except:
+    except Exception as e:
         log.exception("!!! Model Failed !!!")
-        raise
+        raise e

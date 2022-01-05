@@ -135,7 +135,12 @@ class LightningModel(pl.LightningModule):
     def training_step_end(self, training_step_outputs, *args, **kwargs):
         features, labels, classifier_outputs = training_step_outputs
         loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Training")
-        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
+        return {
+            "loss": loss,
+            "features": features.detach(),
+            "labels": labels.detach(),
+            "classifier": classifier_outputs.detach(),
+        }
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
@@ -150,8 +155,13 @@ class LightningModel(pl.LightningModule):
         loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Validation")
         self.log("hp/loss", loss)
         self.log("hp/accuracy", acc)
-        self.log("hp/epoch", self.current_epoch)
-        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
+        self.log("hp/epoch", torch.tensor(self.current_epoch).float())
+        return {
+            "loss": loss,
+            "features": features.detach(),
+            "labels": labels.detach(),
+            "classifier": classifier_outputs.detach(),
+        }
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
@@ -162,7 +172,12 @@ class LightningModel(pl.LightningModule):
     def test_step_end(self, test_step_outputs, *args, **kwargs):
         features, labels, classifier_outputs = test_step_outputs
         loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Testing")
-        return {"loss": loss, "features": features, "labels": labels, "classifier": classifier_outputs}
+        return {
+            "loss": loss,
+            "features": features.detach(),
+            "labels": labels.detach(),
+            "classifier": classifier_outputs.detach(),
+        }
 
     def _pre_process_batch(self, batch):
         images, labels = batch
@@ -215,13 +230,19 @@ class LightningModel(pl.LightningModule):
     def _log_accuracy_matrices(self, datagroup):
         cm = self.confusion_matrix[datagroup]
 
-        accuracy = torch.diag(cm).sum() / torch.maximum(torch.tensor(1.0), cm.sum())  # accuracy average over all data we're now logging
-        conditional_probabilities = cm / torch.maximum(torch.tensor(1.0), cm.sum(axis=0))  # conditional probabilities for best guess
+        accuracy = torch.diag(cm).sum() / torch.maximum(
+            torch.tensor(1.0), cm.sum()
+        )  # accuracy average over all data we're now logging
+        conditional_probabilities = cm / torch.maximum(
+            torch.tensor(1.0), cm.sum(axis=0)
+        )  # conditional probabilities for best guess
         conditional_accuracy = torch.diag(conditional_probabilities)
         for L, ca in zip(self.class_labels, conditional_accuracy):
             self.log(f"Cond. Acc/{L} {datagroup}", ca)
 
-        self.plot_confusion_matrix(cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}")
+        self.plot_confusion_matrix(
+            cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}"
+        )
         self.plot_confusion_matrix(
             conditional_probabilities,
             self.class_labels,
@@ -330,7 +351,7 @@ class LightningModel(pl.LightningModule):
         box = g.fig.axes[2].get_position()
         g.fig.axes[2].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
 
-        g.fig.axes[0].legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3)
+        g.fig.axes[0].legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3)
         g.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         # plt.tight_layout()

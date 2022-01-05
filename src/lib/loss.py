@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from pytorch_lightning.utilities.distributed import sync_ddp
-
 
 @dataclass
 class NLLLoss:

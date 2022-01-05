@@ -4,7 +4,6 @@ from src.datamodule.DataLoader import PlanktonDataLoader, PlanktonDataSetSimCLR
 
 
 class TestPlanktonDataLoader(unittest.TestCase):
-
     def test_recursive_img_folder_recognition(self):
         dataloader = PlanktonDataLoader(
             excluded_labels=[],
@@ -33,7 +32,9 @@ class TestPlanktonDataLoader(unittest.TestCase):
             unlabeled_files_to_append=None,
         )
 
-        files = dataloader.add_all_images_from_all_subdirectories(folder="C:/Users/Tobias/PycharmProjects/plankton-classifier/data")
+        files = dataloader.add_all_images_from_all_subdirectories(
+            folder="C:/Users/Tobias/PycharmProjects/plankton-classifier/data"
+        )
 
         print(f"len(files = {len(files)})")
         self.assertGreater(len(files), 10000)

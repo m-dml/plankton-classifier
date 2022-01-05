@@ -18,8 +18,8 @@ from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
-from src.lib.trainer import Trainer
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
+from src.lib.trainer import Trainer
 
 
 def register_configs() -> None:

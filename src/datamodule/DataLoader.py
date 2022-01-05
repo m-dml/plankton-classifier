@@ -6,13 +6,13 @@ import random
 from abc import abstractmethod
 from typing import Any, List, Union
 
-import PIL.PngImagePlugin
 import numpy as np
+import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
-from PIL import Image
-from catalyst.data.sampler import DistributedSamplerWrapper, BalanceClassSampler
+from catalyst.data.sampler import BalanceClassSampler, DistributedSamplerWrapper
 from hydra.utils import instantiate
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
@@ -186,8 +186,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         else:
             if self.use_canadian_data:
                 training_pairs = [*training_pairs[0], *training_pairs[1]]
-                self.console_logger.info(f"Using canadian data in some combination. Combined training pairs are "
-                                         f"{len(training_pairs)}")
+                self.console_logger.info(
+                    f"Using canadian data in some combination. Combined training pairs are {len(training_pairs)}"
+                )
             else:
                 self.console_logger.info("Not using canadian data")
             train_split = self.train_split
@@ -218,7 +219,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=train_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.train_transforms,
-                preload_dataset=self.preload_dataset
+                preload_dataset=self.preload_dataset,
             )
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
@@ -228,7 +229,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=valid_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
-                preload_dataset=self.preload_dataset
+                preload_dataset=self.preload_dataset,
             )
 
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
@@ -240,7 +241,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files=test_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
-                preload_dataset=self.preload_dataset
+                preload_dataset=self.preload_dataset,
             )
 
     def prepare_data_setup(self):
@@ -287,7 +288,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         if self._is_image_folder(folder):
             folder_files = self._add_data_from_folder(folder, file_ext=file_ext)
-            logging.debug(f"=====================================")
+            logging.debug("=====================================")
             return folder_files
 
         files = []
@@ -295,9 +296,11 @@ class PlanktonDataLoader(pl.LightningDataModule):
         for sys_element in all_sys_elements:
             if os.path.isdir(sys_element):
                 # using recursion to reach all subdirectories:
-                files += self.add_all_images_from_all_subdirectories(sys_element, file_ext, recursion_depth=recursion_depth + 1)
+                files += self.add_all_images_from_all_subdirectories(
+                    sys_element, file_ext, recursion_depth=recursion_depth + 1
+                )
         logging.debug(f"len files {len(files)}")
-        logging.debug(f"=====================================")
+        logging.debug("=====================================")
         return files
 
     @staticmethod

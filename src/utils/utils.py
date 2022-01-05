@@ -6,7 +6,6 @@ import rich.syntax
 import rich.tree
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
-from pytorch_lightning.plugins import DDPPlugin
 
 from src.utils import LOG_LEVEL
 
@@ -30,7 +29,9 @@ def set_log_levels(level="INFO"):
     level_obj = logging.getLevelName(LOG_LEVEL.log_level)
     debug_loggers = ["hydra", "submitit", "lightning"]
     for logger in loggers:
-        if LOG_LEVEL.log_level == "DEBUG" and any([logger.name.lower().__contains__(debug_logger_str) for debug_logger_str in debug_loggers]):
+        if LOG_LEVEL.log_level == "DEBUG" and any(
+            [logger.name.lower().__contains__(debug_logger_str) for debug_logger_str in debug_loggers]
+        ):
             logger.setLevel(level_obj)
         else:
             logger.setLevel(logging.getLevelName("INFO"))

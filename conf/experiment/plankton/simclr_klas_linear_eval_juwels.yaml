@@ -74,4 +74,3 @@ callbacks:
     patience: 800
     verbose: true
     mode: "min"
-
