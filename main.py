@@ -14,7 +14,9 @@ from torchvision.transforms import Compose
 from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
+import faulthandler
 
+faulthandler.enable()
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
 if platform.system() == "Windows":
     os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
