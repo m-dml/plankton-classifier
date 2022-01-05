@@ -16,12 +16,12 @@ defaults:
 
 debug: false
 scheduler: "linear_warmup_decay"
-log_level: "DEBUG"
+log_level: "INFO"
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 800
+  max_epochs: 2
   gpus: 2
   plugins: null
   precision: 32

@@ -17,7 +17,7 @@ defaults:
 debug: false
 scheduler: "linear_warmup_decay"
 output_dir_base_path: /p/project/hai_emulator/plankton_logs
-log_level: "DEBUG"
+log_level: "INFO"
 
 trainer:
   fast_dev_run: false
