@@ -21,7 +21,7 @@ log_level: "INFO"
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 2
+  max_epochs: 800
   gpus: 2
   plugins: null
   precision: 32
@@ -35,7 +35,7 @@ logger:
 
 datamodule:
   num_workers: 10
-  batch_size: 4
+  batch_size: 200
   oversample_data: false
   pin_memory: false
   reduce_data: false # use max 10.000 images from each class
@@ -44,9 +44,8 @@ datamodule:
   use_planktonnet_data: false
   preload_dataset: false
   unlabeled_files_to_append:
-    - "/gpfs/work/machnitz/plankton_dataset/cpics/20210101/20210101_0000/"
-#    - "/gpfs/work/machnitz/plankton_dataset/cpics/"
-#    - "/gpfs/work/machnitz/plankton_dataset/new_data/"
+    - "/gpfs/work/machnitz/plankton_dataset/cpics/"
+    - "/gpfs/work/machnitz/plankton_dataset/new_data/"
 
 lightning_module:
   log_confusion_matrices: false
