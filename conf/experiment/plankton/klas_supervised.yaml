@@ -24,18 +24,10 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 100
   gpus: 1
-  plugins: null
   precision: 32
-  num_nodes: 4
+  num_nodes: 2
   sync_batchnorm: false
   profiler: null
-
-hydra:
-  launcher:
-    partition: pGPU32
-    cpus_per_task: 20
-    tasks_per_node: ${trainer.gpus} # == gpus_per_node
-    nodes: ${trainer.num_nodes}
 
 logger:
   tensorboard:
