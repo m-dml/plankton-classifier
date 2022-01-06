@@ -121,10 +121,6 @@ def print_config(
     rich.print(tree)
 
 
-def empty(*args, **kwargs):
-    pass
-
-
 @rank_zero_only
 def log_hyperparameters(
     config: DictConfig,
