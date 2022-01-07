@@ -16,10 +16,9 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
 from sklearn.metrics import balanced_accuracy_score
 
+from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
-from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
-import copy
 
 
 class LightningModel(pl.LightningModule):
@@ -39,6 +38,7 @@ class LightningModel(pl.LightningModule):
         freeze_feature_extractor,
         is_in_simclr_mode,
         batch_size,
+        temperature_scale,
     ):
 
         super().__init__()
@@ -66,7 +66,7 @@ class LightningModel(pl.LightningModule):
         self.model = concat_feature_extractor_and_classifier(
             feature_extractor=self.feature_extractor, classifier=self.classifier
         )
-        self.scaled_model = None
+        self.temperatures = None
 
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
@@ -77,6 +77,7 @@ class LightningModel(pl.LightningModule):
         self.console_logger.debug("Test Debug")
         self.is_in_simclr_mode = is_in_simclr_mode
         self.batch_size = batch_size
+        self.temperature_scale = temperature_scale
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -89,6 +90,8 @@ class LightningModel(pl.LightningModule):
         else:
             features = self.feature_extractor(images)
             predictions = self.classifier(features)
+            if self.temperature_scale and self.temperatures:
+                predictions = predictions / self.temperatures
         return features, predictions
 
     def configure_optimizers(self):
@@ -295,10 +298,11 @@ class LightningModel(pl.LightningModule):
 
         if self.log_tsne_image:
             self.plot_tsne_images(outputs)
-
-        self.scaled_model = ModelWithTemperature(copy.deepcopy(self.model))
-        self.scaled_model.set_temperature(self.trainer.datamodule.valid_data)
-        self.scaled_model.cpu()
+        outputs_dict = {k: [dic[k] for dic in outputs] for k in outputs[0]}
+        scaled_model = ModelWithTemperature(self, device=self.device)
+        self.temperatures = scaled_model.get_temperature(
+            labels=torch.cat(outputs_dict["labels"]), logits=torch.cat(outputs_dict["classifier"])
+        )
 
     def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
@@ -378,33 +382,28 @@ class LightningModel(pl.LightningModule):
         else:
             example_input = self.example_input_array
 
-        models = {"model": self.model,
-                  "scaled_model": self.scaled_model}
+        # save model to onnx:
+        folder = self.trainer.checkpoint_callback.dirpath
+        onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
 
-        for model_name, model in models.items():
-            # save model to onnx:
-            folder = self.trainer.checkpoint_callback.dirpath
-            onnx_file_generator = os.path.join(folder, f"{model_name}_{self.global_step}.onnx")
+        torch.onnx.export(
+            model=self.model.to(self.device),
+            args=example_input.to(self.device),
+            f=onnx_file_generator,
+            opset_version=13,
+            do_constant_folding=True,
+            verbose=False,
+            export_params=True,
+            input_names=["input"],
+            output_names=["output"],
+            dynamic_axes={
+                "input": {0: "batch_size"},  # makes the batch-size variable for inference
+                "output": {0: "batch_size"},
+            },
+        )
 
-            torch.onnx.export(
-                model=model.to(self.device),
-                args=example_input.to(self.device),
-                f=onnx_file_generator,
-                opset_version=13,
-                do_constant_folding=True,
-                verbose=False,
-                export_params=True,
-                input_names=["input"],
-                output_names=["output"],
-                dynamic_axes={
-                    "input": {0: "batch_size"},  # makes the batch-size variable for inference
-                    "output": {0: "batch_size"},
-                },
-            )
+        # save the feature_extractor_weights:
+        state_dict = self.model.state_dict()
+        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
 
-            # save the feature_extractor_weights:
-            state_dict = self.model.state_dict()
-            torch.save(state_dict, os.path.join(folder, f"complete_{model_name}_{self.global_step}.weights"))
-
-        # reset the scaled model to free memory
-        self.scaled_model = None
+        torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.global_step}.tensor"))

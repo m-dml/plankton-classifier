@@ -14,3 +14,4 @@ class LitModule:
     log_tsne_image: bool = True
     optimizer: Optimizer = MISSING
     freeze_feature_extractor: bool = False
+    temperature_scale: bool = True

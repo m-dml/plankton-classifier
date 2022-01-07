@@ -1,5 +1,6 @@
 import copy
 import faulthandler
+import glob
 import os
 import platform
 from typing import List
@@ -139,6 +140,13 @@ def main(cfg: Config):
         model.model = concat_feature_extractor_and_classifier(model.feature_extractor, model.classifier)
         del net
         log.info(f"Successfully loaded model weights from {cfg.load_state_dict}")
+
+        state_folder = os.path.split(cfg.load_state_dict)[0]
+        temperature_files = glob.glob(os.path.join(state_folder, "temperature*.tensor"))
+        if len(temperature_files) > 0:
+            step_number = os.path.split(cfg.load_state_dict)[1].split("complete_model_")[-1].split(".weights")[0]
+            temperature_file = os.path.join(state_folder, f"temperatures_{step_number}.tensor")
+            model.temperatures = torch.load(temperature_file)
 
     # freeze the weights of the feature extractor to only train the classifier
     if cfg.lightning_module.freeze_feature_extractor:

@@ -16,7 +16,6 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
-from torchsampler import ImbalancedDatasetSampler
 
 from src.utils import utils
 
