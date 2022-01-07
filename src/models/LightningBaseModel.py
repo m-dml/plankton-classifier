@@ -91,17 +91,18 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
-            global_batch_size = (
-                self.trainer.num_nodes * self.trainer.gpus * self.batch_size
-                if self.trainer.gpus > 0
-                else self.batch_size
-            )
-            self.console_logger.info("global batch size is {}".format(global_batch_size))
-            train_iters_per_epoch = len(self.trainer.datamodule.train_data) // global_batch_size
-            self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
-            warmup_steps = train_iters_per_epoch * 10
-            total_steps = train_iters_per_epoch * self.trainer.max_epochs
+
             if self.cfg_scheduler == "linear_warmup_decay":
+                global_batch_size = (
+                    self.trainer.num_nodes * self.trainer.gpus * self.batch_size
+                    if self.trainer.gpus > 0
+                    else self.batch_size
+                )
+                self.console_logger.info("global batch size is {}".format(global_batch_size))
+                train_iters_per_epoch = len(self.trainer.datamodule.train_data) // global_batch_size
+                self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
+                warmup_steps = train_iters_per_epoch * 10
+                total_steps = train_iters_per_epoch * self.trainer.max_epochs
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.LambdaLR(
                         optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
@@ -111,6 +112,9 @@ class LightningModel(pl.LightningModule):
                     "name": "Lars-LR",
                 }
             elif self.cfg_scheduler == "cosine":
+                train_iters_per_epoch = len(self.trainer.datamodule.train_data) // self.batch_size
+                self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
+                total_steps = train_iters_per_epoch * self.trainer.max_epochs
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_steps, eta_min=0.0),
                     "interval": "step",
