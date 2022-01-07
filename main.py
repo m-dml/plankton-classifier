@@ -1,4 +1,5 @@
 import copy
+import faulthandler
 import os
 import platform
 from typing import List
@@ -14,7 +15,6 @@ from torchvision.transforms import Compose
 from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
-import faulthandler
 
 faulthandler.enable()
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:

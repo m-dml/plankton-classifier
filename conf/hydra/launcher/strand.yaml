@@ -17,6 +17,6 @@ setup: [
     "source activate hydra",
     "export CUDA_VISIBLE_DEVICES=0,1",
     "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
-    "export NCCL_SOCKET_NTHREADS=2",  # number of CPUs per NCCL connection
+    "export NCCL_SOCKET_NTHREADS=2", # number of CPUs per NCCL connection
   ]
 max_num_timeout: 10

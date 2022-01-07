@@ -344,10 +344,16 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.oversample_data:
             sampler = BalanceClassSampler(self.train_labels, mode="upsampling")
             if self.is_ddp:
+                self.console_logger.info("Wrapping the sampler to be ddp compatible")
                 sampler = self.ddp_wrap_sampler(sampler)
+                self.console_logger.info("Wrapping was successful")
 
             return DataLoader(
-                self.train_data, batch_size=self.batch_size, num_workers=0, pin_memory=self.pin_memory, sampler=sampler
+                self.train_data,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                sampler=sampler,
             )
         else:
             return DataLoader(
