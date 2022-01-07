@@ -298,11 +298,13 @@ class LightningModel(pl.LightningModule):
 
         if self.log_tsne_image:
             self.plot_tsne_images(outputs)
-        outputs_dict = {k: [dic[k] for dic in outputs] for k in outputs[0]}
-        scaled_model = ModelWithTemperature(self, device=self.device)
-        self.temperatures = scaled_model.get_temperature(
-            labels=torch.cat(outputs_dict["labels"]), logits=torch.cat(outputs_dict["classifier"])
-        )
+
+        if self.temperature_scale:
+            outputs_dict = {k: [dic[k] for dic in outputs] for k in outputs[0]}
+            scaled_model = ModelWithTemperature(self, device=self.device)
+            self.temperatures = scaled_model.get_temperature(
+                labels=torch.cat(outputs_dict["labels"]), logits=torch.cat(outputs_dict["classifier"])
+            )
 
     def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
@@ -406,4 +408,5 @@ class LightningModel(pl.LightningModule):
         state_dict = self.model.state_dict()
         torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
 
-        torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.global_step}.tensor"))
+        if self.temperature_scale:
+            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.global_step}.tensor"))
