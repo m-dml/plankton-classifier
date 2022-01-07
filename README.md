@@ -15,6 +15,15 @@ with `conda env create -f environment.yaml`.
 You can get a list of all options using `python main.py --help`.
 For more information on configuration see the hydra docs: https://hydra.cc/
 
+This repo contains a submodule, so after cloning it you have to also clone the submodule:
+
+```bash
+git clone https://github.com/m-dml/plankton-classifier
+cd plankton-classifier
+git submodule init
+git submodule update
+```
+
 
 pre-commit
 ---------
