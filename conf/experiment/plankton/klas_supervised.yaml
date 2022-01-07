@@ -49,6 +49,7 @@ lightning_module:
   log_confusion_matrices: true
   log_images: false
   freeze_feature_extractor: false
+  temperature_scale: false
 
 model:
   classifier:
