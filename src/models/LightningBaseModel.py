@@ -18,6 +18,8 @@ from sklearn.metrics import balanced_accuracy_score
 
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
+from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
+import copy
 
 
 class LightningModel(pl.LightningModule):
@@ -64,6 +66,7 @@ class LightningModel(pl.LightningModule):
         self.model = concat_feature_extractor_and_classifier(
             feature_extractor=self.feature_extractor, classifier=self.classifier
         )
+        self.scaled_model = None
 
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
@@ -293,6 +296,10 @@ class LightningModel(pl.LightningModule):
         if self.log_tsne_image:
             self.plot_tsne_images(outputs)
 
+        self.scaled_model = ModelWithTemperature(copy.deepcopy(self.model))
+        self.scaled_model.set_temperature(self.trainer.datamodule.valid_data)
+        self.scaled_model.cpu()
+
     def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
             self._log_accuracy_matrices("Testing")
@@ -366,30 +373,38 @@ class LightningModel(pl.LightningModule):
         if self.automatic_optimization and (self.current_epoch == 0):
             return
 
-        # save model to onnx:
-        folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"complete_model_{self.global_step}.onnx")
         if self.is_in_simclr_mode:
             example_input = self.example_input_array[0]
         else:
             example_input = self.example_input_array
 
-        torch.onnx.export(
-            model=self.model,
-            args=example_input.to(self.device),
-            f=onnx_file_generator,
-            opset_version=13,
-            do_constant_folding=True,
-            verbose=False,
-            export_params=True,
-            input_names=["input"],
-            output_names=["output"],
-            dynamic_axes={
-                "input": {0: "batch_size"},  # makes the batch-size variable for inference
-                "output": {0: "batch_size"},
-            },
-        )
+        models = {"model": self.model,
+                  "scaled_model": self.scaled_model}
 
-        # save the feature_extractor_weights:
-        state_dict = self.model.state_dict()
-        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
+        for model_name, model in models.items():
+            # save model to onnx:
+            folder = self.trainer.checkpoint_callback.dirpath
+            onnx_file_generator = os.path.join(folder, f"{model_name}_{self.global_step}.onnx")
+
+            torch.onnx.export(
+                model=model.to(self.device),
+                args=example_input.to(self.device),
+                f=onnx_file_generator,
+                opset_version=13,
+                do_constant_folding=True,
+                verbose=False,
+                export_params=True,
+                input_names=["input"],
+                output_names=["output"],
+                dynamic_axes={
+                    "input": {0: "batch_size"},  # makes the batch-size variable for inference
+                    "output": {0: "batch_size"},
+                },
+            )
+
+            # save the feature_extractor_weights:
+            state_dict = self.model.state_dict()
+            torch.save(state_dict, os.path.join(folder, f"complete_{model_name}_{self.global_step}.weights"))
+
+        # reset the scaled model to free memory
+        self.scaled_model = None

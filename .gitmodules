@@ -1,0 +1,3 @@
+[submodule "src/external/temperature_scaling"]
+	path = src/external/temperature_scaling
+	url = https://github.com/gpleiss/temperature_scaling.git
