@@ -18,6 +18,7 @@ defaults:
 debug: false
 load_state_dict: null
 scheduler: "cosine"
+random_seed: 7
 
 trainer:
   fast_dev_run: false
