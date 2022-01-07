@@ -72,7 +72,7 @@ def main(cfg: Config):
     datamodule.setup()  # manually set up the datamodule here, so an example batch can be drawn
 
     # generate example input array:
-    for batch in datamodule.train_dataloader():
+    for batch in datamodule.val_dataloader():
         example_input, _ = batch
         if isinstance(example_input, (tuple, list)):
             example_input = torch.stack(example_input).detach().cpu()
