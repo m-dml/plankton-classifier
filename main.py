@@ -143,7 +143,7 @@ def main(cfg: Config):
 
         state_folder = os.path.split(cfg.load_state_dict)[0]
         temperature_files = glob.glob(os.path.join(state_folder, "temperature*.tensor"))
-        if len(temperature_files) > 0:
+        if (len(temperature_files) > 0) and cfg.lightning_module.temperature_scale:
             step_number = os.path.split(cfg.load_state_dict)[1].split("complete_model_")[-1].split(".weights")[0]
             temperature_file = os.path.join(state_folder, f"temperatures_{step_number}.tensor")
             model.temperatures = torch.load(temperature_file)
