@@ -116,6 +116,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         pin_memory=False,
         unlabeled_files_to_append=None,
         is_ddp=False,
+        subsample_supervised=1,
         **kwargs,
     ):
         super().__init__()
@@ -164,6 +165,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.reduce_data = reduce_data
         self.console_logger = utils.get_logger(__name__)
         self.is_ddp = is_ddp
+        self.subsample_supervised = subsample_supervised
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -209,6 +211,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
             _, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
             _, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
             _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
+
+            if self.subsample_supervised < 1.0:
+                train_subset, self.train_labels = self._resample_data(train_subset, self.train_labels)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
@@ -315,7 +320,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
-        for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}")):
+        for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}"), position=0, leave=True):
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
             if label in self.excluded_labels:
@@ -339,6 +344,25 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     label = super_class
                     break
             return label
+
+    def _resample_data(self, train_data, train_labels):
+
+        samples_per_class = np.floor(len(train_labels) * self.subsample_supervised / len(np.unique(train_labels)))
+        self.console_logger.info(f"Only use {samples_per_class} samples per class.")
+
+        new_train_data = []
+        new_train_labels = []
+        train_dict = {}
+
+        for datum, label in zip(train_data, train_labels):
+            if label not in train_dict.keys():
+                train_dict[label] = []
+            if len(train_dict[label]) <= samples_per_class:
+                train_dict[label].append(datum)
+                new_train_data.append(datum)
+                new_train_labels.append(label)
+
+        return new_train_data, np.array(new_train_labels)
 
     def train_dataloader(self):
         if self.oversample_data:
