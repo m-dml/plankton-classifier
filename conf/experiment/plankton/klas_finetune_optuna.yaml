@@ -1,0 +1,109 @@
+# @package _global_
+
+defaults:
+  - /callbacks/gpu_monitoring: gpu_monitoring
+  - override /datamodule: plankton
+  - override /datamodule/dataset: default
+  - override /loss: cross_entropy_loss
+  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: plankton_eval
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: linear
+  - override /trainer: strand
+  - override /hydra/launcher: strand
+  - override /optimizer: sgd
+  - override /strategy: DDP
+  - override hydra/sweeper: optuna
+  - override hydra/sweeper/sampler: tpe
+  - _self_
+
+debug: false
+load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2022-01-05/15-32-15/0/logs/checkpoints/complete_model_195175.weights
+scheduler: "cosine"
+random_seed: 7
+
+
+hydra:
+  sweeper:
+    sampler:
+      seed: ${random_seed}
+    direction: minimize
+    study_name: plankton_finetune
+    storage: null
+    n_trials: 30
+    n_jobs: 4
+
+    search_space:
+      optimizer:
+        lr:
+          type: float
+          low: 0.001
+          high: 0.1
+        nesterov:
+          type: categorical
+          choices: [true, false]
+      datamodule:
+        batch_size:
+          type: int
+          low: 48
+          high: 256
+
+
+trainer:
+  fast_dev_run: false
+  num_sanity_val_steps: 5
+  max_epochs: 30
+  gpus: 1
+  precision: 32
+  num_nodes: 2
+  sync_batchnorm: false
+  profiler: null
+  replace_sampler_ddp: false
+
+logger:
+  tensorboard:
+    default_hp_metric: false
+
+datamodule:
+  num_workers: 10
+  batch_size: 64
+  oversample_data: true
+  pin_memory: false
+  reduce_data: true # use max 10.000 images from each class
+  use_klas_data: true
+  use_canadian_data: false
+  use_planktonnet_data: false
+  subsample_supervised: 0.01
+
+lightning_module:
+  log_confusion_matrices: true
+  log_images: false
+  freeze_feature_extractor: false
+  temperature_scale: false
+
+model:
+  classifier:
+    num_classes: null # size of the projection head
+    input_features: 2048
+  feature_extractor:
+    model:
+      _target_: "torchvision.models.resnet50"
+      num_classes: ${model.classifier.input_features}
+      pretrained: false
+      # first conv layer:
+    kernel_size: 7 # default is 7
+    stride: 2 # default is 2
+    channels: 3 # default is 3
+    maxpool1: true
+
+optimizer:
+  nesterov: false
+  momentum: 0.9
+  lr: 0.02
+
+callbacks:
+  early_stopping:
+    monitor: "loss/Validation"
+    patience: 800
+    verbose: true
+    mode: "min"

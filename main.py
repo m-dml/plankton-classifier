@@ -193,6 +193,8 @@ def main(cfg: Config):
     if trainer.checkpoint_callback.best_model_path is not None:
         log.info(f"Best checkpoint path:\n{trainer.checkpoint_callback.best_model_path}")
 
+    return trainer.callback_metrics["hp/accuracy"].item()
+
 
 if __name__ == "__main__":
     log = utils.get_logger()
