@@ -27,7 +27,7 @@ hydra:
   sweeper:
     sampler:
       seed: ${random_seed}
-    direction: minimize
+    direction: maximize
     study_name: plankton_finetune
     storage: null
     n_trials: 30
