@@ -29,7 +29,7 @@ hydra:
       seed: ${random_seed}
     direction: maximize
     study_name: plankton_finetune
-    storage: "sqlite:///gpfs/work/machnitz/optuna_results.db"
+    storage: "sqlite:////gpfs/work/machnitz/optuna_results.db"
     n_trials: 30
     n_jobs: 4
 
@@ -50,7 +50,7 @@ hydra:
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 3
+  max_epochs: 30
   gpus: 1
   precision: 32
   num_nodes: 2
