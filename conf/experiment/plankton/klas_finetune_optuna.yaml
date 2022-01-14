@@ -34,19 +34,17 @@ hydra:
     n_jobs: 4
 
     search_space:
-      optimizer:
-        lr:
-          type: float
-          low: 0.001
-          high: 0.1
-        nesterov:
-          type: categorical
-          choices: [true, false]
-      datamodule:
-        batch_size:
-          type: int
-          low: 48
-          high: 256
+      optimizer.lr:
+        type: float
+        low: 0.001
+        high: 0.1
+      optimizer.nesterov:
+        type: categorical
+        choices: [true, false]
+      datamodule.batch_size:
+        type: int
+        low: 48
+        high: 256
 
 
 trainer:
