@@ -383,11 +383,13 @@ class LightningModel(pl.LightningModule):
 
     def _correct_eval_probabilities_with_training_prior(self, outputs):
         training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-        p_balanced_per_class = 1/(len(training_class_counts))
+        p_balanced_per_class = 1 / (len(training_class_counts))
         p_corrected_per_class = training_class_counts / len(training_class_counts)
 
         corrected_denominator = (p_balanced_per_class / p_corrected_per_class) * outputs
-        corrected_divisor = corrected_denominator + (((1 - p_balanced_per_class) / (1-p_corrected_per_class)) * (1 - outputs))
+        corrected_divisor = corrected_denominator + (
+            ((1 - p_balanced_per_class) / (1 - p_corrected_per_class)) * (1 - outputs)
+        )
         return corrected_denominator / corrected_divisor
 
     def on_save_checkpoint(self, checkpoint) -> None:
