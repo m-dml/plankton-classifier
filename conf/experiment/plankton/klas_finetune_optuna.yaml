@@ -50,7 +50,7 @@ hydra:
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 30
+  max_epochs: 3
   gpus: 1
   precision: 32
   num_nodes: 2
