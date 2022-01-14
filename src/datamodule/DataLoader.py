@@ -166,6 +166,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger = utils.get_logger(__name__)
         self.is_ddp = is_ddp
         self.subsample_supervised = subsample_supervised
+        self.training_class_counts = None  # how often does each class exist in the training dataset
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -208,12 +209,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
             valid_subset = training_pairs[valid_split_start:valid_split_end]
             test_subset = training_pairs[test_split_start:test_split_end]
 
-            _, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
-            _, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
-            _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
+        _, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
+        _, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
+        _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
 
-            if self.subsample_supervised < 1.0:
-                train_subset, self.train_labels = self._resample_data(train_subset, self.train_labels)
+        _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
+
+        if self.subsample_supervised < 1.0:
+            train_subset, self.train_labels = self._resample_data(train_subset, self.train_labels)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")

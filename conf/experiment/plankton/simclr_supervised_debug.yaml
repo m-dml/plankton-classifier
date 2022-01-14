@@ -4,20 +4,21 @@ defaults:
   - /callbacks/gpu_monitoring: gpu_monitoring
   - override /strategy: null
   - override /datamodule: plankton
-  - override /datamodule/dataset: simclr
-  - override /loss: nt_xent_loss
+  - override /datamodule/dataset: default
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: simclr_plankton
-  - override /datamodule/valid_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
-  - override /model/classifier: simclr_head
+  - override /model/classifier: linear
   - override /trainer: default
   - override /hydra/launcher: local
-  - override /optimizer: lars
+  - override /optimizer: adam
 
   - _self_
 
 debug: false
-scheduler: "linear_warmup_decay"
+load_state_dict: null
+scheduler: "cosine"
 log_level: "DEBUG"
 
 trainer:
@@ -39,9 +40,9 @@ logger:
 datamodule:
   num_workers: 0
   batch_size: 5 # batch size per GPU
-  oversample_data: false
+  oversample_data: true
   pin_memory: false
-  reduce_data: false # use max 10.000 images from each class
+  reduce_data: true # use max 10.000 images from each class
   use_klas_data: true
   use_canadian_data: false
   use_planktonnet_data: false
@@ -51,11 +52,13 @@ datamodule:
 lightning_module:
   log_confusion_matrices: false
   log_images: false
+  freeze_feature_extractor: false
+  temperature_scale: false
 
 model:
   classifier:
-    num_classes: 100 # size of the projection head
-    input_features: 100
+    num_classes: null # size of the projection head
+    input_features: 128
   feature_extractor:
     model:
       _target_: "torchvision.models.resnet18"
@@ -68,7 +71,7 @@ model:
     maxpool1: true
 
 optimizer:
-  lr: 4
+  lr: 0.02
 
 callbacks:
   early_stopping:

@@ -157,6 +157,9 @@ class LightningModel(pl.LightningModule):
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
         features, classifier_outputs = self._do_gpu_parallel_step(images)
 
+        # due to rebalancing during training we have to account for distribution shifts during evaluation:
+        classifier_outputs = self._correct_eval_probabilities_with_training_prior(classifier_outputs)
+
         return features, labels, classifier_outputs
 
     def validation_step_end(self, validation_step_outputs, *args, **kwargs):
@@ -176,6 +179,9 @@ class LightningModel(pl.LightningModule):
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_outputs = self._do_gpu_parallel_step(images)
+
+        # due to rebalancing during training we have to account for distribution shifts during evaluation:
+        classifier_outputs = self._correct_eval_probabilities_with_training_prior(classifier_outputs)
 
         return features, labels, classifier_outputs
 
@@ -374,6 +380,15 @@ class LightningModel(pl.LightningModule):
         # plt.tight_layout()
         self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
+
+    def _correct_eval_probabilities_with_training_prior(self, outputs):
+        training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
+        p_balanced_per_class = 1/(len(training_class_counts))
+        p_corrected_per_class = training_class_counts / len(training_class_counts)
+
+        corrected_denominator = (p_balanced_per_class / p_corrected_per_class) * outputs
+        corrected_divisor = corrected_denominator + (((1 - p_balanced_per_class) / (1-p_corrected_per_class)) * (1 - outputs))
+        return corrected_denominator / corrected_divisor
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
