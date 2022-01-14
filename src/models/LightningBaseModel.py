@@ -90,6 +90,9 @@ class LightningModel(pl.LightningModule):
         else:
             features = self.feature_extractor(images)
             predictions = self.classifier(features)
+
+            predictions = F.softmax(predictions, dim=1)
+
             if self.temperature_scale and self.temperatures:
                 predictions = predictions / self.temperatures
         return features, predictions

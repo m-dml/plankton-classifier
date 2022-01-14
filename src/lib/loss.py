@@ -6,9 +6,10 @@ class NLLLoss:
     _target_: str = "torch.nn.NLLLoss"
 
 
-@dataclass
-class CrossEntropyLoss:
-    _target_: str = "torch.nn.CrossEntropyLoss"
+# Deprecated:
+# @dataclass
+# class CrossEntropyLoss:
+#     _target_: str = "torch.nn.CrossEntropyLoss"
 
 
 @dataclass

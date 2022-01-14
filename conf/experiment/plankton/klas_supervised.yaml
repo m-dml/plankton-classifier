@@ -4,7 +4,7 @@ defaults:
   - /callbacks/gpu_monitoring: gpu_monitoring
   - override /datamodule: plankton
   - override /datamodule/dataset: default
-  - override /loss: cross_entropy_loss
+  - override /loss: nll_loss
   - override /datamodule/train_transforms: simclr_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
