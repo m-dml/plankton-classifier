@@ -13,8 +13,8 @@ defaults:
   - override /hydra/launcher: strand
   - override /optimizer: sgd
   - override /strategy: DDP
-  - override hydra/sweeper: optuna
-  - override hydra/sweeper/sampler: tpe
+  - override /hydra/sweeper: optuna
+  - override /hydra/sweeper/sampler: tpe
   - _self_
 
 debug: false
