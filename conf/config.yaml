@@ -16,6 +16,7 @@ defaults:
   - callbacks/lr_monitor: lr_monitor
 
   - override hydra/launcher: strand
+  - override hydra/sweeper: optuna
 
   # enable color logging
   - override hydra/hydra_logging: colorlog
