@@ -29,7 +29,7 @@ hydra:
       seed: ${random_seed}
     direction: maximize
     study_name: plankton_finetune
-    storage: null
+    storage: "sqlite:///gpfs/work/machnitz/optuna_results.db"
     n_trials: 30
     n_jobs: 4
 
