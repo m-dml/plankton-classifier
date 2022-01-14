@@ -15,7 +15,7 @@ defaults:
   - callbacks/early_stopping: early_stopping
   - callbacks/lr_monitor: lr_monitor
 
-  - override hydra/launcher: strand
+  - override hydra/launcher: strand_single
   - override hydra/sweeper: optuna
 
   # enable color logging

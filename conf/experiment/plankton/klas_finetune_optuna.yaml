@@ -10,7 +10,7 @@ defaults:
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: linear
   - override /trainer: strand
-  - override /hydra/launcher: strand
+  - override /hydra/launcher: strand_single
   - override /optimizer: sgd
   - override /strategy: DDP
   - override /hydra/sweeper: optuna
@@ -30,8 +30,8 @@ hydra:
     direction: maximize
     study_name: plankton_finetune
     storage: "sqlite:////gpfs/work/machnitz/optuna_results.db"
-    n_trials: 30
-    n_jobs: 4
+    n_trials: 36
+    n_jobs: 6
 
     search_space:
       optimizer.lr:
@@ -53,7 +53,7 @@ trainer:
   max_epochs: 30
   gpus: 1
   precision: 32
-  num_nodes: 2
+  num_nodes: 1
   sync_batchnorm: false
   profiler: null
   replace_sampler_ddp: false
