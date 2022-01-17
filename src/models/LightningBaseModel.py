@@ -91,7 +91,7 @@ class LightningModel(pl.LightningModule):
             features = self.feature_extractor(images)
             predictions = self.classifier(features)
 
-            predictions = F.softmax(predictions, dim=1)
+            predictions = F.log_softmax(predictions, dim=1)
 
             if self.temperature_scale and self.temperatures:
                 predictions = predictions / self.temperatures
@@ -139,34 +139,34 @@ class LightningModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        features, classifier_outputs = self._do_gpu_parallel_step(images)
+        features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
-        return features, labels, classifier_outputs
+        return features, labels, class_log_probabilities
 
     def training_step_end(self, training_step_outputs, *args, **kwargs):
-        features, labels, classifier_outputs = training_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Training")
+        features, labels, class_log_probabilities = training_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Training")
         return {
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": classifier_outputs.detach(),
+            "classifier": class_log_probabilities.detach(),
         }
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
-        features, classifier_outputs = self._do_gpu_parallel_step(images)
+        features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        classifier_outputs = self._correct_eval_probabilities_with_training_prior(classifier_outputs)
+        class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
-        return features, labels, classifier_outputs
+        return features, labels, class_log_probabilities
 
     def validation_step_end(self, validation_step_outputs, *args, **kwargs):
-        features, labels, classifier_outputs = validation_step_outputs
+        features, labels, class_log_probabilities = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
-        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Validation")
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Validation")
         self.log("hp/loss", loss)
         self.log("hp/accuracy", acc)
         self.log("hp/epoch", torch.tensor(self.current_epoch).float())
@@ -174,26 +174,26 @@ class LightningModel(pl.LightningModule):
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": classifier_outputs.detach(),
+            "classifier": class_log_probabilities.detach(),
         }
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        features, classifier_outputs = self._do_gpu_parallel_step(images)
+        features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        classifier_outputs = self._correct_eval_probabilities_with_training_prior(classifier_outputs)
+        class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
-        return features, labels, classifier_outputs
+        return features, labels, class_log_probabilities
 
     def test_step_end(self, test_step_outputs, *args, **kwargs):
-        features, labels, classifier_outputs = test_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(classifier_outputs, labels, step="Testing")
+        features, labels, class_log_probabilities = test_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Testing")
         return {
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": classifier_outputs.detach(),
+            "classifier": class_log_probabilities.detach(),
         }
 
     def _pre_process_batch(self, batch):
@@ -383,16 +383,16 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
 
     def _correct_eval_probabilities_with_training_prior(self, log_probabilities):
-        outputs = torch.exp(log_probabilities)
+        probabilities = torch.exp(log_probabilities)
         training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
         p_balanced_per_class = 1 / (len(training_class_counts))
-        p_corrected_per_class = training_class_counts / len(training_class_counts)
+        p_corrected_per_class = training_class_counts / torch.sum(training_class_counts)
 
-        corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * outputs
+        corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * probabilities
         corrected_denominator = corrected_enumerator + (
-            ((1 - p_balanced_per_class) / (1 - p_corrected_per_class)) * (1 - outputs)
+            ((1 - p_corrected_per_class) / (1 - p_balanced_per_class)) * (1 - probabilities)
         )
-        return torch.log(corrected_enumerator / corrected_denominator)
+        return F.log_softmax(corrected_enumerator / corrected_denominator)
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
