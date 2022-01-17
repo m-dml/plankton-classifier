@@ -109,7 +109,11 @@ def main(cfg: Config):
         this_state_dict = model.model.state_dict().copy()
         len_old_state_dict = len(this_state_dict)
         log.info(f"Old state dict has {len_old_state_dict} entries.")
-        new_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
+        try:
+            new_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
+        except Exception as e:
+            log.error()
+            raise e
         for key in new_state_dict.keys():
             # make sure feature extractor weights are the same format:
             if key not in this_state_dict and not key.startswith("classifier."):

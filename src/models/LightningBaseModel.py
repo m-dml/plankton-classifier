@@ -100,18 +100,18 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
+            global_batch_size = (
+                self.trainer.num_nodes * self.trainer.gpus * self.batch_size
+                if self.trainer.gpus > 0
+                else self.batch_size
+            )
+            self.console_logger.info("global batch size is {}".format(global_batch_size))
+            train_iters_per_epoch = len(self.trainer.datamodule.train_data) / global_batch_size
+            self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
+            warmup_steps = int(train_iters_per_epoch * 10)
+            total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
 
             if self.cfg_scheduler == "linear_warmup_decay":
-                global_batch_size = (
-                    self.trainer.num_nodes * self.trainer.gpus * self.batch_size
-                    if self.trainer.gpus > 0
-                    else self.batch_size
-                )
-                self.console_logger.info("global batch size is {}".format(global_batch_size))
-                train_iters_per_epoch = len(self.trainer.datamodule.train_data) / global_batch_size
-                self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
-                warmup_steps = int(train_iters_per_epoch * 10)
-                total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.LambdaLR(
                         optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
@@ -121,9 +121,6 @@ class LightningModel(pl.LightningModule):
                     "name": "Lars-LR",
                 }
             elif self.cfg_scheduler == "cosine":
-                train_iters_per_epoch = len(self.trainer.datamodule.train_data) / self.batch_size
-                self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
-                total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_steps, eta_min=0.0),
                     "interval": "step",
@@ -385,15 +382,16 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
 
     def _correct_eval_probabilities_with_training_prior(self, outputs):
+        outputs = torch.exp(outputs)
         training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
         p_balanced_per_class = 1 / (len(training_class_counts))
         p_corrected_per_class = training_class_counts / len(training_class_counts)
 
-        corrected_denominator = (p_balanced_per_class / p_corrected_per_class) * outputs
-        corrected_divisor = corrected_denominator + (
+        corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * outputs
+        corrected_denominator = corrected_enumerator + (
             ((1 - p_balanced_per_class) / (1 - p_corrected_per_class)) * (1 - outputs)
         )
-        return corrected_denominator / corrected_divisor
+        return torch.log(corrected_enumerator / corrected_denominator)
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
