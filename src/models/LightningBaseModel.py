@@ -106,7 +106,7 @@ class LightningModel(pl.LightningModule):
                 else self.batch_size
             )
             self.console_logger.info("global batch size is {}".format(global_batch_size))
-            train_iters_per_epoch = self.trainer.datamodule.len_train_data / global_batch_size
+            train_iters_per_epoch = self.trainer.datamodule.len_train_data * (self.batch_size / global_batch_size)
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = int(train_iters_per_epoch * 10)
             total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
