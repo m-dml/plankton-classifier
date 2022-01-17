@@ -106,10 +106,11 @@ class LightningModel(pl.LightningModule):
                 else self.batch_size
             )
             self.console_logger.info("global batch size is {}".format(global_batch_size))
-            train_iters_per_epoch = len(self.trainer.datamodule.train_data) / global_batch_size
+            train_iters_per_epoch = self.trainer.datamodule.len_train_data / global_batch_size
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = int(train_iters_per_epoch * 10)
             total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
+            self.console_logger.info(f"Total train steps are {total_steps}")
 
             if self.cfg_scheduler == "linear_warmup_decay":
                 scheduler = {
@@ -297,12 +298,12 @@ class LightningModel(pl.LightningModule):
         return figure
 
     def validation_epoch_end(self, outputs):
-        if self.log_confusion_matrices:
+        if self.log_confusion_matrices and self.current_epoch > 0:
             self._log_accuracy_matrices("Validation")
             # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
             self._log_accuracy_matrices("Training")
 
-        if self.log_tsne_image:
+        if self.log_tsne_image and self.current_epoch > 0:
             self.plot_tsne_images(outputs)
 
         if self.temperature_scale:
@@ -381,8 +382,8 @@ class LightningModel(pl.LightningModule):
         self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 
-    def _correct_eval_probabilities_with_training_prior(self, outputs):
-        outputs = torch.exp(outputs)
+    def _correct_eval_probabilities_with_training_prior(self, log_probabilities):
+        outputs = torch.exp(log_probabilities)
         training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
         p_balanced_per_class = 1 / (len(training_class_counts))
         p_corrected_per_class = training_class_counts / len(training_class_counts)

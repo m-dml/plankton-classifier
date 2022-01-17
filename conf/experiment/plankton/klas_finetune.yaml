@@ -39,12 +39,15 @@ datamodule:
   num_workers: 10
   batch_size: 64
   oversample_data: true
+  # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
+  # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
+  # downsample (For Klaas data 4000 samples mean 100% data):
+  subsample_supervised: 4000
   pin_memory: false
   reduce_data: true # use max 10.000 images from each class
   use_klas_data: true
   use_canadian_data: false
   use_planktonnet_data: false
-  subsample_supervised: 1 # percentage of labels to use (100 = 100%)
 
 lightning_module:
   log_confusion_matrices: true

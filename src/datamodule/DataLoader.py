@@ -215,9 +215,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
 
-        if self.subsample_supervised < 100:
-            train_subset, self.train_labels = self._resample_data(train_subset, self.train_labels)
-
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit" or stage is None:
@@ -348,29 +345,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
                     break
             return label
 
-    def _resample_data(self, train_data, train_labels):
-
-        subsample_proportion = self.subsample_supervised / 100
-        samples_per_class = np.floor(len(train_labels) * subsample_proportion / len(np.unique(train_labels)))
-        self.console_logger.info(f"Only use {samples_per_class} samples per class.")
-
-        new_train_data = []
-        new_train_labels = []
-        train_dict = {}
-
-        for datum, label in zip(train_data, train_labels):
-            if label not in train_dict.keys():
-                train_dict[label] = []
-            if len(train_dict[label]) <= samples_per_class:
-                train_dict[label].append(datum)
-                new_train_data.append(datum)
-                new_train_labels.append(label)
-
-        return new_train_data, np.array(new_train_labels)
-
     def train_dataloader(self):
         if self.oversample_data:
-            sampler = BalanceClassSampler(self.train_labels, mode="upsampling")
+            sampler = BalanceClassSampler(self.train_labels, mode=self.subsample_supervised)
             if self.is_ddp:
                 self.console_logger.info("Wrapping the sampler to be ddp compatible")
                 sampler = self.ddp_wrap_sampler(sampler)
@@ -426,3 +403,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def ddp_wrap_sampler(self, sampler):
         return DistributedSamplerWrapper(sampler)
+
+    @property
+    def len_train_data(self):
+        return len(self.train_dataloader())
