@@ -215,7 +215,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
 
-        if self.subsample_supervised < 1.0:
+        if self.subsample_supervised < 100:
             train_subset, self.train_labels = self._resample_data(train_subset, self.train_labels)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
@@ -350,7 +350,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def _resample_data(self, train_data, train_labels):
 
-        samples_per_class = np.floor(len(train_labels) * self.subsample_supervised / len(np.unique(train_labels)))
+        subsample_proportion = self.subsample_supervised / 100
+        samples_per_class = np.floor(len(train_labels) * subsample_proportion / len(np.unique(train_labels)))
         self.console_logger.info(f"Only use {samples_per_class} samples per class.")
 
         new_train_data = []

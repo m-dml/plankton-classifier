@@ -44,7 +44,7 @@ datamodule:
   use_klas_data: true
   use_canadian_data: false
   use_planktonnet_data: false
-  subsample_supervised: 0.01
+  subsample_supervised: 1 # percentage of labels to use (100 = 100%)
 
 lightning_module:
   log_confusion_matrices: true
