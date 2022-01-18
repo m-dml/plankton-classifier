@@ -29,7 +29,7 @@ trainer:
   precision: 32
   num_nodes: 10
   sync_batchnorm: true
-  profiler: "pytorch"
+  profiler: null
 
 logger:
   tensorboard:

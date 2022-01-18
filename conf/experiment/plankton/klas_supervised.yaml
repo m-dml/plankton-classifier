@@ -18,12 +18,13 @@ debug: false
 load_state_dict: null
 scheduler: "cosine"
 random_seed: 7
+output_dir_base_path: /p/project/hai_emulator/plankton_logs
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 100
-  gpus: 1
+  gpus: 4
   precision: 32
   num_nodes: 1
   sync_batchnorm: false
