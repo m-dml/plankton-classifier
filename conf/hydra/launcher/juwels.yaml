@@ -13,7 +13,7 @@ partition: booster
 gres: gpu:4
 signal_delay_s: 120
 additional_parameters:
-  { exclusive: true, signal: "SIGUSR1@200", account: "hai_emulator", nodelist: "jwb[0002-0007]"}
+  { exclusive: true, signal: "SIGUSR1@200", account: "hai_emulator"}
 array_parallelism: 256
 setup: [
     "conda activate hydra",
