@@ -29,12 +29,7 @@ def set_log_levels(level="INFO"):
     level_obj = logging.getLevelName(LOG_LEVEL.log_level)
     debug_loggers = ["hydra", "submitit", "lightning"]
     for logger in loggers:
-        if LOG_LEVEL.log_level == "DEBUG" and any(
-            [logger.name.lower().__contains__(debug_logger_str) for debug_logger_str in debug_loggers]
-        ):
-            logger.setLevel(level_obj)
-        else:
-            logger.setLevel(logging.getLevelName("INFO"))
+        logger.setLevel(logging.getLevelName("INFO"))
         for level in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
             setattr(logger, level, rank_zero_only(getattr(logger, level)))
 

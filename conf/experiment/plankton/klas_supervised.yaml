@@ -19,6 +19,7 @@ load_state_dict: null
 scheduler: "cosine"
 random_seed: 7
 output_dir_base_path: /p/project/hai_emulator/plankton_logs
+log_level: "debug"
 
 trainer:
   fast_dev_run: false
