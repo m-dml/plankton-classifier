@@ -214,18 +214,18 @@ class PlanktonDataLoader(pl.LightningDataModule):
         _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
 
         if self.subsample_supervised:
-            label_dict = {label: np.arange(len(self.train_labels))[self.train_labels == label].tolist() for label in set(self.train_labels)}
+            label_dict = {
+                label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
+                for label in set(self.train_labels)
+            }
             indices = []
             for key in sorted(label_dict):
                 if len(label_dict[key]) >= self.subsample_supervised:
-                    indices += np.random.choice(
-                        label_dict[key], self.subsample_supervised, replace=False
-                    ).tolist()
+                    indices += np.random.choice(label_dict[key], self.subsample_supervised, replace=False).tolist()
                 else:
                     indices += label_dict[key]
             train_subset = [train_subset[i] for i in indices]
             self.train_labels = self.train_labels[indices]
-
 
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
 

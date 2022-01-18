@@ -1,8 +1,10 @@
 import copy
 import faulthandler
 import glob
+import logging
 import os
 import platform
+import sys
 from typing import List
 
 import hydra
@@ -17,8 +19,6 @@ from torchvision.transforms import Compose
 from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
-import sys
-import logging
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(stream=sys.stdout)

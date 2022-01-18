@@ -51,7 +51,6 @@ datamodule:
   use_planktonnet_data: false
   preload_dataset: false
 
-
 lightning_module:
   log_confusion_matrices: false
   log_images: false

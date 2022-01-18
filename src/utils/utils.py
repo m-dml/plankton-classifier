@@ -26,8 +26,6 @@ def get_logger(name=__name__, level=None) -> logging.Logger:
 def set_log_levels(level="INFO"):
     LOG_LEVEL.log_level = level.strip().upper()
     loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-    level_obj = logging.getLevelName(LOG_LEVEL.log_level)
-    debug_loggers = ["hydra", "submitit", "lightning"]
     for logger in loggers:
         logger.setLevel(logging.getLevelName("INFO"))
         for level in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
