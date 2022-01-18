@@ -101,7 +101,7 @@ class LightningModel(pl.LightningModule):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
             self.console_logger.info("global batch size is {}".format(self.batch_size))
-            train_iters_per_epoch = self.trainer.datamodule.len_train_data * self.batch_size
+            train_iters_per_epoch = self.trainer.datamodule.len_train_data
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = int(train_iters_per_epoch * 10)
             total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
