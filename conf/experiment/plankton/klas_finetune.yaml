@@ -1,7 +1,6 @@
 # @package _global_
 
 defaults:
-  - /callbacks/gpu_monitoring: gpu_monitoring
   - override /datamodule: plankton
   - override /datamodule/dataset: default
   - override /loss: nll_loss
