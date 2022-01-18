@@ -17,6 +17,23 @@ from torchvision.transforms import Compose
 from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
+import sys
+import logging
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+sys.excepthook = handle_exception
 
 faulthandler.enable()
 # sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
@@ -205,11 +222,5 @@ def main(cfg: Config):
 if __name__ == "__main__":
     log = utils.get_logger()
     log.info("Starting python script")
-    try:
-        main()
-    except Exception as e:
-        log.exception("!!! Model Failed !!!")
-        raise e
-    except:
-        log.exception("!!! Sys Exit !!!")
-        raise
+
+    main()
