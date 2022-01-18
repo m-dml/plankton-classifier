@@ -210,3 +210,6 @@ if __name__ == "__main__":
     except Exception as e:
         log.exception("!!! Model Failed !!!")
         raise e
+    except:
+        log.exception("!!! Sys Exit !!!")
+        raise
