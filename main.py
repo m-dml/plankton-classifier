@@ -6,6 +6,7 @@ import platform
 from typing import List
 
 import hydra
+import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
@@ -40,6 +41,7 @@ def main(cfg: Config):
 
     torch.manual_seed(cfg.random_seed)  # set random seed
     pl.seed_everything(cfg.random_seed)
+    np.random.seed(cfg.random_seed)
 
     # Init Lightning callbacks
     callbacks: List[Callback] = []
