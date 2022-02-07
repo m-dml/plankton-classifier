@@ -15,7 +15,7 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import NLLLoss, NTXentLoss, SimCLRLoss
+from src.lib.loss import NLLLoss, NTXentLoss, SimCLRLoss, KLDivLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
@@ -69,6 +69,7 @@ def register_configs() -> None:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
     cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
     cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
+    cs.store(name="kl_div_loss", node=KLDivLoss, group="loss")
 
     # pl training strategies:
     cs.store(name="DDP", node=DDPPlugin, group="strategy")

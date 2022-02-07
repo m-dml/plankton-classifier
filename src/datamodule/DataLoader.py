@@ -7,6 +7,7 @@ from abc import abstractmethod
 from typing import Any, List, Union
 
 import numpy as np
+import pandas as pd
 import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
@@ -421,3 +422,22 @@ class PlanktonDataLoader(pl.LightningDataModule):
     @property
     def len_train_data(self):
         return len(self.train_dataloader())
+
+    def load_multilable_dataset(self, csv_file):
+        df = pd.read_csv(csv_file)
+        df = df.drop(columns="Unnamed: 0")
+        repl_column_names = dict()
+        for column in df.columns:
+            column_new = column.strip().lower()
+            column_new = column_new[3:] if column_new.startswith("00_") else column_new
+            repl_column_names[column] = column_new
+            if not column == "file":
+                df[column] = df[column].astype("category").cat.codes.astype(int)
+
+        df = df.rename(columns=repl_column_names)
+
+        files = []
+        for file, labels in df.set_index("file").iterrows():
+            files.append((file, list(labels.values)))
+
+        return files

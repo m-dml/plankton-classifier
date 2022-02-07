@@ -23,3 +23,10 @@ class NTXentLoss:
     _target_: str = "src.utils.NTXentLoss.NTXentLoss"
     temperature: float = 0.5
     sync_ddp: bool = True
+
+
+@dataclass
+class KLDivLoss:
+    _target_: str = "torch.nn.KLDivLoss"
+    log_target: bool = False
+    reduction: str = "batchmean"
