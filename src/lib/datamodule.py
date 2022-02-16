@@ -20,6 +20,14 @@ class PlanktonDataSet:
 
 
 @dataclass
+class PlanktonMultiLabelDataSet:
+    _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelDataSet"
+    final_image_size: int = 500
+    preload_dataset: bool = False
+    _convert_: Any = "all"
+
+
+@dataclass
 class PlanktonDataSetSimCLR:
     _target_: str = "src.datamodule.DataLoader.PlanktonDataSetSimCLR"
     final_image_size: int = 500
@@ -34,7 +42,6 @@ class PlanktonDataLoader(ParentDataloader):
     train_transforms: Any = MISSING
     valid_transforms: Any = MISSING
     dataset: Any = MISSING
-
     excluded_labels: Any = None
     train_split: float = 0.8
     validation_split: float = 0.1
@@ -55,6 +62,14 @@ class PlanktonDataLoader(ParentDataloader):
     random_seed: int = 0
     reduce_data: bool = False
     subsample_supervised: int = 100  # number of samples per class to use
+
+
+@dataclass
+class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
+    _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelDataLoader"
+    _recursive_: bool = False
+    data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
+    human_error2_data_path: str = data_base_path + "human_error2"
 
 
 @dataclass

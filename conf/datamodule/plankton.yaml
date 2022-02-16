@@ -1,6 +1,7 @@
 defaults:
   - plankton_datamodule_base
   - dataset: default
+  - _self_
 
 excluded_labels: ["blurry", "bubbles"] # has to be  a list
 batch_size: 16

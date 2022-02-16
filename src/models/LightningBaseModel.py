@@ -208,22 +208,25 @@ class LightningModel(pl.LightningModule):
         return features, classifier_outputs
 
     def _do_gpu_accumulated_step(self, classifier_outputs, labels, step):
-        class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
-        labels_est = classifier_outputs.detach().argmax(dim=-1).cpu()
-        targets = labels.detach().view(-1).to(torch.int).cpu()
-
-        loss = self.loss_func(classifier_outputs, labels.view(-1).long())
-        try:
-            accuracy = self.accuracy_func(class_probabilities, targets)
-        except (RuntimeError, ValueError):
-            accuracy = 0
+        accuracy = 0  # set initial value, for the case of multi-label training
+        if isinstance(self.loss_func, torch.nn.KLDivLoss):
+            loss = self.loss_func(classifier_outputs.float(), labels.float())
+        else:
+            predicted_labels = classifier_outputs.detach().argmax(dim=-1).cpu()
+            targets = labels.detach().view(-1).to(torch.int).cpu()
+            loss = self.loss_func(classifier_outputs, labels.view(-1).long())
+            try:
+                class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
+                accuracy = self.accuracy_func(class_probabilities, targets)
+            except (RuntimeError, ValueError):
+                accuracy = 0
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"loss/{step}", loss)
         self.log(f"Accuracy/{step}", accuracy)
 
         if self.log_confusion_matrices:
-            self._update_accuracy_matrices(step, targets, labels_est)
+            self._update_accuracy_matrices(step, targets, predicted_labels)
 
         return loss, accuracy
 
@@ -378,16 +381,25 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
 
     def _correct_eval_probabilities_with_training_prior(self, log_probabilities):
-        probabilities = torch.exp(log_probabilities)
-        training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-        p_balanced_per_class = 1 / (len(training_class_counts))
-        p_corrected_per_class = training_class_counts / torch.sum(training_class_counts)
+        # TODO: The following line is unsafe! this makes the model not really convertable to inference, since it
+        #  needs to call the training dataloader during inference!.
+        if self.trainer.datamodule.oversample_data:
+            probabilities = torch.exp(log_probabilities)
 
-        corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * probabilities
-        corrected_denominator = corrected_enumerator + (
-            ((1 - p_corrected_per_class) / (1 - p_balanced_per_class)) * (1 - probabilities)
-        )
-        return F.log_softmax(corrected_enumerator / corrected_denominator)
+            # TODO: The following line is unsafe! this makes the model not really convertable to inference, since it
+            #  needs the training class count and therefore needs to call the dataloader during inference!.
+            training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
+
+            p_balanced_per_class = 1 / (len(training_class_counts))
+            p_corrected_per_class = training_class_counts / torch.sum(training_class_counts)
+
+            corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * probabilities
+            corrected_denominator = corrected_enumerator + (
+                ((1 - p_corrected_per_class) / (1 - p_balanced_per_class)) * (1 - probabilities)
+            )
+            return F.log_softmax(corrected_enumerator / corrected_denominator)
+        else:
+            return log_probabilities
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):

@@ -9,9 +9,9 @@ from src.lib.optimizer import Optimizer
 class LitModule:
     _target_: str = "src.models.LightningBaseModel.LightningModel"
     _recursive_: bool = False
-    log_confusion_matrices: bool = True
+    log_confusion_matrices: bool = False
     log_images: bool = False
-    log_tsne_image: bool = True
+    log_tsne_image: bool = False
     optimizer: Optimizer = MISSING
     freeze_feature_extractor: bool = False
-    temperature_scale: bool = True
+    temperature_scale: bool = False

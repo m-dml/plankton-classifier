@@ -63,10 +63,30 @@ class PlanktonDataSet(ParentDataSet):
 
         if isinstance(image, PIL.PngImagePlugin.PngImageFile):
             image = transforms.ToTensor()(image)
-
-        label = torch.Tensor([self.integer_labels[label_name]])
+        if isinstance(label_name, list) and len(label_name) > 1:
+            label = torch.Tensor(label_name)
+        else:
+            label = torch.Tensor([self.integer_labels[label_name]])
 
         return image, (label, label_name)
+
+
+class PlanktonMultiLabelDataSet(ParentDataSet):
+    def __init__(self, *args, **kwargs):
+        super(PlanktonMultiLabelDataSet, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, item):
+        image, label_probabilities = self.files[item]
+        if not self.preload_dataset:
+            image = self.load_file(image)
+
+        if self.transform:
+            image = self.transform(image)
+
+        if isinstance(image, PIL.PngImagePlugin.PngImageFile):
+            image = transforms.ToTensor()(image)
+
+        return image, torch.tensor(label_probabilities)
 
 
 class PlanktonDataSetSimCLR(ParentDataSet):
@@ -168,6 +188,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.is_ddp = is_ddp
         self.subsample_supervised = subsample_supervised
         self.training_class_counts = None  # how often does each class exist in the training dataset
+        self.max_label_value = 0
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -210,14 +231,17 @@ class PlanktonDataLoader(pl.LightningDataModule):
             valid_subset = training_pairs[valid_split_start:valid_split_end]
             test_subset = training_pairs[test_split_start:test_split_end]
 
-        _, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
-        _, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
-        _, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
+        self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
+        unique_val_labels, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
+        unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
+
+        self._test_label_consistency(self.unique_labels, unique_val_labels)
+        self._test_label_consistency(self.unique_labels, unique_test_labels)
 
         if self.subsample_supervised:
             label_dict = {
                 label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
-                for label in set(self.train_labels)
+                for label in self.unique_labels.flatten()
             }
             indices = []
             for key in sorted(label_dict):
@@ -302,7 +326,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):
         logging.debug(f"folder: {folder}")
-        logging.debug(f"Recusion depth: {recursion_depth}")
+        logging.debug(f"Recursion depth: {recursion_depth}")
 
         all_sys_elements = glob.glob(os.path.join(folder, "*"))
 
@@ -416,14 +440,92 @@ class PlanktonDataLoader(pl.LightningDataModule):
             integer_class_labels[label] = i
         return integer_class_labels
 
-    def ddp_wrap_sampler(self, sampler):
+    @staticmethod
+    def ddp_wrap_sampler(sampler):
         return DistributedSamplerWrapper(sampler)
 
     @property
     def len_train_data(self):
         return len(self.train_dataloader())
 
-    def load_multilable_dataset(self, csv_file):
+    @staticmethod
+    def _test_label_consistency(labels_a, labels_b):
+        if len(labels_a.flatten()) == len(labels_b.flatten()):
+            return
+        else:
+            raise ValueError("Training labels are not the same as validation or test labels!")
+
+
+class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
+    def __init__(
+        self,
+        human_error2_data_path,
+        **kwargs,
+    ):
+        super().__init__(
+            **kwargs,
+        )
+
+        self.human_error2_data_path = human_error2_data_path
+
+    def setup(self, stage=None):
+        training_pairs = self.prepare_data_setup()
+
+        train_split = self.train_split
+        valid_split = train_split + self.validation_split
+        length = len(training_pairs)
+
+        train_split_start = 0
+        train_split_end = int(length * train_split)
+        valid_split_start = train_split_end
+        valid_split_end = int(length * valid_split)
+        test_split_start = valid_split_end
+        test_split_end = length
+
+        train_subset = training_pairs[train_split_start:train_split_end]
+        valid_subset = training_pairs[valid_split_start:valid_split_end]
+        test_subset = training_pairs[test_split_start:test_split_end]
+
+        self.train_labels = list(zip(*train_subset))[1]
+        self.valid_labels = list(zip(*valid_subset))[1]
+        self.test_labels = list(zip(*test_subset))[1]
+
+        self.console_logger.info(f"There are {len(train_subset)} training files")
+        self.console_logger.info(f"There are {len(valid_subset)} validation files")
+        if stage == "fit" or stage is None:
+            self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
+            self.train_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=train_subset,
+                integer_labels=self.train_labels,
+                transform=self.train_transforms,
+                preload_dataset=self.preload_dataset,
+            )
+
+            self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
+            logging.debug(f"Number of training samples: {len(self.train_data)}")
+            self.valid_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=valid_subset,
+                integer_labels=self.valid_labels,
+                transform=self.valid_transforms,
+                preload_dataset=self.preload_dataset,
+            )
+
+            logging.debug(f"Number of validation samples: {len(self.valid_data)}")
+
+        if stage == "test" or stage is None:
+            self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
+            self.test_data: Dataset = instantiate(
+                self.cfg_dataset,
+                files=test_subset,
+                integer_labels=self.integer_class_label_dict,
+                transform=self.valid_transforms,
+                preload_dataset=self.preload_dataset,
+            )
+
+    def load_multilable_dataset(self, human_error2_data_path):
+        csv_file = os.path.join(human_error2_data_path, "human_error2.csv")
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
@@ -437,7 +539,28 @@ class PlanktonDataLoader(pl.LightningDataModule):
         df = df.rename(columns=repl_column_names)
 
         files = []
+        self.max_label_value = df.drop(labels="file", axis=1).max().max().item()
+        self.unique_labels = np.arange(0, self.max_label_value)
         for file, labels in df.set_index("file").iterrows():
-            files.append((file, list(labels.values)))
+            files.append(
+                (
+                    self.load_image(os.path.join(human_error2_data_path, "rois", file), preload=self.preload_dataset),
+                    self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
+                )
+            )
 
         return files
+
+    def prepare_data_setup(self):
+
+        files = self.load_multilable_dataset(self.human_error2_data_path)
+        random.seed(self.random_seed)
+        random.shuffle(files)
+
+        return files
+
+    @staticmethod
+    def multi_labels_to_probabilities(labels, max_label_value):
+        nbins = np.arange(0, max_label_value + 1)
+        probabilities = np.histogram(labels, bins=nbins)[0] / len(labels)
+        return probabilities

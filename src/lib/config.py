@@ -12,10 +12,12 @@ from src.lib.datamodule import (
     PlanktonDataLoader,
     PlanktonDataSet,
     PlanktonDataSetSimCLR,
+    PlanktonMultiLabelDataLoader,
+    PlanktonMultiLabelDataSet,
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import NLLLoss, NTXentLoss, SimCLRLoss, KLDivLoss
+from src.lib.loss import KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
@@ -36,11 +38,13 @@ def register_configs() -> None:
 
     # data:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
+    cs.store(name="plankton_datamodule_multilabel_base", node=PlanktonMultiLabelDataLoader, group="datamodule")
     cs.store(name="cifar10_datamodule_base", node=CIFAR10DataLoader, group="datamodule")
 
     dataset_group = "datamodule/dataset"
     cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group=dataset_group)
     cs.store(name="default_base", node=PlanktonDataSet, group=dataset_group)
+    cs.store(name="multilabel_base", node=PlanktonMultiLabelDataSet, group=dataset_group)
     cs.store(name="cifar10_base", node=CIFAR10Dataset, group=dataset_group)
     cs.store(name="cifar10simclr_base", node=CIFAR10DatasetSimClr, group=dataset_group)
 
