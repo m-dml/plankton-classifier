@@ -12,6 +12,7 @@ defaults:
   - override /hydra/launcher: strand_A100
   - override /optimizer: sgd
   - override /strategy: DDP
+  - override /metric: multi_label_accuracy
   - _self_
 
 debug: false
@@ -29,7 +30,7 @@ trainer:
   num_nodes: 1
   sync_batchnorm: false
   profiler: null
-  replace_sampler_ddp: true
+  replace_sampler_ddp: false
 
 logger:
   tensorboard:

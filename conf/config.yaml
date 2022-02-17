@@ -9,6 +9,7 @@ defaults:
   - trainer: default
   - optimizer: adam
   - loss: nll_loss
+  - metric: accuracy
   - strategy: null
   - logger/tensorboard: tensorboard
   - callbacks/checkpoint: model_checkpoint

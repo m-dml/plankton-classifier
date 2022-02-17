@@ -112,6 +112,7 @@ def main(cfg: Config):
         feature_extractor=cfg.model.feature_extractor,
         classifier=cfg.model.classifier,
         loss=cfg.loss,
+        metric=cfg.metric,
         class_labels=datamodule.unique_labels,
         all_labels=datamodule.all_labels,
         example_input_array=example_input.detach().cpu(),

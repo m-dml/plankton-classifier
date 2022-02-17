@@ -76,7 +76,7 @@ class PlanktonMultiLabelDataSet(ParentDataSet):
         super(PlanktonMultiLabelDataSet, self).__init__(*args, **kwargs)
 
     def __getitem__(self, item):
-        image, label_probabilities = self.files[item]
+        image, label_probabilities, labels = self.files[item]
         if not self.preload_dataset:
             image = self.load_file(image)
 
@@ -86,7 +86,7 @@ class PlanktonMultiLabelDataSet(ParentDataSet):
         if isinstance(image, PIL.PngImagePlugin.PngImageFile):
             image = transforms.ToTensor()(image)
 
-        return image, torch.tensor(label_probabilities)
+        return image, (torch.tensor(label_probabilities), torch.tensor(labels))
 
 
 class PlanktonDataSetSimCLR(ParentDataSet):
@@ -189,6 +189,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.subsample_supervised = subsample_supervised
         self.training_class_counts = None  # how often does each class exist in the training dataset
         self.max_label_value = 0
+        self.len_train_data = None
 
     def setup(self, stage=None):
         training_pairs = self.prepare_data_setup()
@@ -228,6 +229,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             test_split_end = length
 
             train_subset = training_pairs[train_split_start:train_split_end]
+            self.len_train_data = int(len(train_subset) / self.batch_size)
             valid_subset = training_pairs[valid_split_start:valid_split_end]
             test_subset = training_pairs[test_split_start:test_split_end]
 
@@ -444,10 +446,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def ddp_wrap_sampler(sampler):
         return DistributedSamplerWrapper(sampler)
 
-    @property
-    def len_train_data(self):
-        return len(self.train_dataloader())
-
     @staticmethod
     def _test_label_consistency(labels_a, labels_b):
         if len(labels_a.flatten()) == len(labels_b.flatten()):
@@ -483,6 +481,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         test_split_end = length
 
         train_subset = training_pairs[train_split_start:train_split_end]
+        self.len_train_data = int(len(train_subset) / self.batch_size)
         valid_subset = training_pairs[valid_split_start:valid_split_end]
         test_subset = training_pairs[test_split_start:test_split_end]
 
@@ -546,6 +545,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
                 (
                     self.load_image(os.path.join(human_error2_data_path, "rois", file), preload=self.preload_dataset),
                     self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
+                    labels.values
                 )
             )
 

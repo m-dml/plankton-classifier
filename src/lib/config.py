@@ -22,6 +22,7 @@ from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.trainer import Trainer
+from src.lib.metrics import Accuracy, MultiLabelAccuracy
 
 
 def register_configs() -> None:
@@ -75,6 +76,10 @@ def register_configs() -> None:
     cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
     cs.store(name="kl_div_loss", node=KLDivLoss, group="loss")
 
+    # metrics:
+    cs.store(name="accuracy", node=Accuracy, group="metric")
+    cs.store(name="multi_label_accuracy", node=MultiLabelAccuracy, group="metric")
+
     # pl training strategies:
     cs.store(name="DDP", node=DDPPlugin, group="strategy")
     cs.store(name="SingleDevice", node=SingleDevicePlugin, group="strategy")
@@ -93,6 +98,7 @@ class Config:
     callbacks: Any = MISSING
     optimizer: Any = MISSING
     loss: Any = MISSING
+    metric: Any = MISSING
     strategy: Any = None
 
     scheduler: Any = None

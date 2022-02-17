@@ -35,6 +35,7 @@ class LightningModel(pl.LightningModule):
         feature_extractor,
         classifier,
         loss,
+        metric,
         freeze_feature_extractor,
         is_in_simclr_mode,
         batch_size,
@@ -47,6 +48,7 @@ class LightningModel(pl.LightningModule):
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
         self.cfg_scheduler = scheduler
+        self.cfg_metric = metric
         self.freeze_feature_extractor = freeze_feature_extractor
         self.save_hyperparameters(ignore=["example_input_array", "all_labels"])
 
@@ -54,7 +56,7 @@ class LightningModel(pl.LightningModule):
         self.class_labels = class_labels
         self.all_labels = all_labels
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
-        self.accuracy_func = torchmetrics.Accuracy()
+        self.accuracy_func = hydra.utils.instantiate(self.cfg_metric)
 
         self.feature_extractor: nn.Module = hydra.utils.instantiate(feature_extractor)
         if self.freeze_feature_extractor:
@@ -101,6 +103,7 @@ class LightningModel(pl.LightningModule):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
             self.console_logger.info("global batch size is {}".format(self.batch_size))
+
             train_iters_per_epoch = self.trainer.datamodule.len_train_data
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
             warmup_steps = int(train_iters_per_epoch * 10)
@@ -136,11 +139,11 @@ class LightningModel(pl.LightningModule):
         images, labels, label_names = self._pre_process_batch(batch)
         features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
-        return features, labels, class_log_probabilities
+        return features, labels, label_names, class_log_probabilities
 
     def training_step_end(self, training_step_outputs, *args, **kwargs):
-        features, labels, class_log_probabilities = training_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Training")
+        features, labels, label_names, class_log_probabilities = training_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Training")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -156,12 +159,12 @@ class LightningModel(pl.LightningModule):
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
         class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
-        return features, labels, class_log_probabilities
+        return features, labels, label_names, class_log_probabilities
 
     def validation_step_end(self, validation_step_outputs, *args, **kwargs):
-        features, labels, class_log_probabilities = validation_step_outputs
+        features, labels, label_names, class_log_probabilities = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Validation")
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Validation")
         self.log("hp/loss", loss)
         self.log("hp/accuracy", acc)
         self.log("hp/epoch", torch.tensor(self.current_epoch).float())
@@ -179,11 +182,11 @@ class LightningModel(pl.LightningModule):
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
         class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
-        return features, labels, class_log_probabilities
+        return features, labels, label_names, class_log_probabilities
 
     def test_step_end(self, test_step_outputs, *args, **kwargs):
-        features, labels, class_log_probabilities = test_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, step="Testing")
+        features, labels, label_names, class_log_probabilities = test_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Testing")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -207,19 +210,20 @@ class LightningModel(pl.LightningModule):
         features, classifier_outputs = self(images)
         return features, classifier_outputs
 
-    def _do_gpu_accumulated_step(self, classifier_outputs, labels, step):
+    def _do_gpu_accumulated_step(self, classifier_outputs, labels, label_names, step):
         accuracy = 0  # set initial value, for the case of multi-label training
+        predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
             loss = self.loss_func(classifier_outputs.float(), labels.float())
+            accuracy = self.accuracy_func(predicted_labels, label_names)
         else:
-            predicted_labels = classifier_outputs.detach().argmax(dim=-1).cpu()
             targets = labels.detach().view(-1).to(torch.int).cpu()
             loss = self.loss_func(classifier_outputs, labels.view(-1).long())
             try:
                 class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
                 accuracy = self.accuracy_func(class_probabilities, targets)
             except (RuntimeError, ValueError):
-                accuracy = 0
+                pass
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"loss/{step}", loss)

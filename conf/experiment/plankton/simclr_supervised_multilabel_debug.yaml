@@ -12,7 +12,7 @@ defaults:
   - override /trainer: default
   - override /hydra/launcher: local
   - override /optimizer: adam
-
+  - override /metric: multi_label_accuracy
   - _self_
 
 debug: false
