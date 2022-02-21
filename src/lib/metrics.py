@@ -9,3 +9,4 @@ class Accuracy:
 @dataclass
 class MultiLabelAccuracy:
     _target_: str = "src.utils.CustomMetrics.MultiLabelAccuracy"
+    weighted: bool = True

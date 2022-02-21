@@ -10,7 +10,6 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchmetrics
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
@@ -215,7 +214,7 @@ class LightningModel(pl.LightningModule):
         predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
             loss = self.loss_func(classifier_outputs.float(), labels.float())
-            accuracy = self.accuracy_func(predicted_labels, label_names)
+            accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
         else:
             targets = labels.detach().view(-1).to(torch.int).cpu()
             loss = self.loss_func(classifier_outputs, labels.view(-1).long())

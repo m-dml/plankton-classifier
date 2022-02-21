@@ -539,13 +539,13 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         files = []
         self.max_label_value = df.drop(labels="file", axis=1).max().max().item()
-        self.unique_labels = np.arange(0, self.max_label_value)
+        self.unique_labels = np.arange(0, self.max_label_value + 1)
         for file, labels in df.set_index("file").iterrows():
             files.append(
                 (
                     self.load_image(os.path.join(human_error2_data_path, "rois", file), preload=self.preload_dataset),
                     self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
-                    labels.values
+                    labels.values,
                 )
             )
 
@@ -561,6 +561,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
     @staticmethod
     def multi_labels_to_probabilities(labels, max_label_value):
-        nbins = np.arange(0, max_label_value + 1)
-        probabilities = np.histogram(labels, bins=nbins)[0] / len(labels)
+        n_bins = len(np.arange(0, max_label_value))
+        probabilities = np.histogram(labels, bins=n_bins + 1, range=(0, n_bins))[0] / len(labels)
         return probabilities

@@ -18,11 +18,11 @@ from src.lib.datamodule import (
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
+from src.lib.metrics import Accuracy, MultiLabelAccuracy
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.trainer import Trainer
-from src.lib.metrics import Accuracy, MultiLabelAccuracy
 
 
 def register_configs() -> None:

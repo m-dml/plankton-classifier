@@ -30,7 +30,7 @@ trainer:
   num_nodes: 1
   sync_batchnorm: false
   profiler: null
-  replace_sampler_ddp: false
+  replace_sampler_ddp: true
 
 logger:
   tensorboard:
