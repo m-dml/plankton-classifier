@@ -210,6 +210,11 @@ def main(cfg: Config):
         log.info("Starting tuning the model")
         trainer.tune(model, datamodule)
 
+    if cfg.evaluate:
+        log.info("Starting evaluation on test data")
+        trainer.test(model, datamodule)
+        return
+
     log.info("Starting training")
     trainer.fit(model, datamodule)  # the actual training of the NN
 

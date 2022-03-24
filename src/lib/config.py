@@ -101,6 +101,7 @@ class Config:
     metric: Any = MISSING
     strategy: Any = None
 
+    evaluate: bool = False
     scheduler: Any = None
     random_seed: int = 42
     print_config: bool = True
