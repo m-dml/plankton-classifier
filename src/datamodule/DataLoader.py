@@ -217,6 +217,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 )
             else:
                 self.console_logger.info("Not using canadian data")
+
             train_split = self.train_split
             valid_split = train_split + self.validation_split
             length = len(training_pairs)
@@ -258,7 +259,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
-        if stage == "fit" or stage is None:
+        if stage == "fit":
             self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
             self.train_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -280,7 +281,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
-        if stage == "test" or stage is None:
+        elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
             self.test_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -289,6 +290,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+
+        else:
+            raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
     def prepare_data_setup(self):
         files = []
@@ -491,7 +495,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
-        if stage == "fit" or stage is None:
+        if stage == "fit":
             self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
             self.train_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -513,7 +517,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
             logging.debug(f"Number of validation samples: {len(self.valid_data)}")
 
-        if stage == "test" or stage is None:
+        elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
             self.test_data: Dataset = instantiate(
                 self.cfg_dataset,
@@ -522,6 +526,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+
+        else:
+            raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
     def load_multilable_dataset(self, human_error2_data_path):
         csv_file = os.path.join(human_error2_data_path, "human_error2.csv")
