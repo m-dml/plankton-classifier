@@ -89,7 +89,7 @@ def main(cfg: Config):
         dataset=cfg.datamodule.dataset,
         is_ddp=cfg.strategy is not None,
     )
-    datamodule.setup()  # manually set up the datamodule here, so an example batch can be drawn
+    datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
     # generate example input array:
     for batch in datamodule.val_dataloader():

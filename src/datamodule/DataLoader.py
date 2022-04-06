@@ -191,69 +191,54 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.max_label_value = 0
         self.len_train_data = None
 
+        if self.use_canadian_data:
+            raise ValueError("Usage of the Canadian data is not permitted for the paper.")
+        if self.use_planktonnet_data:
+            raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
+
     def setup(self, stage=None):
-        training_pairs = self.prepare_data_setup()
+        train_subset = self.prepare_data_setup(subset="train")
+        valid_subset = self.prepare_data_setup(subset="val")
+        test_subset = self.prepare_data_setup(subset="test")
+
+        if self.unlabeled_files_to_append:
+            if isinstance(train_subset, str):
+                train_subset += self.add_all_images_from_all_subdirectories(self.unlabeled_files_to_append)
+            else:
+                for folder_with_unlabeled_files in self.unlabeled_files_to_append:
+                    train_subset += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
+
         self.integer_class_label_dict = self.set_up_integer_class_labels()
 
-        if len(training_pairs) == 0:
+        if len(train_subset) == 0:
             if self.use_klas_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.klas_data_path)}")
             if self.use_canadian_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.canadian_data_path)}")
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
-
-        if self.use_canadian_data and (not self.use_klas_data and not self.use_planktonnet_data):
-            self.console_logger.info("Using only canadian data")
-            train_subset = training_pairs[0]
-            valid_subset = training_pairs[1]
-            test_subset = training_pairs[1]  # This is only to not brake the code if a test-dataloader is needed.
-
-        else:
-            if self.use_canadian_data:
-                training_pairs = [*training_pairs[0], *training_pairs[1]]
-                self.console_logger.info(
-                    f"Using canadian data in some combination. Combined training pairs are {len(training_pairs)}"
-                )
-            else:
-                self.console_logger.info("Not using canadian data")
-
-            train_split = self.train_split
-            valid_split = train_split + self.validation_split
-            length = len(training_pairs)
-
-            train_split_start = 0
-            train_split_end = int(length * train_split)
-            valid_split_start = train_split_end
-            valid_split_end = int(length * valid_split)
-            test_split_start = valid_split_end
-            test_split_end = length
-
-            train_subset = training_pairs[train_split_start:train_split_end]
-            self.len_train_data = int(len(train_subset) / self.batch_size)
-            valid_subset = training_pairs[valid_split_start:valid_split_end]
-            test_subset = training_pairs[test_split_start:test_split_end]
+        self.len_train_data = int(len(train_subset) / self.batch_size)
 
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
         unique_val_labels, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
         unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
 
-        self._test_label_consistency(self.unique_labels, unique_val_labels)
-        self._test_label_consistency(self.unique_labels, unique_test_labels)
+        # self._test_label_consistency(self.unique_labels, unique_val_labels)
+        # self._test_label_consistency(self.unique_labels, unique_test_labels)
 
-        if self.subsample_supervised:
-            label_dict = {
-                label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
-                for label in self.unique_labels.flatten()
-            }
-            indices = []
-            for key in sorted(label_dict):
-                if len(label_dict[key]) >= self.subsample_supervised:
-                    indices += np.random.choice(label_dict[key], self.subsample_supervised, replace=False).tolist()
-                else:
-                    indices += label_dict[key]
-            train_subset = [train_subset[i] for i in indices]
-            self.train_labels = self.train_labels[indices]
+        # if self.subsample_supervised:
+        #     label_dict = {
+        #         label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
+        #         for label in self.unique_labels.flatten()
+        #     }
+        #     indices = []
+        #     for key in sorted(label_dict):
+        #         if len(label_dict[key]) >= self.subsample_supervised:
+        #             indices += np.random.choice(label_dict[key], self.subsample_supervised, replace=False).tolist()
+        #         else:
+        #             indices += label_dict[key]
+        #     train_subset = [train_subset[i] for i in indices]
+        #     self.train_labels = self.train_labels[indices]
 
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
 
@@ -294,40 +279,11 @@ class PlanktonDataLoader(pl.LightningDataModule):
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
-    def prepare_data_setup(self):
+    def prepare_data_setup(self, subset):
         files = []
         if self.use_klas_data:
-            for folder in tqdm(glob.glob(os.path.join(self.klas_data_path, "*")), desc="Load Klas data"):
+            for folder in tqdm(glob.glob(os.path.join(self.klas_data_path, subset, "*")), desc="Load Klas data"):
                 files += self._add_data_from_folder(folder, file_ext="png")
-
-        if self.use_planktonnet_data:
-            for folder in tqdm(glob.glob(os.path.join(self.planktonnet_data_path, "*")), desc="Load planktonNet"):
-                files += self._add_data_from_folder(folder, file_ext="jpg")
-
-        if self.use_canadian_data:
-            for folder in tqdm(
-                glob.glob(os.path.join(self.canadian_data_path, "ringstudy_train", "*")), desc="Load canadian data"
-            ):
-                files += self._add_data_from_folder(folder, file_ext="png")
-
-            test_files = []
-            for folder in tqdm(
-                glob.glob(os.path.join(self.canadian_data_path, "ringstudy_test", "*")), desc="Load canadian data"
-            ):
-                test_files += self._add_data_from_folder(folder, file_ext="png")
-
-        if self.unlabeled_files_to_append:
-            if isinstance(files, str):
-                files += self.add_all_images_from_all_subdirectories(self.unlabeled_files_to_append)
-            else:
-                for folder_with_unlabeled_files in self.unlabeled_files_to_append:
-                    files += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
-
-        random.seed(self.random_seed)
-        random.shuffle(files)
-        if self.use_canadian_data:
-            return files, test_files
-
         return files
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):
@@ -559,7 +515,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         return files
 
     def prepare_data_setup(self):
-
         files = self.load_multilable_dataset(self.human_error2_data_path)
         random.seed(self.random_seed)
         random.shuffle(files)

@@ -46,7 +46,9 @@ datamodule:
   use_canadian_data: false
   use_planktonnet_data: false
   preload_dataset: false
-  subsample_supervised: 0.05
+  unlabeled_files_to_append:
+    - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/cpics/"
+    - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/new_data/4Tobi"
 
 lightning_module:
   log_confusion_matrices: false

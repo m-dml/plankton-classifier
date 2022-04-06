@@ -156,7 +156,8 @@ class LightningModel(pl.LightningModule):
         features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
+        if not self.is_in_simclr_mode:
+            class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
         return features, labels, label_names, class_log_probabilities
 
@@ -179,7 +180,8 @@ class LightningModel(pl.LightningModule):
         features, class_log_probabilities = self._do_gpu_parallel_step(images)
 
         # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
+        if not self.is_in_simclr_mode:
+            class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
 
         return features, labels, label_names, class_log_probabilities
 

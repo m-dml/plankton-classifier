@@ -48,7 +48,7 @@ datamodule:
   preload_dataset: false
   unlabeled_files_to_append:
     - "/p/project/hai_emulator/plankton_data/cpics/"
-    - "/p/project/hai_emulator/plankton_data/new_data/"
+    - "/p/project/hai_emulator/plankton_data/new_data/4Tobi"
 
 lightning_module:
   log_confusion_matrices: false
