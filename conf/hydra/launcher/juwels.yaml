@@ -16,7 +16,7 @@ additional_parameters:
   {
     exclusive: true,
     signal: "SIGUSR1@200",
-    account: "hai_emulator",
+    account: "hai_simclr",
     contiguous: true,
   }
 array_parallelism: 256

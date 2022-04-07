@@ -16,7 +16,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: /gpfs/work/machnitz/plankton_logs/juwels_results/2022-01-18/20-13-49/0/logs/checkpoints/complete_model_99.weights
+load_state_dict: /gpfs/work/machnitz/plankton_logs/juwels_results/2022-01-18/23-03-34/0/logs/checkpoints/complete_model_99.weights
 random_seed: 7
 log_level: "warning"
 evaluate: true
