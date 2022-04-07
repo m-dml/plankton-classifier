@@ -19,6 +19,7 @@ defaults:
 debug: false
 scheduler: "linear_warmup_decay"
 log_level: "DEBUG"
+output_dir_base_path: outputs/
 
 trainer:
   fast_dev_run: false
@@ -49,6 +50,7 @@ datamodule:
   unlabeled_files_to_append:
     - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/cpics/"
     - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/new_data/4Tobi"
+    - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/new_data/multi_label/train"
 
 lightning_module:
   log_confusion_matrices: false

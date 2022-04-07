@@ -43,6 +43,7 @@ class LightningModel(pl.LightningModule):
 
         super().__init__()
 
+        self.training_class_counts = None
         self.lr = optimizer.lr
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
@@ -385,18 +386,20 @@ class LightningModel(pl.LightningModule):
         self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 
-    def _correct_eval_probabilities_with_training_prior(self, log_probabilities):
+    def _correct_eval_probabilities_with_training_prior(self, log_probabilities, file=None):
         # TODO: The following line is unsafe! this makes the model not really convertable to inference, since it
         #  needs to call the training dataloader during inference!.
         if self.trainer.datamodule.oversample_data:
+            if not self.training_class_counts and not file:
+                raise ValueError("Training class counts are not loaded. Look for a <raining_label_distribution.pt> file")
+
+            if file:
+                self.training_class_counts = torch.load(file)
+
             probabilities = torch.exp(log_probabilities)
 
-            # TODO: The following line is unsafe! this makes the model not really convertable to inference, since it
-            #  needs the training class count and therefore needs to call the dataloader during inference!.
-            training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-
-            p_balanced_per_class = 1 / (len(training_class_counts))
-            p_corrected_per_class = training_class_counts / torch.sum(training_class_counts)
+            p_balanced_per_class = 1 / (len(self.training_class_counts))
+            p_corrected_per_class = self.training_class_counts / torch.sum(self.training_class_counts)
 
             corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * probabilities
             corrected_denominator = corrected_enumerator + (
@@ -405,6 +408,13 @@ class LightningModel(pl.LightningModule):
             return F.log_softmax(corrected_enumerator / corrected_denominator)
         else:
             return log_probabilities
+
+    def on_train_start(self):
+        self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
+        save_path = self.trainer.checkpoint_callback.dirpath
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
