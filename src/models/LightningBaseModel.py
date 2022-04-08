@@ -304,7 +304,7 @@ class LightningModel(pl.LightningModule):
             outputs_dict = {k: [dic[k] for dic in outputs] for k in outputs[0]}
             scaled_model = ModelWithTemperature(self, device=self.device)
             self.temperatures = scaled_model.get_temperature(
-                labels=torch.cat(outputs_dict["labels"].squeeze().long()),
+                labels=torch.cat(outputs_dict["labels"]).squeeze().long(),
                 logits=torch.cat(outputs_dict["classifier"]),
                 logger=self.console_logger,
             )
