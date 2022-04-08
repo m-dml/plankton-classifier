@@ -379,11 +379,12 @@ class LightningModel(pl.LightningModule):
         plt.close("all")
 
     def on_train_start(self):
-        self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-        save_path = self.trainer.checkpoint_callback.dirpath
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
+        if self.trainer.datamodule.training_class_counts is not None and not self.is_in_simclr_mode:
+            self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
+            save_path = self.trainer.checkpoint_callback.dirpath
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):

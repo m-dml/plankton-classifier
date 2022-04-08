@@ -427,23 +427,12 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         self.human_error2_data_path = human_error2_data_path
 
     def setup(self, stage=None):
-        training_pairs = self.prepare_data_setup()
+        train_subset = self.prepare_data_setup("train")
+        valid_subset = self.prepare_data_setup("val")
+        test_subset = self.prepare_data_setup("test")
 
-        train_split = self.train_split
-        valid_split = train_split + self.validation_split
-        length = len(training_pairs)
-
-        train_split_start = 0
-        train_split_end = int(length * train_split)
-        valid_split_start = train_split_end
-        valid_split_end = int(length * valid_split)
-        test_split_start = valid_split_end
-        test_split_end = length
-
-        train_subset = training_pairs[train_split_start:train_split_end]
         self.len_train_data = int(len(train_subset) / self.batch_size)
-        valid_subset = training_pairs[valid_split_start:valid_split_end]
-        test_subset = training_pairs[test_split_start:test_split_end]
+
 
         self.train_labels = list(zip(*train_subset))[1]
         self.valid_labels = list(zip(*valid_subset))[1]
@@ -486,8 +475,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
-    def load_multilable_dataset(self, human_error2_data_path):
-        csv_file = os.path.join(human_error2_data_path, "human_error2.csv")
+    def load_multilable_dataset(self, data_path, csv_file):
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
@@ -506,7 +494,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         for file, labels in df.set_index("file").iterrows():
             files.append(
                 (
-                    self.load_image(os.path.join(human_error2_data_path, "rois", file), preload=self.preload_dataset),
+                    self.load_image(os.path.join(data_path, file), preload=self.preload_dataset),
                     self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
                     labels.values,
                 )
@@ -514,10 +502,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         return files
 
-    def prepare_data_setup(self):
-        files = self.load_multilable_dataset(self.human_error2_data_path)
-        random.seed(self.random_seed)
-        random.shuffle(files)
+    def prepare_data_setup(self, subset):
+        csv_file = os.path.join(self.human_error2_data_path, f"multi_label_{subset}.csv")
+        folder = os.path.join(self.human_error2_data_path, subset)
+        files = self.load_multilable_dataset(folder, csv_file)
 
         return files
 
