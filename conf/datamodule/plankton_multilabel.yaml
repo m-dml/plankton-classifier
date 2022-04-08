@@ -17,5 +17,5 @@ use_klas_data: false
 use_canadian_data: false
 oversample_data: false
 data_base_path: /gpfs/work/machnitz/plankton_dataset/
-human_error2_data_path: ${datamodule.data_base_path}human_error2/
+human_error2_data_path: ${datamodule.data_base_path}new_data/multi_label/
 random_seed: ${random_seed}

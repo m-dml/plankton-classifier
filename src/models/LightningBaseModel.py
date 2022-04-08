@@ -1,3 +1,4 @@
+import glob
 import itertools
 import os
 
@@ -93,10 +94,6 @@ class LightningModel(pl.LightningModule):
             features = self.feature_extractor(images)
             predictions = self.classifier(features)
 
-            predictions = F.log_softmax(predictions, dim=1)
-
-            if self.temperature_scale and self.temperatures:
-                predictions = predictions / self.temperatures
         return features, predictions
 
     def configure_optimizers(self):
@@ -137,63 +134,56 @@ class LightningModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        features, class_log_probabilities = self._do_gpu_parallel_step(images)
+        features, classifier_logits = self._do_gpu_parallel_step(images)
 
-        return features, labels, label_names, class_log_probabilities
+        return features, labels, label_names, classifier_logits
 
     def training_step_end(self, training_step_outputs, *args, **kwargs):
-        features, labels, label_names, class_log_probabilities = training_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Training")
+        features, labels, label_names, classifier_logits = training_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Training")
         return {
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": class_log_probabilities.detach(),
+            "classifier": classifier_logits.detach(),
         }
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
-        features, class_log_probabilities = self._do_gpu_parallel_step(images)
+        features, classifier_logits = self._do_gpu_parallel_step(images)
 
-        # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        if not self.is_in_simclr_mode:
-            class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
-
-        return features, labels, label_names, class_log_probabilities
+        return features, labels, label_names, classifier_logits
 
     def validation_step_end(self, validation_step_outputs, *args, **kwargs):
-        features, labels, label_names, class_log_probabilities = validation_step_outputs
+        features, labels, label_names, classifier_logits = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Validation")
+        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Validation")
         self.log("hp/loss", loss)
         self.log("hp/accuracy", acc)
         self.log("hp/epoch", torch.tensor(self.current_epoch).float())
+
         return {
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": class_log_probabilities.detach(),
+            "classifier": classifier_logits.detach(),
         }
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
-        features, class_log_probabilities = self._do_gpu_parallel_step(images)
+        features, classifier_logits = self._do_gpu_parallel_step(images)
 
-        # due to rebalancing during training we have to account for distribution shifts during evaluation:
-        if not self.is_in_simclr_mode:
-            class_log_probabilities = self._correct_eval_probabilities_with_training_prior(class_log_probabilities)
-
-        return features, labels, label_names, class_log_probabilities
+        return features, labels, label_names, classifier_logits
 
     def test_step_end(self, test_step_outputs, *args, **kwargs):
-        features, labels, label_names, class_log_probabilities = test_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(class_log_probabilities, labels, label_names, step="Testing")
+        features, labels, label_names, classifier_logits = test_step_outputs
+        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Testing")
         return {
             "loss": loss,
             "features": features.detach(),
             "labels": labels.detach(),
-            "classifier": class_log_probabilities.detach(),
+            "classifier": classifier_logits.detach(),
         }
 
     def _pre_process_batch(self, batch):
@@ -216,7 +206,7 @@ class LightningModel(pl.LightningModule):
         accuracy = 0  # set initial value, for the case of multi-label training
         predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
-            loss = self.loss_func(classifier_outputs.float(), labels.float())
+            loss = self.loss_func(F.log_softmax(classifier_outputs.float()), labels.float())
             accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
         else:
             targets = labels.detach().view(-1).to(torch.int).cpu()
@@ -297,7 +287,7 @@ class LightningModel(pl.LightningModule):
         plt.tight_layout()
         plt.xlabel("True label")
         plt.ylabel("Predicted label")
-        self.logger.experiment[0].add_figure(figname, figure, self.global_step)
+        self.logger.experiment.add_figure(figname, figure, self.global_step)
         plt.close("all")
         return figure
 
@@ -314,7 +304,9 @@ class LightningModel(pl.LightningModule):
             outputs_dict = {k: [dic[k] for dic in outputs] for k in outputs[0]}
             scaled_model = ModelWithTemperature(self, device=self.device)
             self.temperatures = scaled_model.get_temperature(
-                labels=torch.cat(outputs_dict["labels"]), logits=torch.cat(outputs_dict["classifier"])
+                labels=torch.cat(outputs_dict["labels"]).squeeze().long(),
+                logits=torch.cat(outputs_dict["classifier"]),
+                logger=self.console_logger,
             )
 
     def test_epoch_end(self, outputs):
@@ -383,38 +375,16 @@ class LightningModel(pl.LightningModule):
         g.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         # plt.tight_layout()
-        self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
+        self.logger.experiment.add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 
-    def _correct_eval_probabilities_with_training_prior(self, log_probabilities, file=None):
-        # TODO: The following line is unsafe! this makes the model not really convertable to inference, since it
-        #  needs to call the training dataloader during inference!.
-        if self.trainer.datamodule.oversample_data:
-            if not self.training_class_counts and not file:
-                raise ValueError("Training class counts are not loaded. Look for a <raining_label_distribution.pt> file")
-
-            if file:
-                self.training_class_counts = torch.load(file)
-
-            probabilities = torch.exp(log_probabilities)
-
-            p_balanced_per_class = 1 / (len(self.training_class_counts))
-            p_corrected_per_class = self.training_class_counts / torch.sum(self.training_class_counts)
-
-            corrected_enumerator = (p_corrected_per_class / p_balanced_per_class) * probabilities
-            corrected_denominator = corrected_enumerator + (
-                ((1 - p_corrected_per_class) / (1 - p_balanced_per_class)) * (1 - probabilities)
-            )
-            return F.log_softmax(corrected_enumerator / corrected_denominator)
-        else:
-            return log_probabilities
-
     def on_train_start(self):
-        self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-        save_path = self.trainer.checkpoint_callback.dirpath
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
+        if self.trainer.datamodule.training_class_counts is not None and not self.is_in_simclr_mode:
+            self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
+            save_path = self.trainer.checkpoint_callback.dirpath
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
@@ -427,7 +397,7 @@ class LightningModel(pl.LightningModule):
 
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
+        onnx_file_generator = os.path.join(folder, f"model_{self.current_epoch}.onnx")
 
         torch.onnx.export(
             model=self.model.to(self.device),
@@ -447,7 +417,33 @@ class LightningModel(pl.LightningModule):
 
         # save the feature_extractor_weights:
         state_dict = self.model.state_dict()
-        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
+        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.current_epoch}.weights"))
 
         if self.temperature_scale:
-            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.global_step}.tensor"))
+            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.current_epoch}.tensor"))
+
+        best_epochs = self.get_best_epochs()
+        self.remove_outdated_saves(best_epochs)
+
+    def get_best_epochs(self):
+        best_k_models = self.trainer.checkpoint_callback.best_k_models
+        best_epochs = []
+        for key, value in best_k_models.items():
+            best_epochs.append(int(os.path.basename(key).replace("epoch=", "").replace(".ckpt", "")))
+
+        return best_epochs
+
+    def remove_outdated_saves(self, best_epochs: list,
+                              filepatterns=("complete_model_*.weights", "model_*.onnx", "temperatures_*.tensor")):
+        folder = self.trainer.checkpoint_callback.dirpath
+        for filepattern in filepatterns:
+            files_to_keep = []
+            for k in best_epochs:
+                files_to_keep.append(os.path.join(folder, filepattern.replace("*", str(k))))
+
+            # always keep the last epoch:
+            files_to_keep.append(os.path.join(folder, filepattern.replace("*", str(self.current_epoch))))
+            files = glob.glob(os.path.join(folder, filepattern))
+            files_to_delete = [item for item in files if item not in files_to_keep]
+            for item in files_to_delete:
+                os.remove(item)

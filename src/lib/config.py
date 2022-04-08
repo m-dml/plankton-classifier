@@ -17,7 +17,7 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
+from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.metrics import Accuracy, MultiLabelAccuracy
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
@@ -75,6 +75,7 @@ def register_configs() -> None:
     cs.store(name="simclr_loss", node=SimCLRLoss, group="loss")
     cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
     cs.store(name="kl_div_loss", node=KLDivLoss, group="loss")
+    cs.store(name="cross_entropy_loss", node=CrossEntropyLoss, group="loss")
 
     # metrics:
     cs.store(name="accuracy", node=Accuracy, group="metric")

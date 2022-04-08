@@ -37,7 +37,7 @@ class MultiLabelAccuracy:
             return torch.stack([function(x_i, **kwargs) for x_i in torch.unbind(x, dim=axis)], dim=axis)
 
         bins = apply_along_axis(
-            torch.histc, targets.int(), axis=0, bins=n_labels, min=0, max=n_labels - 1
+            torch.histc, targets.float(), axis=0, bins=n_labels, min=0, max=n_labels - 1
         ) / targets.size(1)
         weights = torch.max(bins, dim=1)
         result_tensor = bins[torch.arange(0, len(bins)), predictions.squeeze()].float() / weights.values

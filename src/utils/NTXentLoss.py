@@ -4,6 +4,7 @@ import math
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import Tensor
 
 
@@ -38,7 +39,7 @@ class NTXentLoss(nn.Module):
 
     def __call__(self, out_1_out_2, *args):
         """
-        assume out_1 and out_2 are normalized
+        assume out_1 and out_2 are pure logits
         out_1: [batch_size, dim]
         out_2: [batch_size, dim]
         """
@@ -56,6 +57,9 @@ class NTXentLoss(nn.Module):
         else:
             out_1_dist = out_1
             out_2_dist = out_2
+
+        out_2_dist = F.normalize(out_2_dist, dim=1)
+        out_2_dist = F.normalize(out_2_dist, dim=1)
 
         # out: [2 * batch_size, dim]
         # out_dist: [2 * batch_size * world_size, dim]

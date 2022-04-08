@@ -16,7 +16,7 @@ defaults:
 
 debug: false
 scheduler: "linear_warmup_decay"
-output_dir_base_path: /p/project/hai_simclr/plankton_logs
+output_dir_base_path: /p/project/hai_simclr/plankton_logs/pretrain
 log_level: "INFO"
 
 trainer:
