@@ -287,7 +287,7 @@ class LightningModel(pl.LightningModule):
         plt.tight_layout()
         plt.xlabel("True label")
         plt.ylabel("Predicted label")
-        self.logger.experiment[0].add_figure(figname, figure, self.global_step)
+        self.logger.experiment.add_figure(figname, figure, self.global_step)
         plt.close("all")
         return figure
 
@@ -375,7 +375,7 @@ class LightningModel(pl.LightningModule):
         g.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         # plt.tight_layout()
-        self.logger.experiment[0].add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
+        self.logger.experiment.add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
         plt.close("all")
 
     def on_train_start(self):

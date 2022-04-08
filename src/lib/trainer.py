@@ -38,7 +38,6 @@ class Trainer:
     profiler: Any = None
     benchmark: bool = False
     deterministic: bool = False
-    reload_dataloaders_every_epoch: bool = False
     auto_lr_find: bool = False
     replace_sampler_ddp: bool = True
     detect_anomaly: bool = True
@@ -47,3 +46,5 @@ class Trainer:
     amp_backend: str = "native"
     amp_level: Any = None
     move_metrics_to_cpu: bool = False
+    accelerator: Any = None
+    devices: Any = None

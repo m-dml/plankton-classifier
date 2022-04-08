@@ -489,7 +489,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         df = df.rename(columns=repl_column_names)
 
         files = []
-        self.max_label_value = df.drop(labels="file", axis=1).max().max().item()
+        self.max_label_value = df.drop(labels="file", axis=1).max().max()
         self.unique_labels = np.arange(0, self.max_label_value + 1)
         for file, labels in df.set_index("file").iterrows():
             files.append(

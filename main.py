@@ -132,7 +132,7 @@ def main(cfg: Config):
         try:
             new_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
         except Exception as e:
-            log.error()
+            log.error(e)
             raise e
         for key in new_state_dict.keys():
             # make sure feature extractor weights are the same format:

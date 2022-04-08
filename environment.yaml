@@ -9,6 +9,7 @@ dependencies:
   - pip
   - cudatoolkit
   - pytorch
+  - natsort
   - pre-commit
   - black
   - isort
@@ -19,7 +20,6 @@ dependencies:
   - torchmetrics
   - matplotlib
   - ipython
-  - libgcc
   - hydra-core
   - jupyterlab
   - scikit-learn
@@ -34,10 +34,12 @@ dependencies:
   - pillow
   - tqdm
   - pip:
-      - onnxruntime
+      - onnxruntime-gpu
+      - lightning-bolts
       - hydra-colorlog
       - hydra-optuna-sweeper
       - hydra-submitit-launcher
       - test-tube
       - fairscale
+      - catalyst
       - https://github.com/ufoym/imbalanced-dataset-sampler/archive/master.zip # torchsampler
