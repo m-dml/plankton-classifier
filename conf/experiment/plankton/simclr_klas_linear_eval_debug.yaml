@@ -2,86 +2,67 @@
 
 defaults:
   - /callbacks/gpu_monitoring: gpu_monitoring
+  - override /strategy: null
   - override /datamodule: plankton
   - override /datamodule/dataset: default
-  - override /loss: nll_loss
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: simclr_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: linear
-  - override /trainer: strand
-  - override /hydra/launcher: strand_single
+  - override /trainer: default
+  - override /hydra/launcher: local
   - override /optimizer: sgd
-  - override /strategy: DDP
-  - override /hydra/sweeper: optuna
-  - override /hydra/sweeper/sampler: tpe
   - _self_
 
 debug: false
-load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2022-01-05/15-32-15/0/logs/checkpoints/complete_model_195175.weights
+load_state_dict: C:/Users/Tobias/PycharmProjects/plankton-classifier/outputs/pretrain/outputs/2022-04-08/13-17-03/logs/checkpoints/complete_model_4.weights
 scheduler: "cosine"
-random_seed: 7
-
-hydra:
-  sweeper:
-    sampler:
-      seed: ${random_seed}
-      n_startup_trials: 20
-    direction: maximize
-    study_name: plankton_sweep_finetune
-    storage: "sqlite:////gpfs/work/machnitz/optuna_results.db"
-    n_trials: 20
-    n_jobs: 10
-
-    search_space:
-      datamodule.subsample_supervised:
-        type: float
-        low: 0.05
-        high: 1.0
-        step: 0.05
+output_dir_base_path: outputs/linear_eval/
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 100
+  max_epochs: 5
+  limit_train_batches: 5
+  limit_val_batches: 5
+  min_epochs: 4
   gpus: 1
   precision: 32
-  num_nodes: 1
   sync_batchnorm: false
-  profiler: null
-  replace_sampler_ddp: false
 
 logger:
   tensorboard:
     default_hp_metric: false
 
 datamodule:
-  num_workers: 10
-  batch_size: 64
+  num_workers: 0
+  batch_size: 8
   oversample_data: true
   # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
   # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
   # downsample (For Klaas data 4000 samples mean 100% data):
-  subsample_supervised: 4000
+  subsample_supervised: 21
   pin_memory: false
-  reduce_data: true # use max 10.000 images from each class
+  reduce_data: false # use max 10.000 images from each class
   use_klas_data: true
   use_canadian_data: false
   use_planktonnet_data: false
+  data_base_path: "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/"
 
 lightning_module:
-  log_confusion_matrices: true
+  log_confusion_matrices: false
   log_images: false
-  freeze_feature_extractor: false
-  temperature_scale: false
+  freeze_feature_extractor: true
+  temperature_scale: true
 
 model:
   classifier:
     num_classes: null # size of the projection head
-    input_features: 2048
+    input_features: 100
   feature_extractor:
     model:
-      _target_: "torchvision.models.resnet50"
+      _target_: "torchvision.models.resnet18"
       num_classes: ${model.classifier.input_features}
       pretrained: false
       # first conv layer:
@@ -93,7 +74,7 @@ model:
 optimizer:
   nesterov: false
   momentum: 0.9
-  lr: 0.066
+  lr: 0.3
 
 callbacks:
   early_stopping:

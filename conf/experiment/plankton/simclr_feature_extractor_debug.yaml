@@ -19,7 +19,7 @@ defaults:
 debug: false
 scheduler: "linear_warmup_decay"
 log_level: "DEBUG"
-output_dir_base_path: outputs/
+output_dir_base_path: outputs/pretrain
 
 trainer:
   fast_dev_run: false
@@ -30,7 +30,7 @@ trainer:
   min_epochs: 4
   gpus: 1
   precision: 32
-  sync_batchnorm: true
+  sync_batchnorm: false
   profiler: "pytorch"
 
 logger:
@@ -47,6 +47,7 @@ datamodule:
   use_canadian_data: false
   use_planktonnet_data: false
   preload_dataset: false
+  data_base_path: "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/"
   unlabeled_files_to_append:
     - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/cpics/"
     - "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/new_data/4Tobi"
@@ -55,6 +56,7 @@ datamodule:
 lightning_module:
   log_confusion_matrices: false
   log_images: false
+  temperature_scale: false
 
 model:
   classifier:
