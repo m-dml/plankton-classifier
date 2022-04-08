@@ -25,9 +25,15 @@ class OnnxWrapper:
     def init_ort(self):
         self.ort_sess = ort.InferenceSession(self.onnx_file)
 
-    def __call__(self, input_image: torch.Tensor, correct_probabilities_with_training_prior=False, correct_probabilties_with_temperature=False, return_probabilities=True):
+    def __call__(
+        self,
+        input_image: torch.Tensor,
+        correct_probabilities_with_training_prior=False,
+        correct_probabilties_with_temperature=False,
+        return_probabilities=True,
+    ):
 
-        outputs = self.ort_sess.run(None, {'input': input_image.cpu().numpy()})
+        outputs = self.ort_sess.run(None, {"input": input_image.cpu().numpy()})
         outputs = torch.tensor(outputs).to(self.device)
 
         if correct_probabilties_with_temperature:

@@ -17,7 +17,7 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss, CrossEntropyLoss
+from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.metrics import Accuracy, MultiLabelAccuracy
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
