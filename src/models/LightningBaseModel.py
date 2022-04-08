@@ -1,3 +1,4 @@
+import glob
 import itertools
 import os
 
@@ -395,7 +396,7 @@ class LightningModel(pl.LightningModule):
 
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"model_{self.global_step}.onnx")
+        onnx_file_generator = os.path.join(folder, f"model_{self.current_epoch}.onnx")
 
         torch.onnx.export(
             model=self.model.to(self.device),
@@ -415,7 +416,33 @@ class LightningModel(pl.LightningModule):
 
         # save the feature_extractor_weights:
         state_dict = self.model.state_dict()
-        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.global_step}.weights"))
+        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.current_epoch}.weights"))
 
         if self.temperature_scale:
-            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.global_step}.tensor"))
+            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.current_epoch}.tensor"))
+
+        best_epochs = self.get_best_epochs()
+        self.remove_outdated_saves(best_epochs)
+
+    def get_best_epochs(self):
+        best_k_models = self.trainer.checkpoint_callback.best_k_models
+        best_epochs = []
+        for key, value in best_k_models.items():
+            best_epochs.append(int(os.path.basename(key).replace("epoch=", "").replace(".ckpt", "")))
+
+        return best_epochs
+
+    def remove_outdated_saves(self, best_epochs: list,
+                              filepatterns=("complete_model_*.weights", "model_*.onnx", "temperatures_*.tensor")):
+        folder = self.trainer.checkpoint_callback.dirpath
+        for filepattern in filepatterns:
+            files_to_keep = []
+            for k in best_epochs:
+                files_to_keep.append(os.path.join(folder, filepattern.replace("*", str(k))))
+
+            # always keep the last epoch:
+            files_to_keep.append(os.path.join(folder, filepattern.replace("*", str(self.current_epoch))))
+            files = glob.glob(os.path.join(folder, filepattern))
+            files_to_delete = [item for item in files if item not in files_to_keep]
+            for item in files_to_delete:
+                os.remove(item)
