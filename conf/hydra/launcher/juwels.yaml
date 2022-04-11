@@ -23,7 +23,7 @@ array_parallelism: 256
 setup: [
     "conda activate plankton",
     "export CUDA_VISIBLE_DEVICES=0,1,2,3",
-    "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
-    "export NCCL_SOCKET_NTHREADS=2",
+#    "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
+#    "export NCCL_SOCKET_NTHREADS=2",
   ] # number of CPUs per NCCL connection
 max_num_timeout: 10
