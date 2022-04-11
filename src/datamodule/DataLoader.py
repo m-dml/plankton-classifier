@@ -196,12 +196,18 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_planktonnet_data:
             raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
 
+        self.console_logger.info("Successfully set up datamodule.")
+
     def setup(self, stage=None):
+        self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
+        self.console_logger.debug("Loading Validation data")
         valid_subset = self.prepare_data_setup(subset="val")
+        self.console_logger.debug("Loading Test data")
         test_subset = self.prepare_data_setup(subset="test")
 
         if self.unlabeled_files_to_append:
+            self.console_logger.debug("Trying to load unlabeled files")
             if isinstance(train_subset, str):
                 train_subset += self.add_all_images_from_all_subdirectories(self.unlabeled_files_to_append)
             else:
@@ -219,6 +225,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
         self.len_train_data = int(len(train_subset) / self.batch_size)
 
+        self.console_logger.debug("Separating labels from images")
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
         unique_val_labels, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
         unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
