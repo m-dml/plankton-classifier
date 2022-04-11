@@ -51,7 +51,7 @@ register_configs()
 def main(cfg: Config):
     utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings
     utils.set_log_levels(cfg.log_level)
-    log = utils.get_logger(cfg.log_level)
+    log = utils.get_logger("main.main", cfg.log_level)
 
     # Pretty print config using Rich library
     if cfg.print_config:
@@ -227,7 +227,9 @@ def main(cfg: Config):
 
 
 if __name__ == "__main__":
-    log = utils.get_logger()
+    log = utils.get_logger("__main__", "info")
     log.info("Starting python script")
-
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.exception("Error occurred during main().")
