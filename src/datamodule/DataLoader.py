@@ -196,9 +196,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_planktonnet_data:
             raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
 
+        self.is_set_up = False
         self.console_logger.info("Successfully set up datamodule.")
 
     def setup(self, stage=None):
+        if self.is_set_up:
+            self.console_logger.warning("The Datamodule was already set up and therefore this setup will be skipped.")
+            return
+
         self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
         self.console_logger.debug(f"len(train_subset) = {len(train_subset)}")
@@ -296,6 +301,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
+
+        self.is_set_up = True
 
     def prepare_data_setup(self, subset):
         files = []
