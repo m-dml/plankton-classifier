@@ -201,10 +201,13 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def setup(self, stage=None):
         self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
+        self.console_logger.debug(f"len(train_subset) = {len(train_subset)}")
         self.console_logger.debug("Loading Validation data")
         valid_subset = self.prepare_data_setup(subset="val")
+        self.console_logger.debug(f"len(valid_subset) = {len(valid_subset)}")
         self.console_logger.debug("Loading Test data")
         test_subset = self.prepare_data_setup(subset="test")
+        self.console_logger.debug(f"len(test_subset) = {len(test_subset)}")
 
         if self.unlabeled_files_to_append:
             self.console_logger.debug("Trying to load unlabeled files")
