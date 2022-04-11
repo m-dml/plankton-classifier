@@ -227,6 +227,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         self.console_logger.debug("Separating labels from images")
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
+        self.console_logger.debug(f"There are {len(self.unique_labels)} unique training labels: {self.unique_labels}")
         unique_val_labels, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
         unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
 
@@ -247,6 +248,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         #     train_subset = [train_subset[i] for i in indices]
         #     self.train_labels = self.train_labels[indices]
 
+        self.console_logger.debug("Getting the image counts for each label")
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
