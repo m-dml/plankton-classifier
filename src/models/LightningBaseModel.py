@@ -110,7 +110,7 @@ class LightningModel(pl.LightningModule):
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
             # total_train_steps = len(self.trainer.train_dataloader)
-            total_train_steps = self.trainer.estimated_stepping_batches
+            total_train_steps = self.num_training_steps
             warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
             self.console_logger.info(f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup.")
 
@@ -454,3 +454,19 @@ class LightningModel(pl.LightningModule):
             files_to_delete = [item for item in files if item not in files_to_keep]
             for item in files_to_delete:
                 os.remove(item)
+
+    @property
+    def num_training_steps(self) -> int:
+        """Total training steps inferred from datamodule and devices."""
+        if self.trainer.max_steps > 0:
+            return self.trainer.max_steps
+
+        total_train_samples = len(self.trainer.datamodule.train_data)
+
+        batches_per_epoch_and_device = total_train_samples / self.trainer.datamodule.batch_size
+
+        num_devices = max(1, self.trainer.devices, self.trainer.num_processes)
+        num_nodes = self.trainer.num_nodes
+
+        effective_accum = self.trainer.accumulate_grad_batches * num_devices * num_nodes
+        return int((batches_per_epoch_and_device // effective_accum) * self.trainer.max_epochs)
