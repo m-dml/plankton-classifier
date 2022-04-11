@@ -229,7 +229,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
         self.console_logger.debug(f"There are {len(self.unique_labels)} unique training labels: {self.unique_labels}")
         unique_val_labels, self.valid_labels = np.unique(list(list(zip(*valid_subset))[1]), return_inverse=True)
+        self.console_logger.debug(f"There are {len(unique_val_labels)} unique validation labels: {unique_val_labels}")
         unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
+        self.console_logger.debug(f"There are {len(unique_test_labels)} unique test labels: {unique_test_labels}")
 
         # self._test_label_consistency(self.unique_labels, unique_val_labels)
         # self._test_label_consistency(self.unique_labels, unique_test_labels)
@@ -264,7 +266,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             )
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
-            logging.debug(f"Number of training samples: {len(self.train_data)}")
+            self.console_logger.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data: Dataset = instantiate(
                 self.cfg_dataset,
                 files=valid_subset,
@@ -273,7 +275,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 preload_dataset=self.preload_dataset,
             )
 
-            logging.debug(f"Number of validation samples: {len(self.valid_data)}")
+            self.console_logger.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
@@ -296,14 +298,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
         return files
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):
-        logging.debug(f"folder: {folder}")
-        logging.debug(f"Recursion depth: {recursion_depth}")
+        self.console_logger.debug(f"folder: {folder}")
+        self.console_logger.debug(f"Recursion depth: {recursion_depth}")
 
         all_sys_elements = glob.glob(os.path.join(folder, "*"))
 
         if self._is_image_folder(folder):
             folder_files = self._add_data_from_folder(folder, file_ext=file_ext)
-            logging.debug("=====================================")
+            self.console_logger.debug("=====================================")
             return folder_files
 
         files = []
@@ -314,8 +316,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files += self.add_all_images_from_all_subdirectories(
                     sys_element, file_ext, recursion_depth=recursion_depth + 1
                 )
-        logging.debug(f"len files {len(files)}")
-        logging.debug("=====================================")
+        self.console_logger.debug(f"len files {len(files)}")
+        self.console_logger.debug("=====================================")
         return files
 
     @staticmethod
@@ -460,7 +462,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             )
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
-            logging.debug(f"Number of training samples: {len(self.train_data)}")
+            self.console_logger.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data: Dataset = instantiate(
                 self.cfg_dataset,
                 files=valid_subset,
@@ -469,7 +471,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
                 preload_dataset=self.preload_dataset,
             )
 
-            logging.debug(f"Number of validation samples: {len(self.valid_data)}")
+            self.console_logger.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")

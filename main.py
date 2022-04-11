@@ -20,7 +20,8 @@ from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
 
-logger = logging.getLogger(__name__)
+
+logger = utils.get_logger(__name__)
 handler = logging.StreamHandler(stream=sys.stdout)
 logger.addHandler(handler)
 
