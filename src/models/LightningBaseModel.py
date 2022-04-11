@@ -101,9 +101,7 @@ class LightningModel(pl.LightningModule):
         if self.cfg_scheduler:
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
-            train_iters_per_epoch = self.trainer.datamodule.len_train_data
-            total_train_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
-            self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
+            total_train_steps = self.trainer.estimated_stepping_batches
             warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
             self.console_logger.info(f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup.")
 
