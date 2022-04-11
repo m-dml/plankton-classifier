@@ -24,7 +24,8 @@ trainer:
   num_sanity_val_steps: 5
   max_epochs: 2
   min_epochs: 1
-  gpus: 4
+  accelerator: "gpu"
+  devices: 4
   plugins: null
   precision: 32
   num_nodes: 10

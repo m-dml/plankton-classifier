@@ -102,15 +102,15 @@ class LightningModel(pl.LightningModule):
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
             train_iters_per_epoch = self.trainer.datamodule.len_train_data
+            total_train_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
             self.console_logger.info(f"train iterations per epoch are {train_iters_per_epoch}")
-            warmup_steps = int(train_iters_per_epoch * 10)
-            total_steps = int(train_iters_per_epoch * self.trainer.max_epochs)
-            self.console_logger.info(f"Total train steps are {total_steps}")
+            warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
+            self.console_logger.info(f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup.")
 
             if self.cfg_scheduler == "linear_warmup_decay":
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.LambdaLR(
-                        optimizer, linear_warmup_decay(warmup_steps, total_steps, cosine=True)
+                        optimizer, linear_warmup_decay(warmup_steps, total_train_steps, cosine=True)
                     ),
                     "interval": "step",
                     "frequency": 1,
