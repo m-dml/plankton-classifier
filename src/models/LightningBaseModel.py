@@ -24,9 +24,7 @@ from src.utils import utils
 class LightningModel(pl.LightningModule):
     def __init__(
         self,
-        class_labels,
-        all_labels,
-        example_input_array,
+
         log_images,
         log_confusion_matrices,
         log_tsne_image,
@@ -53,9 +51,9 @@ class LightningModel(pl.LightningModule):
         self.freeze_feature_extractor = freeze_feature_extractor
         self.save_hyperparameters(ignore=["example_input_array", "all_labels"])
 
-        self.example_input_array = example_input_array
-        self.class_labels = class_labels
-        self.all_labels = all_labels
+        self.example_input_array = None
+        self.class_labels = None
+        self.all_labels = None
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = hydra.utils.instantiate(self.cfg_metric)
 
@@ -75,12 +73,22 @@ class LightningModel(pl.LightningModule):
         self.log_confusion_matrices = log_confusion_matrices
         self.log_tsne_image = log_tsne_image
         self.confusion_matrix = dict()
-        self._init_accuracy_matrices()
         self.console_logger = utils.get_logger("LightningBaseModel")
         self.console_logger.debug("Test Debug")
         self.is_in_simclr_mode = is_in_simclr_mode
         self.batch_size = batch_size
         self.temperature_scale = temperature_scale
+
+    def set_external_data(self,
+        class_labels,
+        all_labels,
+        example_input_array):
+
+        self.example_input_array = example_input_array
+        self.class_labels = class_labels
+        self.all_labels = all_labels
+
+        self._init_accuracy_matrices()
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -101,6 +109,7 @@ class LightningModel(pl.LightningModule):
         if self.cfg_scheduler:
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
+            # total_train_steps = len(self.trainer.train_dataloader)
             total_train_steps = self.trainer.estimated_stepping_batches
             warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
             self.console_logger.info(f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup.")

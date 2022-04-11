@@ -22,8 +22,8 @@ from src.utils import utils
 
 
 class ParentDataSet(Dataset):
-    def __init__(self, files, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
-        self.files = files
+    def __init__(self, integer_labels, final_image_size=500, transform=None, preload_dataset=False):
+        self.files = None
         self.integer_labels = integer_labels
 
         self.transform = transform
@@ -31,6 +31,9 @@ class ParentDataSet(Dataset):
         self.final_image_size = final_image_size
 
         self.console_logger = utils.get_logger(__name__)
+
+    def set_files(self, files):
+        self.files = files
 
     def get_labels(self):  # this is used by the torchsampler
         _, label_names = zip(*self.files)
@@ -269,35 +272,43 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit":
             self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
-            self.train_data: Dataset = instantiate(
+            self.train_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=train_subset,
+                _convert_="all",
+                _recursive_=False,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.train_transforms,
                 preload_dataset=self.preload_dataset,
             )
 
+            self.train_data.set_files(train_subset)
+
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
             self.console_logger.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data: Dataset = instantiate(
+            self.valid_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=valid_subset,
+                _convert_="all",
+                _recursive_=False,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+
+            self.valid_data.set_files(valid_subset)
 
             self.console_logger.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
-            self.test_data: Dataset = instantiate(
+            self.test_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=test_subset,
+                _convert_="all",
+                _recursive_=False,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+            self.test_data.set_files(test_subset)
 
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')

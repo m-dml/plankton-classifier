@@ -11,7 +11,6 @@ class Trainer:
     process_position: int = 0
     num_nodes: int = 1
     num_processes: int = 1
-    gpus: int = 0
     auto_select_gpus: bool = False
     tpu_cores: Any = None
     enable_progress_bar: bool = True
