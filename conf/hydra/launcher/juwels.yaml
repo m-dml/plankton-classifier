@@ -5,12 +5,12 @@ defaults:
 
 timeout_min: 1440 # maximum time for the job in minutes
 cpus_per_task: ${datamodule.num_workers}
-tasks_per_node: 4 # == gpus_per_node
+tasks_per_node: ${trainer.devices} # == gpus_per_node
 nodes: ${trainer.num_nodes}
 name: ${hydra.job.name}
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 partition: booster
-gres: gpu:4
+gres: gpu:${trainer.devices}
 signal_delay_s: 120
 additional_parameters:
   {
@@ -21,12 +21,11 @@ additional_parameters:
   }
 array_parallelism: 256
 setup: [
-    "export NCCL_DEBUG=INFO"
-    "conda activate plankton",
+    "module load NCCL/2.12.7-1-CUDA-11.5",
+    "source activate plankton",
+    "export NCCL_DEBUG=INFO",
     "export CUDA_VISIBLE_DEVICES=0,1,2,3",
-#    "export NCCL_P2P_DISABLE=1",
-#    "export NCCL_IB_DISABLE=1"
-#    "export NCCL_NSOCKS_PERTHREAD=2", # number sockets opened by each helper CPU
-#    "export NCCL_SOCKET_NTHREADS=2",
-  ] # number of CPUs per NCCL connection
+    "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
+    "export NCCL_SOCKET_NTHREADS=2", # number of CPUs per NCCL connection
+  ]
 max_num_timeout: 10
