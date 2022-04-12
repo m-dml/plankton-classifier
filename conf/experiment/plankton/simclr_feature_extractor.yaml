@@ -16,6 +16,7 @@ defaults:
 
 debug: false
 scheduler: "linear_warmup_decay"
+output_dir_base_path: /gpfs/work/machnitz/plankton_logs/pretrain
 log_level: "INFO"
 
 trainer:
