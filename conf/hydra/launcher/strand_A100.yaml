@@ -14,7 +14,7 @@ signal_delay_s: 120
 additional_parameters: { exclusive: true, signal: "SIGUSR1@90" }
 array_parallelism: 256
 setup: [
-    "module load compilers/cuda/11.0"
+    "module load compilers/cuda/11.0",
     "source activate plankton",
     "export NCCL_DEBUG=INFO"
     "export CUDA_VISIBLE_DEVICES=0,1",
