@@ -22,8 +22,8 @@ log_level: "INFO"
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 2
-  min_epochs: 1
+  max_epochs: 800
+  min_epochs: 800
   accelerator: "gpu"
   devices: 4
   plugins: null
