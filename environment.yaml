@@ -6,17 +6,17 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.9
+  - python=3.8
   - pip
   - nvidia::cudatoolkit>=11.3
-  - conda-forge::pytorch-gpu>=1.11
+  - pytorch>=1.11
   - natsort
   - pre-commit
   - black
   - isort
   - flake8
   - tensorboard
-  - pytorch::torchvision>=0.12
+  - torchvision>=0.12
   - pytorch-lightning>=1.6
   - torchmetrics
   - matplotlib
@@ -37,6 +37,7 @@ dependencies:
   - pip:
       - onnxruntime-gpu
       - lightning-bolts
+      - torch-tb-profiler
       - hydra-colorlog
       - hydra-optuna-sweeper
       - hydra-submitit-launcher
