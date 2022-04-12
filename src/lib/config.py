@@ -23,6 +23,7 @@ from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.trainer import Trainer
+from src.lib.profiler import PytorchProfiler, NoProfiler
 
 
 def register_configs() -> None:
@@ -85,6 +86,10 @@ def register_configs() -> None:
     cs.store(name="DDP", node=DDPPlugin, group="strategy")
     cs.store(name="SingleDevice", node=SingleDevicePlugin, group="strategy")
 
+    # profiler:
+    cs.store(name="PytorchProfiler", node=PytorchProfiler, group="profiler")
+    cs.store(name="NoProfiler", node=NoProfiler, group="profiler")
+
     # register the base config class (this name has to be called in config.yaml):
     cs.store(name="base_config", node=Config)
 
@@ -101,6 +106,7 @@ class Config:
     loss: Any = MISSING
     metric: Any = MISSING
     strategy: Any = None
+    profiler: Any = None
 
     evaluate: bool = False
     scheduler: Any = None

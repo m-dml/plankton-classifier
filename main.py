@@ -207,7 +207,8 @@ def main(cfg: Config):
         # Init Trainer:
         log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
         trainer: Trainer = instantiate(
-            cfg.trainer, strategy=cfg.strategy, logger=logger, callbacks=callbacks, _convert_="partial"
+            cfg.trainer, strategy=cfg.strategy, logger=logger, callbacks=callbacks, _convert_="partial",
+            profiler=cfg.profiler
         )
 
         # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
