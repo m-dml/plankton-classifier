@@ -9,7 +9,7 @@ defaults:
   - override /datamodule/valid_transforms: simclr_plankton
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: simclr_head
-  - override /trainer: strand_A100
+  - override /trainer: strand
   - override /optimizer: lars
   - override /strategy: DDP
   - _self_
