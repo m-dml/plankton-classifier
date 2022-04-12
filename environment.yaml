@@ -8,8 +8,8 @@ channels:
 dependencies:
   - python=3.8
   - pip
-  - nvidia::cudatoolkit>=11.3
-  - pytorch-gpu>=1.11
+  - nvidia::cudatoolkit=11.3
+  - pytorch>=1.11
   - natsort
   - pre-commit
   - black
