@@ -6,17 +6,17 @@ channels:
   - pytorch
 
 dependencies:
-  - python=3.8
+  - python=3.9
   - pip
-  - nvidia::cudatoolkit=11.3
-  - pytorch::pytorch
+  - nvidia::cudatoolkit>=11.3
+  - pytorch::pytorch>=1.11
   - natsort
   - pre-commit
   - black
   - isort
   - flake8
   - tensorboard
-  - torchvision
+  - pytorch::torchvision>=0.12
   - pytorch-lightning
   - torchmetrics
   - matplotlib
