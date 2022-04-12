@@ -1,9 +1,9 @@
 name: plankton
 
 channels:
-  - defaults
-  - conda-forge
+  - nvidia
   - pytorch
+  - conda-forge
 
 dependencies:
   - python=3.9
@@ -17,7 +17,7 @@ dependencies:
   - flake8
   - tensorboard
   - pytorch::torchvision>=0.12
-  - pytorch-lightning
+  - pytorch-lightning>=1.6
   - torchmetrics
   - matplotlib
   - ipython
