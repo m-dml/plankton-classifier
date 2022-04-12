@@ -9,7 +9,7 @@ dependencies:
   - python=3.9
   - pip
   - nvidia::cudatoolkit>=11.3
-  - pytorch::pytorch-gpu>=1.11
+  - conda-forge::pytorch-gpu>=1.11
   - natsort
   - pre-commit
   - black
