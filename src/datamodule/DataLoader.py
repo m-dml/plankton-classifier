@@ -200,7 +200,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
 
         self.is_set_up = False
-        self.console_logger.info("Successfully set up datamodule.")
+        self.console_logger.info("Successfully initialised up datamodule.")
 
     def setup(self, stage=None):
         # if self.is_set_up:
