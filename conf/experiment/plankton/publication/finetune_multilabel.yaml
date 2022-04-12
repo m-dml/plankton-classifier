@@ -1,0 +1,84 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: plankton_multilabel
+  - override /datamodule/dataset: multilabel
+  - override /loss: kl_div_loss
+  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: plankton_eval
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: linear
+  - override /trainer: juwels
+  - override /hydra/launcher: juwels
+  - override /optimizer: adam
+  - override /strategy: DDP
+  - override /metric: multi_label_accuracy
+  - _self_
+
+debug: false
+load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2022-01-05/15-32-15/0/logs/checkpoints/complete_model_195175.weights
+scheduler: "cosine"
+random_seed: 7
+log_level: "info"
+
+trainer:
+  fast_dev_run: false
+  num_sanity_val_steps: 5
+  max_epochs: 100
+  gpus: 4
+  precision: 32
+  num_nodes: 1
+  sync_batchnorm: true
+  replace_sampler_ddp: true
+
+logger:
+  tensorboard:
+    default_hp_metric: false
+
+datamodule:
+  num_workers: 10
+  batch_size: 64
+  oversample_data: false
+  # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
+  # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
+  # downsample (For Klaas data 4000 samples mean 100% data):
+  subsample_supervised: 0
+  pin_memory: false
+  reduce_data: false # use max 10.000 images from each class
+  use_klas_data: false
+  use_canadian_data: false
+  use_planktonnet_data: false
+  preload_dataset: false
+  data_base_path: /p/project/hai_simclr/plankton_data/
+
+lightning_module:
+  log_confusion_matrices: false
+  log_images: false
+  freeze_feature_extractor: false
+  temperature_scale: false
+  log_tsne_image: false
+
+model:
+  classifier:
+    num_classes: null # size of the projection head
+    input_features: 2048
+  feature_extractor:
+    model:
+      _target_: "torchvision.models.resnet50"
+      num_classes: ${model.classifier.input_features}
+      pretrained: false
+      # first conv layer:
+    kernel_size: 7 # default is 7
+    stride: 2 # default is 2
+    channels: 3 # default is 3
+    maxpool1: true
+
+optimizer:
+  lr: 0.01
+
+callbacks:
+  early_stopping:
+    monitor: "loss/Validation"
+    patience: 800
+    verbose: true
+    mode: "min"
