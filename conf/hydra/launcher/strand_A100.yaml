@@ -16,7 +16,7 @@ array_parallelism: 256
 setup: [
     "module load compilers/cuda/11.0",
     "source activate plankton",
-    "export NCCL_DEBUG=INFO"
+    "export NCCL_DEBUG=INFO",
     "export CUDA_VISIBLE_DEVICES=0,1",
     "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
     "export NCCL_SOCKET_NTHREADS=2", # number of CPUs per NCCL connection
