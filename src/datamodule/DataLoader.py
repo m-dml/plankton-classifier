@@ -203,9 +203,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.info("Successfully set up datamodule.")
 
     def setup(self, stage=None):
-        if self.is_set_up:
-            self.console_logger.warning("The Datamodule was already set up and therefore this setup will be skipped.")
-            return
+        # if self.is_set_up:
+        #     self.console_logger.warning("The Datamodule was already set up and therefore this setup will be skipped.")
+        #     return
 
         self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
