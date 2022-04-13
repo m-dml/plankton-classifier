@@ -25,7 +25,8 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 100
-  gpus: 4
+  accelerator: "gpu"
+  devices: 4
   precision: 32
   num_nodes: 1
   sync_batchnorm: true
