@@ -160,6 +160,12 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
+    def on_train_epoch_end(self) -> None:
+        self.console_logger.debug("Finished training epoch")
+
+    def on_validation_epoch_start(self) -> None:
+        self.console_logger.debug("Starting validation")
+
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
@@ -310,6 +316,7 @@ class LightningModel(pl.LightningModule):
             self._log_accuracy_matrices("Training")
 
         if self.log_tsne_image and self.current_epoch > 0:
+            self.console_logger.debug("saving tsne image")
             self.plot_tsne_images(outputs)
 
         if self.temperature_scale:
