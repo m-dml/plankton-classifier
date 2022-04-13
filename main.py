@@ -94,7 +94,11 @@ def main(cfg: Config):
         datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
         # get number of training samples_per_device and epoch:
+
+        datamodule.is_ddp = False
         stepping_batches = len(datamodule.train_dataloader())
+        datamodule.is_ddp = cfg.strategy is not None
+        logging.info(f"Infered batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised}")
 
         # generate example input array:
         for batch in datamodule.val_dataloader():

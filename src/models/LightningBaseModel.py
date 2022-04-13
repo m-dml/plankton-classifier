@@ -113,7 +113,7 @@ class LightningModel(pl.LightningModule):
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
             # total_train_steps = len(self.trainer.train_dataloader)
-            total_train_steps = int(self.num_steps_per_epoch * self.trainer.max_epochs)
+            total_train_steps = int((self.num_steps_per_epoch / (self.trainer.devices * self.trainer.num_nodes)) * self.trainer.max_epochs)
 
             if self.cfg_scheduler == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
