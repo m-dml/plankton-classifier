@@ -233,7 +233,7 @@ class LightningModel(pl.LightningModule):
         self.log(f"Accuracy/{step}", accuracy)
 
         if self.log_confusion_matrices:
-            self._update_accuracy_matrices(step, targets, predicted_labels)
+            self._update_accuracy_matrices(step, targets.cpu(), predicted_labels.cpu())
 
         return loss, accuracy
 
