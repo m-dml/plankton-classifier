@@ -20,6 +20,7 @@ load_state_dict: /gpfs/work/machnitz/plankton_logs/multirun/2022-01-05/15-32-15/
 scheduler: "cosine"
 random_seed: 7
 log_level: "info"
+output_dir_base_path: /p/project/hai_simclr/plankton_logs/linear_eval/multilabel
 
 trainer:
   fast_dev_run: false

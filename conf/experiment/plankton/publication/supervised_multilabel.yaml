@@ -20,6 +20,7 @@ load_state_dict: null
 scheduler: "cosine"
 random_seed: 7
 log_level: "info"
+output_dir_base_path: /p/project/hai_simclr/plankton_logs/supervised/multilabel
 
 trainer:
   fast_dev_run: false
