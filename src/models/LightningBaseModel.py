@@ -128,6 +128,7 @@ class LightningModel(pl.LightningModule):
                     "name": "Lars-LR",
                 }
             elif self.cfg_scheduler == "cosine":
+                self.console_logger.info(f"Total train steps are {total_train_steps}")
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_train_steps, eta_min=0.0),
                     "interval": "step",
