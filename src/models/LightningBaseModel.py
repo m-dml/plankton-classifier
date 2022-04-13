@@ -107,12 +107,12 @@ class LightningModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         if self.cfg_scheduler:
-            self.console_logger.info("global batch size is {}".format(self.batch_size))
 
             # total_train_steps = len(self.trainer.train_dataloader)
             total_train_steps = int(
                 (self.num_steps_per_epoch / (self.trainer.devices * self.trainer.num_nodes)) * self.trainer.max_epochs
             )
+            self.console_logger.info("total_train_steps are {}".format(total_train_steps))
 
             if self.cfg_scheduler == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
@@ -128,7 +128,6 @@ class LightningModel(pl.LightningModule):
                     "name": "Lars-LR",
                 }
             elif self.cfg_scheduler == "cosine":
-                self.console_logger.info(f"Total train steps are {total_train_steps}")
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_train_steps, eta_min=0.0),
                     "interval": "step",

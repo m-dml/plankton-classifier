@@ -505,7 +505,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             self.train_data.set_files(train_subset)
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
-            self.console_logger.debug(f"Number of training samples: {len(self.train_data)}")
             self.valid_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
                 integer_labels=self.valid_labels,

@@ -97,7 +97,7 @@ def main(cfg: Config):
         datamodule.is_ddp = False
         stepping_batches = len(datamodule.train_dataloader())
         datamodule.is_ddp = cfg.strategy is not None
-        logging.info(
+        log.info(
             f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
             f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} "
         )
