@@ -238,7 +238,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.canadian_data_path)}")
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
-        self.len_train_data = int(len(train_subset) / self.batch_size)
 
         self.console_logger.debug("Separating labels from images")
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
@@ -267,6 +266,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
         self.console_logger.debug("Getting the image counts for each label")
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
+        self.len_train_data = int(len(train_subset) / self.batch_size)
 
         self.console_logger.info(f"There are {len(train_subset)} training files")
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
@@ -384,7 +384,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def train_dataloader(self):
         if self.oversample_data:
-            if self.subsample_supervised < 1:
+            if self.subsample_supervised <= 1:
                 subsamples = int(len(self.train_labels) * self.subsample_supervised)
             else:
                 subsamples = int(self.subsample_supervised)
@@ -471,6 +471,15 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         valid_subset = self.prepare_data_setup("val")
         test_subset = self.prepare_data_setup("test")
 
+        if self.oversample_data:
+            if self.subsample_supervised <= 1:
+                train_indices = np.arange(0, len(train_subset))
+                train_subset = [train_subset[x] for x in np.random.choice(train_indices,
+                                                int(self.subsample_supervised * len(train_subset)),
+                                                replace=False).tolist()]
+            else:
+                raise NotImplementedError("For Multilabling just percentage subsampling is possible, so subsample_supervised has to be <= 1 .")
+
         self.len_train_data = int(len(train_subset) / self.batch_size)
 
 
@@ -482,35 +491,36 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         self.console_logger.info(f"There are {len(valid_subset)} validation files")
         if stage == "fit":
             self.console_logger.info(f"Instantiating training dataset <{self.cfg_dataset._target_}>")
-            self.train_data: Dataset = instantiate(
+            self.train_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=train_subset,
                 integer_labels=self.train_labels,
                 transform=self.train_transforms,
                 preload_dataset=self.preload_dataset,
             )
+            self.train_data.set_files(train_subset)
 
             self.console_logger.info(f"Instantiating validation dataset <{self.cfg_dataset._target_}>")
             self.console_logger.debug(f"Number of training samples: {len(self.train_data)}")
-            self.valid_data: Dataset = instantiate(
+            self.valid_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=valid_subset,
                 integer_labels=self.valid_labels,
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+            self.valid_data.set_files(valid_subset)
 
             self.console_logger.debug(f"Number of validation samples: {len(self.valid_data)}")
 
         elif stage == "test":
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
-            self.test_data: Dataset = instantiate(
+            self.test_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
                 files=test_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,
             )
+            self.test_data.set_files(test_subset)
 
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
@@ -554,3 +564,12 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         n_bins = len(np.arange(0, max_label_value))
         probabilities = np.histogram(labels, bins=n_bins + 1, range=(0, n_bins))[0] / len(labels)
         return probabilities
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_data,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=self.shuffle_train_dataset,
+        )

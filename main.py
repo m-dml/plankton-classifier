@@ -93,6 +93,9 @@ def main(cfg: Config):
         )
         datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
+        # get number of training samples_per_device and epoch:
+        stepping_batches = len(datamodule.train_dataloader())
+
         # generate example input array:
         for batch in datamodule.val_dataloader():
             example_input, _ = batch
@@ -117,7 +120,8 @@ def main(cfg: Config):
             metric=cfg.metric,
             is_in_simclr_mode=is_in_simclr_mode,
             batch_size=cfg.datamodule.batch_size,
-            num_unique_labels=len(datamodule.unique_labels)
+            num_unique_labels=len(datamodule.unique_labels),
+            num_steps_per_epoch=stepping_batches
         )
 
         model.set_external_data(
@@ -241,4 +245,3 @@ if __name__ == "__main__":
     log = utils.get_logger("__main__", "info")
     log.info("Starting python script")
     main()
-
