@@ -13,11 +13,7 @@ partition: develbooster
 gres: gpu:${trainer.devices}
 signal_delay_s: 120
 additional_parameters:
-  {
-    exclusive: true,
-    signal: "SIGUSR1@200",
-    account: "hai_simclr",
-  }
+  { exclusive: true, signal: "SIGUSR1@200", account: "hai_simclr" }
 array_parallelism: 256
 setup: [
     "module load NCCL/2.12.7-1-CUDA-11.5",

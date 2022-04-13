@@ -4,14 +4,14 @@ import pathlib
 from abc import abstractmethod
 from typing import Any, List, Union
 
-import PIL.PngImagePlugin
 import numpy as np
 import pandas as pd
+import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
-from PIL import Image
 from catalyst.data.sampler import BalanceClassSampler, DistributedSamplerWrapper
 from hydra.utils import instantiate
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
@@ -257,7 +257,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
             indices = []
             for key in sorted(label_dict):
                 num_samples_this_label = int(np.ceil(len(label_dict[key]) * self.subsample_supervised))
-                self.console_logger.debug(f"For class {self.unique_labels[key]} will be using {num_samples_this_label} samples for training from originally {len(label_dict[key])} labeled images.")
+                self.console_logger.debug(
+                    f"For class {self.unique_labels[key]} will be using {num_samples_this_label} samples for training "
+                    f"from originally {len(label_dict[key])} labeled images. "
+                )
                 indices += np.random.choice(label_dict[key], num_samples_this_label, replace=False).tolist()
             train_subset = [train_subset[i] for i in indices]
             self.train_labels = self.train_labels[indices]
@@ -472,14 +475,18 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         if self.oversample_data:
             if self.subsample_supervised <= 1:
                 train_indices = np.arange(0, len(train_subset))
-                train_subset = [train_subset[x] for x in np.random.choice(train_indices,
-                                                int(self.subsample_supervised * len(train_subset)),
-                                                replace=False).tolist()]
+                train_subset = [
+                    train_subset[x]
+                    for x in np.random.choice(
+                        train_indices, int(self.subsample_supervised * len(train_subset)), replace=False
+                    ).tolist()
+                ]
             else:
-                raise NotImplementedError("For Multilabling just percentage subsampling is possible, so subsample_supervised has to be <= 1 .")
+                raise NotImplementedError(
+                    "For Multilabling just percentage subsampling is possible, so subsample_supervised has to be <= 1 ."
+                )
 
         self.len_train_data = int(len(train_subset) / self.batch_size)
-
 
         self.train_labels = list(zip(*train_subset))[1]
         self.valid_labels = list(zip(*valid_subset))[1]

@@ -20,7 +20,6 @@ from src.lib.config import Config, register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
 
-
 logger = utils.get_logger(__name__)
 handler = logging.StreamHandler(stream=sys.stdout)
 logger.addHandler(handler)
@@ -98,7 +97,10 @@ def main(cfg: Config):
         datamodule.is_ddp = False
         stepping_batches = len(datamodule.train_dataloader())
         datamodule.is_ddp = cfg.strategy is not None
-        logging.info(f"Infered batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised}")
+        logging.info(
+            f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
+            f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} "
+        )
 
         # generate example input array:
         for batch in datamodule.val_dataloader():
@@ -125,7 +127,7 @@ def main(cfg: Config):
             is_in_simclr_mode=is_in_simclr_mode,
             batch_size=cfg.datamodule.batch_size,
             num_unique_labels=len(datamodule.unique_labels),
-            num_steps_per_epoch=stepping_batches
+            num_steps_per_epoch=stepping_batches,
         )
 
         model.set_external_data(
@@ -216,8 +218,12 @@ def main(cfg: Config):
         # Init Trainer:
         log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
         trainer: Trainer = instantiate(
-            cfg.trainer, strategy=cfg.strategy, logger=logger, callbacks=callbacks, _convert_="partial",
-            profiler=cfg.profiler
+            cfg.trainer,
+            strategy=cfg.strategy,
+            logger=logger,
+            callbacks=callbacks,
+            _convert_="partial",
+            profiler=cfg.profiler,
         )
 
         # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process

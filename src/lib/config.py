@@ -22,8 +22,8 @@ from src.lib.metrics import Accuracy, MultiLabelAccuracy
 from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
+from src.lib.profiler import NoProfiler, PytorchProfiler
 from src.lib.trainer import Trainer
-from src.lib.profiler import PytorchProfiler, NoProfiler
 
 
 def register_configs() -> None:

@@ -25,7 +25,6 @@ from src.utils import utils
 class LightningModel(pl.LightningModule):
     def __init__(
         self,
-
         log_images,
         log_confusion_matrices,
         log_tsne_image,
@@ -40,7 +39,7 @@ class LightningModel(pl.LightningModule):
         batch_size,
         temperature_scale,
         num_steps_per_epoch,
-        num_unique_labels=None
+        num_unique_labels=None,
     ):
 
         super().__init__()
@@ -83,10 +82,7 @@ class LightningModel(pl.LightningModule):
         self.batch_size = batch_size
         self.temperature_scale = temperature_scale
 
-    def set_external_data(self,
-        class_labels,
-        all_labels,
-        example_input_array):
+    def set_external_data(self, class_labels, all_labels, example_input_array):
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
@@ -114,12 +110,15 @@ class LightningModel(pl.LightningModule):
             self.console_logger.info("global batch size is {}".format(self.batch_size))
 
             # total_train_steps = len(self.trainer.train_dataloader)
-            total_train_steps = int((self.num_steps_per_epoch / (self.trainer.devices * self.trainer.num_nodes)) * self.trainer.max_epochs)
+            total_train_steps = int(
+                (self.num_steps_per_epoch / (self.trainer.devices * self.trainer.num_nodes)) * self.trainer.max_epochs
+            )
 
             if self.cfg_scheduler == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
                 self.console_logger.info(
-                    f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup.")
+                    f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup."
+                )
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.LambdaLR(
                         optimizer, linear_warmup_decay(warmup_steps, total_train_steps, cosine=True)
@@ -242,7 +241,7 @@ class LightningModel(pl.LightningModule):
         # sum over batch to update confusion matrix
         n_classes = len(self.class_labels)
         idx = labels_true + n_classes * labels_est
-        counts = torch.bincount(idx.reshape(-1), minlength=n_classes ** 2)
+        counts = torch.bincount(idx.reshape(-1), minlength=n_classes**2)
         self.confusion_matrix[datagroup] += counts.reshape((n_classes, n_classes))
 
     def _init_accuracy_matrices(self):
@@ -449,8 +448,9 @@ class LightningModel(pl.LightningModule):
 
         return best_epochs
 
-    def remove_outdated_saves(self, best_epochs: list,
-                              filepatterns=("complete_model_*.weights", "model_*.onnx", "temperatures_*.tensor")):
+    def remove_outdated_saves(
+        self, best_epochs: list, filepatterns=("complete_model_*.weights", "model_*.onnx", "temperatures_*.tensor")
+    ):
         folder = self.trainer.checkpoint_callback.dirpath
         for filepattern in filepatterns:
             files_to_keep = []
