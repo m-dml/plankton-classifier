@@ -403,6 +403,7 @@ class LightningModel(pl.LightningModule):
         torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
+        self.console_logger.debug("Running on_save_checkpoint")
         if self.automatic_optimization and (self.current_epoch == 0):
             return
 
@@ -415,6 +416,7 @@ class LightningModel(pl.LightningModule):
         folder = self.trainer.checkpoint_callback.dirpath
         onnx_file_generator = os.path.join(folder, f"model_{self.current_epoch}.onnx")
 
+        self.console_logger.debug("exporting to onnx")
         torch.onnx.export(
             model=self.model.to(self.device),
             args=example_input.to(self.device),
@@ -432,6 +434,7 @@ class LightningModel(pl.LightningModule):
         )
 
         # save the feature_extractor_weights:
+        self.console_logger.debug("Saving state dict")
         state_dict = self.model.state_dict()
         torch.save(state_dict, os.path.join(folder, f"complete_model_{self.current_epoch}.weights"))
 
@@ -441,17 +444,23 @@ class LightningModel(pl.LightningModule):
         best_epochs = self.get_best_epochs()
         self.remove_outdated_saves(best_epochs)
 
+    @rank_zero_only
     def get_best_epochs(self):
+        self.console_logger.debug("Getting best epochs")
         best_k_models = self.trainer.checkpoint_callback.best_k_models
         best_epochs = []
         for key, value in best_k_models.items():
             best_epochs.append(int(os.path.basename(key).replace("epoch=", "").replace(".ckpt", "")))
 
+        self.console_logger.debug(f"Best inferred epochs are: {best_epochs}")
+        self.console_logger.debug(f"Best models from callback are: {self.trainer.checkpoint_callback.best_k_models}")
         return best_epochs
 
+    @rank_zero_only
     def remove_outdated_saves(
         self, best_epochs: list, filepatterns=("complete_model_*.weights", "model_*.onnx", "temperatures_*.tensor")
     ):
+        self.console_logger.debug("Removing outdated files")
         folder = self.trainer.checkpoint_callback.dirpath
         for filepattern in filepatterns:
             files_to_keep = []
@@ -460,7 +469,10 @@ class LightningModel(pl.LightningModule):
 
             # always keep the last epoch:
             files_to_keep.append(os.path.join(folder, filepattern.replace("*", str(self.current_epoch))))
+            self.console_logger.debug(f"Files to keep: {files_to_keep}")
             files = glob.glob(os.path.join(folder, filepattern))
             files_to_delete = [item for item in files if item not in files_to_keep]
+            self.console_logger.debug(f"All files found: {files}")
             for item in files_to_delete:
+                self.console_logger.debug(f"Deleting: {item}")
                 os.remove(item)
