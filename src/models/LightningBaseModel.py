@@ -38,6 +38,7 @@ class LightningModel(pl.LightningModule):
         is_in_simclr_mode,
         batch_size,
         temperature_scale,
+        num_unique_labels=None
     ):
 
         super().__init__()
@@ -62,7 +63,7 @@ class LightningModel(pl.LightningModule):
             self.feature_extractor.eval()
         # if num_classes in the config is set to None then use the number of classes found in the dataloader:
         self.classifier: nn.Module = hydra.utils.instantiate(
-            classifier, num_classes=classifier.num_classes or len(self.class_labels)
+            classifier, num_classes=classifier.num_classes or num_unique_labels
         )
         self.model = concat_feature_extractor_and_classifier(
             feature_extractor=self.feature_extractor, classifier=self.classifier

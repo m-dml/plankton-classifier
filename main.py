@@ -117,6 +117,7 @@ def main(cfg: Config):
             metric=cfg.metric,
             is_in_simclr_mode=is_in_simclr_mode,
             batch_size=cfg.datamodule.batch_size,
+            num_unique_labels=len(datamodule.unique_labels)
         )
 
         model.set_external_data(

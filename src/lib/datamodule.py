@@ -61,7 +61,7 @@ class PlanktonDataLoader(ParentDataloader):
     unlabeled_files_to_append: Any = None
     random_seed: int = 0
     reduce_data: bool = False
-    subsample_supervised: int = 100  # number of samples per class to use
+    subsample_supervised: float = 1.0  # number of samples per class to use
 
 
 @dataclass

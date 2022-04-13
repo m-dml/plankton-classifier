@@ -251,19 +251,19 @@ class PlanktonDataLoader(pl.LightningDataModule):
         # self._test_label_consistency(self.unique_labels, unique_val_labels)
         # self._test_label_consistency(self.unique_labels, unique_test_labels)
 
-        # if self.subsample_supervised:
-        #     label_dict = {
-        #         label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
-        #         for label in self.unique_labels.flatten()
-        #     }
-        #     indices = []
-        #     for key in sorted(label_dict):
-        #         if len(label_dict[key]) >= self.subsample_supervised:
-        #             indices += np.random.choice(label_dict[key], self.subsample_supervised, replace=False).tolist()
-        #         else:
-        #             indices += label_dict[key]
-        #     train_subset = [train_subset[i] for i in indices]
-        #     self.train_labels = self.train_labels[indices]
+        if self.subsample_supervised <= 1:
+            label_dict = {
+                label: np.arange(len(self.train_labels))[self.train_labels == label].tolist()
+                for label in np.arange(0, len(self.unique_labels.flatten()))
+            }
+
+            indices = []
+            for key in sorted(label_dict):
+                num_samples_this_label = int(np.ceil(len(label_dict[key]) * self.subsample_supervised))
+                self.console_logger.debug(f"For class {self.unique_labels[key]} will be using {num_samples_this_label} samples for training from originally {len(label_dict[key])} labeled images.")
+                indices += np.random.choice(label_dict[key], num_samples_this_label, replace=False).tolist()
+            train_subset = [train_subset[i] for i in indices]
+            self.train_labels = self.train_labels[indices]
 
         self.console_logger.debug("Getting the image counts for each label")
         _, self.training_class_counts = np.unique(self.train_labels, return_counts=True)
@@ -384,7 +384,11 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
     def train_dataloader(self):
         if self.oversample_data:
-            sampler = BalanceClassSampler(self.train_labels, mode=self.subsample_supervised)
+            if self.subsample_supervised < 1:
+                subsamples = int(len(self.train_labels) * self.subsample_supervised)
+            else:
+                subsamples = int(self.subsample_supervised)
+            sampler = BalanceClassSampler(self.train_labels, mode=subsamples)
             if self.is_ddp:
                 self.console_logger.info("Wrapping the sampler to be ddp compatible")
                 sampler = self.ddp_wrap_sampler(sampler)
