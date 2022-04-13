@@ -1,19 +1,17 @@
 import glob
-import logging
 import os
 import pathlib
-import random
 from abc import abstractmethod
 from typing import Any, List, Union
 
+import PIL.PngImagePlugin
 import numpy as np
 import pandas as pd
-import PIL.PngImagePlugin
 import pytorch_lightning as pl
 import torch
+from PIL import Image
 from catalyst.data.sampler import BalanceClassSampler, DistributedSamplerWrapper
 from hydra.utils import instantiate
-from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm

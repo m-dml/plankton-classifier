@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
+from pytorch_lightning.utilities import rank_zero_only
 from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
 from sklearn.metrics import balanced_accuracy_score
@@ -392,10 +393,14 @@ class LightningModel(pl.LightningModule):
     def on_train_start(self):
         if self.trainer.datamodule.training_class_counts is not None and not self.is_in_simclr_mode:
             self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-            save_path = self.trainer.checkpoint_callback.dirpath
-            if not os.path.exists(save_path):
-                os.makedirs(save_path)
-            torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
+            self.create_output_dir()
+
+    @rank_zero_only
+    def create_output_dir(self):
+        save_path = self.trainer.checkpoint_callback.dirpath
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
         if self.automatic_optimization and (self.current_epoch == 0):
