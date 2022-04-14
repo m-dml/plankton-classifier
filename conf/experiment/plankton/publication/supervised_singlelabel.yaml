@@ -33,7 +33,6 @@ trainer:
   replace_sampler_ddp: false
   max_steps: 50000
   val_check_interval: 10000
-  check_val_every_n_epoch: 10000000000
 
 logger:
   tensorboard:

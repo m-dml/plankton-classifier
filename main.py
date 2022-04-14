@@ -99,8 +99,15 @@ def main(cfg: Config):
         datamodule.is_ddp = cfg.strategy is not None
         log.info(
             f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
-            f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} "
+            f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} ."
         )
+
+        if cfg.trainer.val_check_interval:
+            if cfg.trainer.val_check_interval > stepping_batches:
+                cfg.trainer.val_check_interval = None
+                log.info("limited validation interval to 1 per epoch.")
+            else:
+                log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
 
         # generate example input array:
         for batch in datamodule.val_dataloader():
