@@ -109,7 +109,7 @@ class LightningModel(pl.LightningModule):
         if self.cfg_scheduler:
 
             # total_train_steps = len(self.trainer.train_dataloader)
-            total_train_steps = int(self.num_steps_per_epoch * self.trainer.max_epochs)
+            total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
             self.console_logger.info("total_train_steps are {}".format(total_train_steps))
 
             if self.cfg_scheduler == "linear_warmup_decay":

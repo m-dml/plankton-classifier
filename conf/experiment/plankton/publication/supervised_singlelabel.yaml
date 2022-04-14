@@ -24,13 +24,14 @@ output_dir_base_path: /gpfs/work/machnitz/plankton_logs/supervised/singlelabel
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
-  max_epochs: 100
+  max_epochs: 100000000000 # just a high value since max_steps should be the limit
   accelerator: "gpu"
   devices: 1
   precision: 32
   num_nodes: 1
   sync_batchnorm: true
   replace_sampler_ddp: false
+  max_steps: 50000
 
 logger:
   tensorboard:
