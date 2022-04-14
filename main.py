@@ -102,13 +102,6 @@ def main(cfg: Config):
             f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} ."
         )
 
-        if cfg.trainer.val_check_interval:
-            if cfg.trainer.val_check_interval > stepping_batches:
-                cfg.trainer.val_check_interval = None
-                log.info("limited validation interval to 1 per epoch.")
-            else:
-                log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
-
         # generate example input array:
         for batch in datamodule.val_dataloader():
             example_input, _ = batch
@@ -232,6 +225,13 @@ def main(cfg: Config):
             _convert_="partial",
             profiler=cfg.profiler,
         )
+
+        if cfg.trainer.val_check_interval:
+            if cfg.trainer.val_check_interval > stepping_batches:
+                trainer.val_check_interval = None
+                log.info("limited validation interval to 1 per epoch.")
+            else:
+                log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
 
         # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
         if cfg.auto_tune:
