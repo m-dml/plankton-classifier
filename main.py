@@ -228,7 +228,7 @@ def main(cfg: Config):
 
         if cfg.trainer.val_check_interval:
             if cfg.trainer.val_check_interval > stepping_batches:
-                trainer.val_check_interval = None
+                trainer.val_check_interval = 1.0
                 log.info("limited validation interval to 1 per epoch.")
             else:
                 log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
