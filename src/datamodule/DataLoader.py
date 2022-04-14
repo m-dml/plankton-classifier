@@ -386,7 +386,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def train_dataloader(self):
         if self.oversample_data:
             if self.subsample_supervised <= 1:
-                subsamples = int(len(self.train_labels) * self.subsample_supervised)
+                subsamples = "upsampling"
             else:
                 subsamples = int(self.subsample_supervised)
             sampler = BalanceClassSampler(self.train_labels, mode=subsamples)
