@@ -454,7 +454,7 @@ class LightningModel(pl.LightningModule):
         best_k_models = self.trainer.checkpoint_callback.best_k_models
         best_epochs = []
         for key, value in best_k_models.items():
-            best_epochs.append(int(os.path.basename(key).replace("epoch=", "").replace(".ckpt", "")))
+            best_epochs.append(os.path.basename(key).replace("epoch=", "").replace(".ckpt", ""))
 
         self.console_logger.debug(f"Best inferred epochs are: {best_epochs}")
         self.console_logger.debug(f"Best models from callback are: {self.trainer.checkpoint_callback.best_k_models}")
