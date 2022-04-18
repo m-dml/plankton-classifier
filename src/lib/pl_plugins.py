@@ -9,4 +9,4 @@ class DDPPlugin:
 
 @dataclass
 class SingleDevicePlugin:
-    _target_: str = "pytorch_lightning.plugins.training_type.SingleDevicePlugin"
+    _target_: str = "pytorch_lightning.strategies.single_device.SingleDeviceStrategy"

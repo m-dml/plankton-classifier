@@ -11,6 +11,7 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from natsort import natsorted
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 from pytorch_lightning.utilities import rank_zero_only
 from sklearn.linear_model import SGDClassifier
@@ -407,8 +408,15 @@ class LightningModel(pl.LightningModule):
         torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
+
+        def get_version_number():
+            best_epochs = natsorted(self.get_best_epochs())
+            return best_epochs[-1]
+
+
         self.console_logger.debug("Running on_save_checkpoint")
-        if self.automatic_optimization and (self.current_epoch == 0):
+        if self.automatic_optimization and (self.global_step <= self.trainer.num_sanity_val_steps):
+            self.console_logger.debug("Skipping on_save_checkpoint")
             return
 
         if self.is_in_simclr_mode:
@@ -418,7 +426,8 @@ class LightningModel(pl.LightningModule):
 
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"model_{self.current_epoch}.onnx")
+        onnx_file_generator = os.path.join(folder, f"model_{get_version_number()}.onnx")
+
 
         self.console_logger.debug("exporting to onnx")
         torch.onnx.export(
@@ -440,10 +449,10 @@ class LightningModel(pl.LightningModule):
         # save the feature_extractor_weights:
         self.console_logger.debug("Saving state dict")
         state_dict = self.model.state_dict()
-        torch.save(state_dict, os.path.join(folder, f"complete_model_{self.current_epoch}.weights"))
+        torch.save(state_dict, os.path.join(folder, f"complete_model_{get_version_number()}.weights"))
 
         if self.temperature_scale:
-            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{self.current_epoch}.tensor"))
+            torch.save(self.temperatures, os.path.join(folder, f"temperatures_{get_version_number()}.tensor"))
 
         best_epochs = self.get_best_epochs()
         self.remove_outdated_saves(best_epochs)
