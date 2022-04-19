@@ -10,3 +10,4 @@ class DDPPlugin:
 @dataclass
 class SingleDevicePlugin:
     _target_: str = "pytorch_lightning.strategies.single_device.SingleDeviceStrategy"
+    device: str = "cpu"
