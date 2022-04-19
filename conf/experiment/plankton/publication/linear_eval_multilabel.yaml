@@ -36,7 +36,6 @@ trainer:
   max_steps: 500
   val_check_interval: 50
 
-
 logger:
   tensorboard:
     default_hp_metric: false

@@ -519,7 +519,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
             self.test_data: ParentDataSet = instantiate(
                 self.cfg_dataset,
-                files=test_subset,
                 integer_labels=self.integer_class_label_dict,
                 transform=self.valid_transforms,
                 preload_dataset=self.preload_dataset,

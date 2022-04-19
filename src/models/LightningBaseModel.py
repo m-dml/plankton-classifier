@@ -408,11 +408,9 @@ class LightningModel(pl.LightningModule):
         torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
     def on_save_checkpoint(self, checkpoint) -> None:
-
         def get_version_number():
             best_epochs = natsorted(self.get_best_epochs())
             return best_epochs[-1]
-
 
         self.console_logger.debug("Running on_save_checkpoint")
         if self.automatic_optimization and (self.global_step <= self.trainer.num_sanity_val_steps):
