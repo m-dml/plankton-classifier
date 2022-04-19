@@ -426,8 +426,11 @@ class LightningModel(pl.LightningModule):
 
         # save model to onnx:
         folder = self.trainer.checkpoint_callback.dirpath
-        onnx_file_generator = os.path.join(folder, f"model_{get_version_number()}.onnx")
 
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+
+        onnx_file_generator = os.path.join(folder, f"model_{get_version_number()}.onnx")
 
         self.console_logger.debug("exporting to onnx")
         torch.onnx.export(
