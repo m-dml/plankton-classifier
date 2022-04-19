@@ -222,7 +222,7 @@ class LightningModel(pl.LightningModule):
         accuracy = 0  # set initial value, for the case of multi-label training
         predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
-            loss = self.loss_func(F.log_softmax(classifier_outputs.float()), labels.float())
+            loss = self.loss_func(F.log_softmax(classifier_outputs.float(), dim=1), labels.float())
             accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
         else:
             targets = labels.detach().view(-1).to(torch.int).cpu()
