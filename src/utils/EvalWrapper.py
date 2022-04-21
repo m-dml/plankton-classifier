@@ -57,5 +57,7 @@ class EvalWrapper:
         return corrected_enumerator / corrected_denominator
 
     def _correct_probabilities_with_temperature(self, logits):
-        temperature = self.temperatures.expand(logits.size(0), logits.size(1)).to(self.device)
-        return logits / temperature
+        if len(torch.unique(self.temperatures)) == 1:
+            return logits / torch.unique(self.temperatures).to(self.device)
+        else:
+            raise NotImplementedError("Temperatures are not the same for every output!")
