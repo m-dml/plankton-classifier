@@ -57,5 +57,5 @@ class EvalWrapper:
         return corrected_enumerator / corrected_denominator
 
     def _correct_probabilities_with_temperature(self, logits):
-        temperature = self.temperatures.unsqueeze(1).expand(logits.size(0), logits.size(1)).to(self.device)
+        temperature = self.temperatures.expand(logits.size(0), logits.size(1)).to(self.device)
         return logits / temperature
