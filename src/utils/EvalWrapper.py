@@ -13,10 +13,10 @@ class EvalWrapper:
         self.temperatures = None
 
         if self.training_distribution_file:
-            self.training_class_counts = torch.load(self.training_distribution_file)
+            self.training_class_counts = torch.load(self.training_distribution_file).to(self.device)
 
         if self.temperature_file:
-            self.temperatures = torch.load(self.temperature_file)
+            self.temperatures = torch.load(self.temperature_file).to(self.device)
 
     def __call__(
         self,
@@ -26,6 +26,7 @@ class EvalWrapper:
         return_probabilities=True,
     ):
         is_probability = False
+        logits = logits.to(self.device).detach()
         outputs = logits
         if correct_probabilties_with_temperature:
             if self.temperatures is None:
