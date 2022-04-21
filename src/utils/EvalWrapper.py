@@ -22,13 +22,13 @@ class EvalWrapper:
         self,
         logits: torch.Tensor,
         correct_probabilities_with_training_prior=False,
-        correct_probabilties_with_temperature=False,
+        correct_probabilities_with_temperature=False,
         return_probabilities=True,
     ):
         is_probability = False
         logits = logits.to(self.device).detach()
         outputs = logits
-        if correct_probabilties_with_temperature:
+        if correct_probabilities_with_temperature:
             if self.temperatures is None:
                 raise ValueError("Temperature File has not been provided")
             outputs = self._correct_probabilities_with_temperature(logits)
