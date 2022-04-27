@@ -12,7 +12,7 @@ defaults:
   - override /hydra/launcher: strand_single
   - override /optimizer: adam
   - override /strategy: null
-  - override /hydra/sweeper: optuna
+  - override /hydra/sweeper: basic
   - _self_
 
 debug: false
@@ -26,8 +26,8 @@ hydra:
   sweeper:
     params:
       load_state_dict:
-        - "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/0/logs/checkpoints/epoch=99.ckpt"
-        - "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/1/logs/checkpoints/epoch=47.ckpt"
+        "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/0/logs/checkpoints/epoch=99.ckpt"
+        "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/1/logs/checkpoints/epoch=47.ckpt"
 #        - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/2/logs/checkpoints/epoch=37.ckpt'
 #        - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/3/logs/checkpoints/epoch=26.ckpt'
 #        - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/4/logs/checkpoints/epoch=19.ckpt'

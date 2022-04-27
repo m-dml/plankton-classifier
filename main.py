@@ -52,6 +52,7 @@ def main(cfg: Config):
     utils.set_log_levels(cfg.log_level)
     log = utils.get_logger("main.main", cfg.log_level)
 
+    log.info(f"Hydra version: {hydra.__version__}")
     # Pretty print config using Rich library
     if cfg.print_config:
         utils.print_config(cfg, resolve=True)  # prints the complete hydra config to std-out
