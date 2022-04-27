@@ -210,6 +210,8 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
     labels = labels.detach().cpu().int()
     logits = logits.detach().cpu()
 
+    if not os.path.isdir("test_results"):
+        os.makedirs("test_results")
     torch.save(logits, f"test_results/logits_{experiment}_{key}.pt")
     torch.save(labels, f"test_results/labels_{experiment}_{key}.pt")
     with open(f"test_results/dict_{experiment}_{key}.pkl", 'wb') as f:
