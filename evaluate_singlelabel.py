@@ -81,11 +81,13 @@ if __name__ == "__main__":
         '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-19/08-15-10/18/logs/checkpoints/epoch=01.ckpt',
     ]
 
-    experiment_str = ",".join(experiments)
+    experiment_str = "'" + "','".join(experiments) + "'"
 
     subprocess.run(["python",
                       "main.py",
                       "+experiment=plankton/publication/evaluate_singlelabel",
                       "hydra/launcher=strand_single",
-                      f"'load_state_dict={experiment_str}'"
-                      "-m"])
+                      f"load_state_dict={experiment_str}"
+                      "-m"],
+                   stdout=subprocess.DEVNULL,
+                   stderr=subprocess.STDOUT)
