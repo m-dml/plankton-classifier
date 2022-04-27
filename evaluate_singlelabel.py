@@ -86,7 +86,8 @@ if __name__ == "__main__":
         experiment_str = '"' + experiment_str + '"'
         subprocess.Popen(["python",
                           "main.py",
+                          "-m",
                           "+experiment=plankton/publication/evaluate_singlelabel",
                           "hydra/launcher=strand_single",
-                          f"load_state_dict={experiment_str}"
-                          "-m"])
+                          f"load_state_dict={experiment_str}",
+                          ])
