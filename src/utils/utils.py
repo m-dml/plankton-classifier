@@ -178,7 +178,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
         if any([return_component is None for return_component in [_key, _experiment, _epoch]]):
             raise ValueError("key, experiment or epoch is not set!")
 
-        return _key, _experiment, _epoch
+        return int(_key), _experiment, _epoch
 
     datamodule.setup(stage="test")
     dataloader = datamodule.test_dataloader()
