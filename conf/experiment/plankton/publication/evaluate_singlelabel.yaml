@@ -24,7 +24,7 @@ evaluate: true
 hydra:
   sweeper:
     params:
-      +load_state_dict:
+      load_state_dict:
         - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/0/logs/checkpoints/epoch=99.ckpt'
         - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/1/logs/checkpoints/epoch=47.ckpt'
         - '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/2/logs/checkpoints/epoch=37.ckpt'
