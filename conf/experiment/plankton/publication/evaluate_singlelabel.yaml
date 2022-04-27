@@ -19,6 +19,7 @@ scheduler: "cosine"
 random_seed: 7
 log_level: "info"
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs/eval/singlelabel
+evaluate: true
 
 hydra:
   sweeper:
