@@ -88,6 +88,4 @@ if __name__ == "__main__":
                       "+experiment=plankton/publication/evaluate_singlelabel",
                       "hydra/launcher=strand_single",
                       f"load_state_dict={experiment_str}"
-                      "-m"],
-                   stdout=subprocess.DEVNULL,
-                   stderr=subprocess.STDOUT)
+                      "-m"])
