@@ -82,6 +82,8 @@ if __name__ == "__main__":
     ]
 
     for experiment_str in experiments:
+
+        experiment_str = '"' + experiment_str + '"'
         subprocess.Popen(["python",
                           "main.py",
                           "+experiment=plankton/publication/evaluate_singlelabel",
