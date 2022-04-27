@@ -187,7 +187,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
                                                                                          np.arange(0.1, 1.1, 0.1)]
     key, experiment, epoch = infer_key_and_experiment_and_epoch_from_file(checkpoint_file)
     return_metrics = dict()
-    return_metrics[key] = dict()
+    return_metrics[experiment] = dict()
     model = instantiate_model(checkpoint_file, datamodule, example_input)
     model.log_confusion_matrices = False
     model.temperature_scale = False
