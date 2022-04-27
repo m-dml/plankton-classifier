@@ -12,6 +12,7 @@ defaults:
   - override /hydra/launcher: strand_single
   - override /optimizer: adam
   - override /strategy: null
+  - override /hydra/sweeper: BasicSweeper
   - _self_
 
 debug: false
