@@ -1,9 +1,13 @@
 import logging
+import os
+import pickle
 import warnings
 
+import numpy as np
 import pytorch_lightning as pl
 import rich.syntax
 import rich.tree
+import torch
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
@@ -139,3 +143,77 @@ def log_hyperparameters(
     hparams["model/params_not_trainable"] = sum(p.numel() for p in model.parameters() if not p.requires_grad)
 
     return hparams
+
+
+def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
+    from src.models.LightningBaseModel import LightningModel
+
+    def instantiate_model(ckpt_path, _datamodule, _example_input):
+        _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
+        _model.set_external_data(
+            class_labels=_datamodule.unique_labels,
+            all_labels=_datamodule.all_labels,
+            example_input_array=_example_input.detach().cpu(),
+        )
+        return _model
+
+    def infer_key_and_experiment_and_epoch_from_file(_checkpoint_file):
+        path = os.path.normpath(_checkpoint_file)
+        path_list = path.split(os.sep)
+
+        _key = None
+        _experiment = None
+        _epoch = None
+
+        for i, element in enumerate(path_list):
+            if element == "plankton_logs":
+                _experiment = path_list[i+1] + "_singlelabel"
+
+            elif element == "logs":
+                _key = path_list[i-1]
+
+            elif "epoch=" in element:
+                _epoch = element.replace("epoch=", "").replace(".ckpt", "")
+
+        if any([return_component is None for return_component in [_key, _experiment, _epoch]]):
+            raise ValueError("key, experiment or epoch is not set!")
+
+        return int(_key), _experiment, _epoch
+
+    datamodule.setup(stage="test")
+    dataloader = datamodule.test_dataloader()
+
+    data_splits_per_experiment = [np.round(x, 2) for x in np.arange(0.01, 0.1, 0.01)] + [np.round(x, 2) for x in
+                                                                                         np.arange(0.1, 1.1, 0.1)]
+    key, experiment, epoch = infer_key_and_experiment_and_epoch_from_file(checkpoint_file)
+    return_metrics = dict()
+    return_metrics[experiment] = dict()
+    model = instantiate_model(checkpoint_file, datamodule, example_input)
+    model.log_confusion_matrices = False
+    model.temperature_scale = False
+    return_metrics[experiment][key] = trainer.test(model, dataloader)[0]
+    return_metrics[experiment][key]["Data Fraction"] = data_splits_per_experiment[key]
+    return_metrics[experiment][key]["Best Epoch"] = epoch
+
+    logits = torch.empty(size=(len(dataloader.dataset), len(datamodule.unique_labels))).to("cuda:0")
+    labels = torch.empty(size=[len(dataloader.dataset)]).to("cuda:0")
+
+    with torch.no_grad():
+        start = 0
+        for i, batch in enumerate(dataloader):
+            x, batch_labels = batch
+            end = start + len(batch_labels[0])
+            labels[start: end] = batch_labels[0].squeeze()
+            logits[start: end, :] = model(x)[1]
+            start = end
+
+    labels = labels.detach().cpu().int()
+    logits = logits.detach().cpu()
+
+    if not os.path.isdir("test_results"):
+        os.makedirs("test_results")
+    torch.save(logits, f"test_results/logits_{experiment}_{key}.pt")
+    torch.save(labels, f"test_results/labels_{experiment}_{key}.pt")
+    with open(f"test_results/dict_{experiment}_{key}.pkl", 'wb') as f:
+        pickle.dump(return_metrics, f)
+    return logits, labels, return_metrics

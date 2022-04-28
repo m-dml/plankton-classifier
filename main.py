@@ -46,12 +46,13 @@ register_configs()
 # set up advanced logging:
 
 
-@hydra.main(config_name="config", config_path="conf")
+@hydra.main(config_name="config", config_path="conf", version_base="1.2")
 def main(cfg: Config):
     utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings
     utils.set_log_levels(cfg.log_level)
     log = utils.get_logger("main.main", cfg.log_level)
 
+    log.info(f"Hydra version: {hydra.__version__}")
     # Pretty print config using Rich library
     if cfg.print_config:
         utils.print_config(cfg, resolve=True)  # prints the complete hydra config to std-out
@@ -138,7 +139,7 @@ def main(cfg: Config):
 
         # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):
         device = "cuda" if cfg.trainer.accelerator == "gpu" else "cpu"
-        if cfg.load_state_dict is not None:
+        if (cfg.load_state_dict is not None) and (not cfg.evaluate):
             log.info(f"Loading model weights from {cfg.load_state_dict}")
             net = copy.deepcopy(model.model.cpu())
             # check state dict before loading:
@@ -240,8 +241,12 @@ def main(cfg: Config):
 
         if cfg.evaluate:
             log.info("Starting evaluation on test data")
-            trainer.test(model, datamodule)
-            return
+            return utils.eval_and_save(
+                checkpoint_file=cfg.load_state_dict,
+                trainer=trainer,
+                datamodule=datamodule,
+                example_input=example_input
+            )
 
         log.info("Starting training")
         trainer.fit(model, datamodule)  # the actual training of the NN

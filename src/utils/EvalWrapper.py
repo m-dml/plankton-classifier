@@ -45,7 +45,7 @@ class EvalWrapper:
         return outputs
 
     def _correct_probabilities_with_training_prior(self, logits):
-        probabilities = F.softmax(logits)
+        probabilities = F.softmax(logits, dim=1)
 
         p_balanced_per_class = 1 / (len(self.training_class_counts))
         p_corrected_per_class = self.training_class_counts / torch.sum(self.training_class_counts)
