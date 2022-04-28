@@ -488,5 +488,8 @@ class LightningModel(pl.LightningModule):
             files_to_delete = [item for item in files if item not in files_to_keep]
             self.console_logger.debug(f"All files found: {files}")
             for item in files_to_delete:
-                self.console_logger.debug(f"Deleting: {item}")
-                os.remove(item)
+                if os.path.isfile(item):
+                    self.console_logger.debug(f"Deleting: {item}")
+                    os.remove(item)
+                else:
+                    self.console_logger.warning(f"Tried to delete file {item} but file did not exist.")
