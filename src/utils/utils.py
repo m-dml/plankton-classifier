@@ -11,7 +11,6 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
-from src.models.LightningBaseModel import LightningModel
 from src.utils import LOG_LEVEL
 
 
@@ -147,6 +146,7 @@ def log_hyperparameters(
 
 
 def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
+    from src.models.LightningBaseModel import LightningModel
 
     def instantiate_model(ckpt_path, _datamodule, _example_input):
         _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
