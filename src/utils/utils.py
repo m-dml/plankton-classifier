@@ -210,10 +210,12 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
     labels = labels.detach().cpu().int()
     logits = logits.detach().cpu()
 
-    if not os.path.isdir("test_results"):
-        os.makedirs("test_results")
-    torch.save(logits, f"test_results/logits_{experiment}_{key}.pt")
-    torch.save(labels, f"test_results/labels_{experiment}_{key}.pt")
-    with open(f"test_results/dict_{experiment}_{key}.pkl", 'wb') as f:
+    base_path = os.path.join(trainer.checkpoint_callback.dirpath, "test_results")
+
+    if not os.path.isdir(base_path):
+        os.makedirs(base_path)
+    torch.save(logits, os.path.join(base_path, f"logits_{experiment}_{key}.pt"))
+    torch.save(labels, os.path.join(base_path, f"labels_{experiment}_{key}.pt"))
+    with open(os.path.join(base_path, f"dict_{experiment}_{key}.pkl"), 'wb') as f:
         pickle.dump(return_metrics, f)
     return logits, labels, return_metrics

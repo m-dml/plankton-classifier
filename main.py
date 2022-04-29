@@ -46,7 +46,7 @@ register_configs()
 # set up advanced logging:
 
 
-@hydra.main(config_name="config", config_path="conf", version_base="1.2")
+@hydra.main(config_name="config", config_path="conf")
 def main(cfg: Config):
     utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings
     utils.set_log_levels(cfg.log_level)
