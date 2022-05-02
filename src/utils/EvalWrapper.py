@@ -13,10 +13,11 @@ class EvalWrapper:
         self.temperatures = None
 
         if self.training_distribution_file:
-            self.training_class_counts = torch.load(self.training_distribution_file).to(self.device)
+            self.training_class_counts = torch.load(self.training_distribution_file,
+                                                    map_location=torch.device(self.device))
 
         if self.temperature_file:
-            self.temperatures = torch.load(self.temperature_file).to(self.device)
+            self.temperatures = torch.load(self.temperature_file, map_location=torch.device(self.device))
 
     def __call__(
         self,
