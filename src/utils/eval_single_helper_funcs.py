@@ -123,7 +123,16 @@ def get_confidence_and_acc_single(logits, labels, n_bins=20, logits_are_probs=Fa
 def get_best_checkpoints(key, path):
     best_checkpoints = []
     return_metrics = dict()
-    experiment_folders = [os.path.join(path, str(i)) for i in np.arange(0, 19)]
+    all_folders = glob.glob(os.path.join(path, "*"))
+    experiment_folders = []
+    for folder in all_folders:
+        num_folder = os.path.split(folder)[-1]
+        try:
+            if num_folder.isnumeric():
+                experiment_folders.append(folder)
+        except:
+            pass
+
     return_metrics[key] = dict()
     # fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(20, 15), sharex=True, sharey=True)
     for experiment_number, experiment_path in enumerate(tqdm(experiment_folders)):
