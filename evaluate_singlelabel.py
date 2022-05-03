@@ -22,7 +22,7 @@ if __name__ == "__main__":
     experiments = []
     for key, paths in experiments_paths.items():
         for path in paths:
-            experiments.append(get_best_checkpoints(key, path))
+            experiments += get_best_checkpoints(key, path)
 
     for experiment_str in experiments:
         experiment_str = '"' + experiment_str + '"'
