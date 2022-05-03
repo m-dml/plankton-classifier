@@ -16,7 +16,7 @@ defaults:
 
 debug: false
 load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_model_799.weights
-scheduler: "cosine"
+scheduler: null
 random_seed: 7
 log_level: "info"
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune/singlelabel
@@ -31,8 +31,8 @@ trainer:
   num_nodes: 1
   sync_batchnorm: true
   replace_sampler_ddp: false
-  max_steps: 50000
-  val_check_interval: 10000
+  max_steps: 5000000
+  val_check_interval: 1000
 
 logger:
   tensorboard:
@@ -82,6 +82,6 @@ optimizer:
 callbacks:
   early_stopping:
     monitor: "loss/Validation"
-    patience: 800
+    patience: 20
     verbose: true
     mode: "min"
