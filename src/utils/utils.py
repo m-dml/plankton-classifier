@@ -183,8 +183,6 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
     datamodule.setup(stage="test")
     dataloader = datamodule.test_dataloader()
 
-    data_splits_per_experiment = [np.round(x, 2) for x in np.arange(0.01, 0.1, 0.01)] + [np.round(x, 2) for x in
-                                                                                         np.arange(0.1, 1.1, 0.1)]
     key, experiment, epoch = infer_key_and_experiment_and_epoch_from_file(checkpoint_file)
     return_metrics = dict()
     return_metrics[experiment] = dict()
@@ -192,7 +190,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
     model.log_confusion_matrices = False
     model.temperature_scale = False
     return_metrics[experiment][key] = trainer.test(model, dataloader)[0]
-    return_metrics[experiment][key]["Data Fraction"] = data_splits_per_experiment[key]
+    return_metrics[experiment][key]["Data Fraction"] = get_split_from_checkpoint_file(checkpoint_file)
     return_metrics[experiment][key]["Best Epoch"] = epoch
 
     logits = torch.empty(size=(len(dataloader.dataset), len(datamodule.unique_labels))).to("cuda:0")
@@ -212,10 +210,26 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
     base_path = os.path.join(trainer.checkpoint_callback.dirpath, "test_results")
 
+    fraction = str(np.round(return_metrics[experiment][key]["Data Fraction"], 6)).replace("0.", "0_")
+
     if not os.path.isdir(base_path):
         os.makedirs(base_path)
-    torch.save(logits, os.path.join(base_path, f"logits_{experiment}_{key}.pt"))
-    torch.save(labels, os.path.join(base_path, f"labels_{experiment}_{key}.pt"))
-    with open(os.path.join(base_path, f"dict_{experiment}_{key}.pkl"), 'wb') as f:
+    torch.save(logits, os.path.join(base_path, f"logits_{experiment}_{fraction}.pt"))
+    torch.save(labels, os.path.join(base_path, f"labels_{experiment}_{fraction}.pt"))
+    with open(os.path.join(base_path, f"dict_{experiment}_{fraction}.pkl"), 'wb') as f:
         pickle.dump(return_metrics, f)
     return logits, labels, return_metrics
+
+
+def get_split_from_checkpoint_file(__file):
+    _path = os.path.split(__file)[0] + "../../.."
+
+    override_file = os.path.abspath(os.path.join(_path, ".hydra", "overrides.yaml"))
+
+    with open(override_file, "r") as f:
+        for line in f:
+            if "datamodule.subsample_supervised=" in line:
+                split = np.round(float(line.split("=")[-1].strip()), 6)
+                break
+
+    return split

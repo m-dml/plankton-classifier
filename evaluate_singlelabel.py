@@ -1,91 +1,30 @@
 import subprocess
+from src.utils.eval_single_helper_funcs import get_best_checkpoints
 
 if __name__ == "__main__":
-    
-    experiments = [
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/0/logs/checkpoints/epoch=99.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/1/logs/checkpoints/epoch=47.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/2/logs/checkpoints/epoch=37.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/3/logs/checkpoints/epoch=26.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/4/logs/checkpoints/epoch=19.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/5/logs/checkpoints/epoch=15.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/6/logs/checkpoints/epoch=14.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/7/logs/checkpoints/epoch=16.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/8/logs/checkpoints/epoch=14.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/9/logs/checkpoints/epoch=13.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/10/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/11/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/12/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/13/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/14/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/15/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/16/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/17/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50/18/logs/checkpoints/epoch=01.ckpt',
 
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/0/logs/checkpoints/epoch=89.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/1/logs/checkpoints/epoch=40.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/2/logs/checkpoints/epoch=37.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/3/logs/checkpoints/epoch=22.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/4/logs/checkpoints/epoch=19.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/5/logs/checkpoints/epoch=15.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/6/logs/checkpoints/epoch=15.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/7/logs/checkpoints/epoch=16.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/8/logs/checkpoints/epoch=12.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/9/logs/checkpoints/epoch=13.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/10/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/11/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/12/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/13/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/14/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/15/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/16/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/17/logs/checkpoints/epoch=01-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24/18/logs/checkpoints/epoch=01.ckpt',
+    experiments_paths = {
+        "supervised_singlelabel": [
+            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-04-19/08-14-50"
+        ],
+        "finetune_singlelabel": [
+          "/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-04-19/08-15-24"
+        ],
+        "linear_singlelabel": [
+          "/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47",
+          "/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-05-02/10-33-55"
+        ],
+        "finetune_sgd_singlelabel": [
+            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35"
+        ],
+    }
 
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/0/logs/checkpoints/epoch=25.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/1/logs/checkpoints/epoch=21.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/2/logs/checkpoints/epoch=25.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/3/logs/checkpoints/epoch=10.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/4/logs/checkpoints/epoch=27.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/5/logs/checkpoints/epoch=22.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/6/logs/checkpoints/epoch=12.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/7/logs/checkpoints/epoch=21.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/8/logs/checkpoints/epoch=05.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/9/logs/checkpoints/epoch=13.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/10/logs/checkpoints/epoch=03.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/11/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/12/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/13/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/14/logs/checkpoints/epoch=01.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/15/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/16/logs/checkpoints/epoch=01.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/17/logs/checkpoints/epoch=00-v1.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-04-29/08-31-47/18/logs/checkpoints/epoch=00.ckpt',
-
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/0/logs/checkpoints/epoch=07.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/1/logs/checkpoints/epoch=03.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/2/logs/checkpoints/epoch=09.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/3/logs/checkpoints/epoch=05.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/4/logs/checkpoints/epoch=01.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/5/logs/checkpoints/epoch=05.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/6/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/7/logs/checkpoints/epoch=08.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/8/logs/checkpoints/epoch=05.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/9/logs/checkpoints/epoch=12.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/10/logs/checkpoints/epoch=07.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/11/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/12/logs/checkpoints/epoch=04.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/13/logs/checkpoints/epoch=00.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/14/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/15/logs/checkpoints/epoch=02.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/16/logs/checkpoints/epoch=01.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/17/logs/checkpoints/epoch=01.ckpt',
-      '/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-04-29/08-19-35/18/logs/checkpoints/epoch=01-v1.ckpt'
-    ]
+    experiments = []
+    for key, paths in experiments_paths.items():
+        for path in paths:
+            experiments.append(get_best_checkpoints(key, path))
 
     for experiment_str in experiments:
-
         experiment_str = '"' + experiment_str + '"'
         subprocess.Popen(["python",
                           "main.py",
