@@ -155,6 +155,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
             all_labels=_datamodule.all_labels,
             example_input_array=_example_input.detach().cpu(),
         )
+        _model.eval()
         return _model
 
     def infer_key_and_experiment_and_epoch_from_file(_checkpoint_file):
@@ -195,6 +196,9 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
     logits = torch.empty(size=(len(dataloader.dataset), len(datamodule.unique_labels))).to("cuda:0")
     labels = torch.empty(size=[len(dataloader.dataset)]).to("cuda:0")
+
+    model.eval()
+    torch.set_grad_enabled(False)
 
     with torch.no_grad():
         start = 0

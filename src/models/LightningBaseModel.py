@@ -21,6 +21,7 @@ from sklearn.metrics import balanced_accuracy_score
 from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
+from src.utils.EvalWrapper import EvalWrapper
 
 
 class LightningModel(pl.LightningModule):
@@ -45,6 +46,7 @@ class LightningModel(pl.LightningModule):
 
         super().__init__()
 
+        self.eval_wrapper = None
         self.training_class_counts = None
         self.num_steps_per_epoch = num_steps_per_epoch
         self.lr = optimizer.lr
@@ -106,7 +108,10 @@ class LightningModel(pl.LightningModule):
         return features, predictions
 
     def configure_optimizers(self):
-        optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
+        if self.model.feature_extractor.training:
+            optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
+        else:
+            optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr)
         if self.cfg_scheduler:
 
             # total_train_steps = len(self.trainer.train_dataloader)
@@ -230,6 +235,12 @@ class LightningModel(pl.LightningModule):
             try:
                 class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
                 accuracy = self.accuracy_func(class_probabilities, targets)
+
+                if self.training_class_counts:
+                    corrected_probs = self.eval_wrapper(classifier_outputs,
+                                                        correct_probabilities_with_training_prior=True)
+                    corrected_accuracy = self.accuracy_func(corrected_probs, targets)
+                    self.log(f"Accuracy_corrected_outputs/{step}", corrected_accuracy)
             except (RuntimeError, ValueError):
                 pass
 
@@ -398,10 +409,13 @@ class LightningModel(pl.LightningModule):
     def on_train_start(self):
         if self.trainer.datamodule.training_class_counts is not None and not self.is_in_simclr_mode:
             self.training_class_counts = torch.tensor(self.trainer.datamodule.training_class_counts).to(self.device)
-            self.create_output_dir()
+            self.save_training_class_counts()
+
+        self.eval_wrapper = EvalWrapper()
+        self.eval_wrapper.training_class_counts = self.training_class_counts
 
     @rank_zero_only
-    def create_output_dir(self):
+    def save_training_class_counts(self):
         save_path = self.trainer.checkpoint_callback.dirpath
         if not os.path.exists(save_path):
             os.makedirs(save_path)
