@@ -13,10 +13,5 @@ partition: p2GPU32
 signal_delay_s: 120
 additional_parameters: { exclusive: true, signal: "SIGUSR1@90" }
 array_parallelism: 256
-setup: [
-    "source activate plankton",
-    "export CUDA_VISIBLE_DEVICES=0,1",
-    "export NCCL_NSOCKS_PERTHREAD=4", # number sockets opened by each helper CPU
-    "export NCCL_SOCKET_NTHREADS=2", # number of CPUs per NCCL connection
-  ]
+setup: ["source activate plankton", "export CUDA_VISIBLE_DEVICES=0,1"]
 max_num_timeout: 10
