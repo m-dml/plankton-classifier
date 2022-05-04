@@ -147,19 +147,19 @@ def main(cfg: Config):
             len_old_state_dict = len(this_state_dict)
             log.info(f"Old state dict has {len_old_state_dict} entries.")
             try:
-                new_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
+                pretrained_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
             except Exception as e:
                 log.error(e)
                 raise e
-            for key in new_state_dict.keys():
+            for key in pretrained_state_dict.keys():
                 # make sure feature extractor weights are the same format:
                 if key not in this_state_dict and not key.startswith("classifier."):
                     # trigger complete traceback error if feature extractor weights are not the same
-                    net.load_state_dict(new_state_dict, strict=True)
+                    net.load_state_dict(pretrained_state_dict, strict=True)
 
-            keys_to_drop = list(this_state_dict.keys())[-2:]
-            [new_state_dict.pop(key_to_drop) for key_to_drop in keys_to_drop]
-            missing_keys, unexpected_keys = net.load_state_dict(new_state_dict, strict=False)
+            keys_to_drop = [key for key in pretrained_state_dict.keys() if key.startswith("classifier")]
+            [pretrained_state_dict.pop(key_to_drop) for key_to_drop in keys_to_drop]
+            missing_keys, unexpected_keys = net.load_state_dict(pretrained_state_dict, strict=False)
             log.warning(f"Missing keys: {missing_keys}")
             log.warning(f"Unexpected keys: {unexpected_keys}")
             state_dict_error_count = 0
