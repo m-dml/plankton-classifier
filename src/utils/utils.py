@@ -214,7 +214,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
     base_path = os.path.join(trainer.checkpoint_callback.dirpath, "test_results")
 
-    fraction = str(np.round(return_metrics[experiment][key]["Data Fraction"], 6)).replace("0.", "0_").replace("1.", "1_")
+    fraction = f"{np.round(return_metrics[experiment][key]['Data Fraction'], 12):.8f}".replace("0.", "0_").replace("1.", "1_")
 
     if not os.path.isdir(base_path):
         os.makedirs(base_path)
@@ -233,7 +233,7 @@ def get_split_from_checkpoint_file(__file):
     with open(override_file, "r") as f:
         for line in f:
             if "datamodule.subsample_supervised=" in line:
-                split = np.round(float(line.split("=")[-1].strip()), 6)
+                split = np.round(float(line.split("=")[-1].strip()), 12)
                 break
 
     return split
