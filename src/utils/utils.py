@@ -214,7 +214,7 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
     base_path = os.path.join(trainer.checkpoint_callback.dirpath, "test_results")
 
-    fraction = str(np.round(return_metrics[experiment][key]["Data Fraction"], 6)).replace("0.", "0_")
+    fraction = str(np.round(return_metrics[experiment][key]["Data Fraction"], 6)).replace("0.", "0_").replace("1.", "1_")
 
     if not os.path.isdir(base_path):
         os.makedirs(base_path)
