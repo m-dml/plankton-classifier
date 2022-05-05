@@ -25,6 +25,7 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 10000000000
+  min_steps: 1000
   accelerator: "gpu"
   devices: 1
   precision: 32

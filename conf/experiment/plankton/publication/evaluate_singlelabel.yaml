@@ -31,6 +31,7 @@ trainer:
   num_nodes: 1
   sync_batchnorm: false
   replace_sampler_ddp: false
+  min_steps: 1000
 
 logger:
   tensorboard:
