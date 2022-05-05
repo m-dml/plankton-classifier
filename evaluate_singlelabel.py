@@ -30,6 +30,6 @@ if __name__ == "__main__":
                           "main.py",
                           "-m",
                           "+experiment=plankton/publication/evaluate_singlelabel",
-                          "hydra/launcher=strand",
+                          "hydra/launcher=strand_single",
                           f"load_state_dict={experiment_str}",
                           ])
