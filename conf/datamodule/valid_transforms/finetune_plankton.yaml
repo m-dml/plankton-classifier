@@ -18,9 +18,9 @@ transforms:
 #  - _target_: torchvision.transforms.AugMix
 
   - _target_: torchvision.transforms.GaussianBlur
-    - kernel_size:
-        - 5
-        - 5
+    kernel_size:
+      - 5
+      - 5
 
   - _target_: torchvision.transforms.RandomAutocontrast
 
