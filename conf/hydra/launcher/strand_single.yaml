@@ -13,5 +13,5 @@ partition: pGPU
 signal_delay_s: 120
 additional_parameters: { exclusive: true, signal: "SIGUSR1@90" }
 array_parallelism: 256
-setup: ["source activate plankton", "export CUDA_VISIBLE_DEVICES=0"]
+setup: ["source activate plankton-clone1", "export CUDA_VISIBLE_DEVICES=0"]
 max_num_timeout: 10
