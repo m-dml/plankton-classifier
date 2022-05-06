@@ -227,8 +227,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 for folder_with_unlabeled_files in self.unlabeled_files_to_append:
                     train_subset += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
 
-        self.integer_class_label_dict = self.set_up_integer_class_labels()
-
         if len(train_subset) == 0:
             if self.use_klas_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.klas_data_path)}")
@@ -244,6 +242,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.debug(f"There are {len(unique_val_labels)} unique validation labels: {unique_val_labels}")
         unique_test_labels, self.test_labels = np.unique(list(list(zip(*test_subset))[1]), return_inverse=True)
         self.console_logger.debug(f"There are {len(unique_test_labels)} unique test labels: {unique_test_labels}")
+
+        self.integer_class_label_dict = self.set_up_integer_class_labels()
 
         # self._test_label_consistency(self.unique_labels, unique_val_labels)
         # self._test_label_consistency(self.unique_labels, unique_test_labels)
@@ -365,8 +365,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 continue
             files.append((self.load_image(file, self.preload_dataset), label))
             self.all_labels.append(label)
-            if label not in self.unique_labels:
-                self.unique_labels.append(label)
 
         if len(files) > 10000 and self.reduce_data:
             self.console_logger.info(f"using only 10k {folder} images from orig={len(files)}")
