@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 import seaborn as sns
 import torch
 import torch.nn as nn
+import torchmetrics
 import torch.nn.functional as F
 from natsort import natsorted
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
@@ -90,8 +91,6 @@ class LightningModel(pl.LightningModule):
         self.example_input_array = example_input_array
         self.class_labels = class_labels
         self.all_labels = all_labels
-
-        self._init_accuracy_matrices()
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -248,48 +247,41 @@ class LightningModel(pl.LightningModule):
         self.log(f"loss/{step}", loss)
         self.log(f"Accuracy/{step}", accuracy)
 
-        if self.log_confusion_matrices:
-            self._update_accuracy_matrices(step, targets.cpu(), predicted_labels.cpu())
-
         return loss, accuracy
 
-    def _update_accuracy_matrices(self, datagroup, labels_true, labels_est):
-        # sum over batch to update confusion matrix
-        n_classes = len(self.class_labels)
-        idx = labels_true + n_classes * labels_est
-        counts = torch.bincount(idx.reshape(-1), minlength=n_classes**2)
-        self.confusion_matrix[datagroup] += counts.reshape((n_classes, n_classes))
+    def _log_accuracy_matrices(self, step, outputs):
+        if isinstance(outputs[0], list):
+            outputs = [item for sublist in outputs for item in sublist]
 
-    def _init_accuracy_matrices(self):
-        n = len(self.class_labels)
-        for datagroup in ["Validation", "Training", "Testing"]:
-            self.confusion_matrix[datagroup] = torch.zeros(size=(n, n)).int()
+        res = dict()
+        for key in outputs[0]:
+            res[key] = []
+            for ele in outputs:
+                res[key].append(ele[key])
 
-    def _log_accuracy_matrices(self, datagroup):
-        cm = self.confusion_matrix[datagroup]
+        _, predictions = torch.cat(res["classifier"]).max(dim=1)
+        predictions = predictions.cpu()
+        labels = torch.cat(res["labels"]).int().cpu()
+        num_classes = len(self.class_labels)
+        cm = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes)
 
-        accuracy = torch.diag(cm).sum() / torch.maximum(
-            torch.tensor(1.0), cm.sum()
-        )  # accuracy average over all data we're now logging
-        conditional_probabilities = cm / torch.maximum(
-            torch.tensor(1.0), cm.sum(axis=0)
-        )  # conditional probabilities for best guess
-        conditional_accuracy = torch.diag(conditional_probabilities)
-        for L, ca in zip(self.class_labels, conditional_accuracy):
-            self.log(f"Cond. Acc/{L} {datagroup}", ca)
+        acc = self.accuracy_func(predictions.squeeze(), labels.squeeze())
 
         self.plot_confusion_matrix(
-            cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {datagroup}", title=f"Accuracy {accuracy}"
-        )
-        self.plot_confusion_matrix(
-            conditional_probabilities,
-            self.class_labels,
-            f"P(best guess | true) {datagroup}",
-            title=f"P(best guess | true) {datagroup}",
+            cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {step}", title=f"Accuracy {acc}"
         )
 
-        # reset the CM
-        self.confusion_matrix[datagroup] = torch.zeros((len(self.class_labels), len(self.class_labels))).int()
+        cond_acc_func = torchmetrics.Accuracy(average="none", num_classes=num_classes)
+        cond_accs = cond_acc_func(predictions.squeeze(), labels.squeeze())
+
+        for label, acc in zip(self.class_labels, cond_accs):
+            self.log(f"cond. acc {step}/{label}", acc)
+
+        cm_normed = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes, normalize="true")
+
+        self.plot_confusion_matrix(
+            cm_normed.cpu().numpy(), self.class_labels, f"Confusion_Matrix {step}", title=f"Accuracy {acc}"
+        )
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
         figure = plt.figure(figsize=(15, 15))
@@ -320,9 +312,7 @@ class LightningModel(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         if self.log_confusion_matrices and self.current_epoch > 0:
-            self._log_accuracy_matrices("Validation")
-            # we also log and reset the training CM, so we log a training CM everytime we log a validation CM
-            self._log_accuracy_matrices("Training")
+            self._log_accuracy_matrices("Validation", outputs)
 
         if self.log_tsne_image and self.current_epoch > 0:
             self.console_logger.debug("saving tsne image")
@@ -337,9 +327,13 @@ class LightningModel(pl.LightningModule):
                 logger=self.console_logger,
             )
 
+    def training_epoch_end(self, outputs) -> None:
+        if self.log_confusion_matrices and self.current_epoch > 0:
+            self._log_accuracy_matrices("Training", outputs)
+
     def test_epoch_end(self, outputs):
         if self.log_confusion_matrices:
-            self._log_accuracy_matrices("Testing")
+            self._log_accuracy_matrices("Testing", outputs)
 
         if self.log_tsne_image:
             self.plot_tsne_images(outputs)
@@ -423,8 +417,8 @@ class LightningModel(pl.LightningModule):
 
     def on_save_checkpoint(self, checkpoint) -> None:
         def get_version_number():
-            best_epochs = natsorted(self.get_best_epochs())
-            return best_epochs[-1]
+            _best_epochs = natsorted(self.get_best_epochs())
+            return _best_epochs[-1]
 
         self.console_logger.debug("Running on_save_checkpoint")
         if self.automatic_optimization and (self.global_step <= self.trainer.num_sanity_val_steps):
