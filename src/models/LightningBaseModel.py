@@ -280,7 +280,7 @@ class LightningModel(pl.LightningModule):
         cm_normed = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes, normalize="true")
 
         self.plot_confusion_matrix(
-            cm_normed.cpu().numpy(), self.class_labels, f"Confusion_Matrix {step}", title=f"Accuracy {acc}"
+            cm_normed.cpu().numpy(), self.class_labels, f"Confusion_Matrix_cond {step}", title=f"Accuracy {acc}"
         )
 
     def plot_confusion_matrix(self, cm, class_names, figname, title):
