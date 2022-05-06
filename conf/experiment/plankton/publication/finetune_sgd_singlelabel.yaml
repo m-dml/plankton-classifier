@@ -4,7 +4,7 @@ defaults:
   - override /datamodule: plankton
   - override /datamodule/dataset: default
   - override /loss: cross_entropy_loss
-  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/train_transforms: finetune_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: linear
@@ -34,6 +34,7 @@ trainer:
   max_steps: 5000000
   val_check_interval: 1000
   min_steps: 1000
+  min_epochs: 5
 
 logger:
   tensorboard:

@@ -1,0 +1,20 @@
+_target_: torchvision.transforms.Compose
+
+transforms:
+  - _target_: torchvision.transforms.RandomResizedCrop
+    size:
+      - 128
+      - 128
+    scale:
+      - 0.7
+      - 1.0
+
+  - _target_: torchvision.transforms.RandomHorizontalFlip
+    p: 0.5
+
+  - _target_: torchvision.transforms.RandomVerticalFlip
+    p: 0.5
+
+  - _target_: torchvision.transforms.AugMix
+
+  - _target_: torchvision.transforms.ToTensor

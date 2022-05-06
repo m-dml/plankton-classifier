@@ -4,7 +4,7 @@ defaults:
   - override /datamodule: plankton_multilabel
   - override /datamodule/dataset: multilabel
   - override /loss: kl_div_loss
-  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/train_transforms: finetune_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: linear
