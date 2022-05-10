@@ -17,14 +17,27 @@ use_klas_data: true
 use_canadian_data: false
 super_classes:
   {
-    MarineSnow:
+    Signal:
       [
+        "Appendicularia",
+        "Ceratocoris",
+        "Copepods",
+        "Dinoflagellates",
+        "Foraminifera",
+        "Gastropoda",
+        "Jellyfish",
         "MarineSnow_Comet",
         "MarineSnow_Detritus",
         "MarineSnow_FaecalPellet",
         "MarineSnow_Jelly",
+        "Noctiluca",
+        "Phytoplankton",
+        "Radiolaria",
+        "Trichodesmium",
+        "Trochophora",
+        "Zooplankton_Other",
       ],
-    Radiolaria: ["Radiolaria", "Foraminifera"],
+    Noise: ["Blurry", "Bubbles"],
   }
 oversample_data: true
 data_base_path: /gpfs/work/machnitz/plankton_dataset/
