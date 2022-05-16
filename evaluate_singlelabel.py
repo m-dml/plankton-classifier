@@ -7,9 +7,9 @@ if __name__ == "__main__":
         "fintune_frozen": [
             "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-06/14-46-05"
         ],
-        "supervised_singlelabel": [
-            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-10/07-38-24"
-        ],
+        # "supervised_singlelabel": [
+        #     "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-10/07-38-24"
+        # ],
         "finetune_singlelabel": [
             "/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-05-05/07-02-47"
         ],
