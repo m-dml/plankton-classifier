@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /datamodule: plankton
+  - override /datamodule: plankton_binary
   - override /datamodule/dataset: default
   - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: finetune_plankton
