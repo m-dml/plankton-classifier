@@ -7,18 +7,18 @@ if __name__ == "__main__":
         # "fintune_frozen": [
         #     "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-06/14-46-05"
         # ],
-        "supervised_singlelabel": [
-            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-16/09-45-24"
-        ],
+        # "supervised_singlelabel": [
+        #     "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-16/09-45-24"
+        # ],
         # "finetune_singlelabel": [
         #     "/gpfs/work/machnitz/plankton_logs/finetune/singlelabel/multirun/2022-05-05/07-02-47"
         # ],
         # "linear_singlelabel": [
         #     "/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-05-06/13-58-58",
         # ],
-        # "finetune_sgd_singlelabel": [
-        #     "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-05-10/07-43-28"
-        # ],
+        "finetune_sgd_singlelabel": [
+            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-05-17/07-38-08"
+        ],
     }
 
     experiments = []
