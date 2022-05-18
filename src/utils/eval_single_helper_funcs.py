@@ -154,7 +154,7 @@ def get_best_checkpoints(key, path):
                     # print(f"found best checkpoint: {line}")
 
         if not found_best_checkpoint:
-            raise UserWarning(f"Did not find checkpoint for {experiment_path}")
+            print(f"Did not find checkpoint for {experiment_path}")
         else:
             best_checkpoints.append(best_checkpoint_result)
 
