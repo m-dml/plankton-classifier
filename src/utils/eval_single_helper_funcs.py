@@ -137,9 +137,9 @@ def get_best_checkpoints(key, path):
     # fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(20, 15), sharex=True, sharey=True)
     for experiment_number, experiment_path in enumerate(tqdm(experiment_folders)):
         # print(experiment_number)
+        found_best_checkpoint = False
         with open(os.path.join(experiment_path, "main.log"), "r") as f:
             complete_log = f.readlines()
-            found_best_checkpoint = False
             for line in complete_log:
                 # print(line)
                 if found_best_checkpoint:
@@ -152,6 +152,9 @@ def get_best_checkpoints(key, path):
                 if "[main.main][INFO] - Best checkpoint path:" in line:
                     found_best_checkpoint = True
                     # print(f"found best checkpoint: {line}")
+
+        if not found_best_checkpoint:
+            UserWarning(f"Did not find checkpoint for {experiment_path}")
         best_checkpoints.append(best_checkpoint_result)
 
     return best_checkpoints

@@ -17,7 +17,8 @@ if __name__ == "__main__":
         #     "/gpfs/work/machnitz/plankton_logs/linear_eval/singlelabel/multirun/2022-05-06/13-58-58",
         # ],
         "finetune_sgd_singlelabel": [
-            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-05-17/07-38-08"
+            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-05-17/07-38-08",
+            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/singlelabel/multirun/2022-05-18/07-01-20"
         ],
     }
 
