@@ -5,11 +5,11 @@ if __name__ == "__main__":
 
     experiments_paths = {
         "finetune_frozen": [
-            "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-06/14-46-05"
+            "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-06/14-46-05",
             "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-18/11-59-15"
         ],
         "supervised_singlelabel": [
-            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-16/09-45-24"
+            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-16/09-45-24",
             "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-05-18/12-00-06"
         ],
         "finetune_singlelabel": [
