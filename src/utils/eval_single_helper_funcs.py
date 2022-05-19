@@ -120,7 +120,7 @@ def get_confidence_and_acc_single(logits, labels, n_bins=20, logits_are_probs=Fa
     return torch.tensor(accuracy_bins), torch.tensor(confidence_bins), ece.item()
 
 
-def get_best_checkpoints(key, path):
+def get_best_checkpoints(path):
     best_checkpoints = []
     return_metrics = dict()
     all_folders = glob.glob(os.path.join(path, "*"))
@@ -131,9 +131,8 @@ def get_best_checkpoints(key, path):
             if num_folder.isnumeric():
                 experiment_folders.append(folder)
         except:
-            pass
+            print(f"Skipping {folder}")
 
-    return_metrics[key] = dict()
     # fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(20, 15), sharex=True, sharey=True)
     for experiment_number, experiment_path in enumerate(tqdm(experiment_folders)):
         # print(experiment_number)

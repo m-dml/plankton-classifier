@@ -4,7 +4,7 @@ from src.utils.eval_single_helper_funcs import get_best_checkpoints
 if __name__ == "__main__":
 
     experiments_paths = {
-        "fintune_frozen": [
+        "finetune_frozen": [
             "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-06/14-46-05"
             "/gpfs/work/machnitz/plankton_logs/finetune_frozen/singlelabel/multirun/2022-05-18/11-59-15"
         ],
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     experiments = []
     for key, paths in experiments_paths.items():
         for path in paths:
-            experiments += get_best_checkpoints(key, path)
+            experiments += get_best_checkpoints(path)
 
     for experiment_str in experiments:
         experiment_str = '"' + experiment_str + '"'
