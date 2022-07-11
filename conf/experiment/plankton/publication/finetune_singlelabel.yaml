@@ -19,7 +19,7 @@ load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_
 scheduler: null
 random_seed: 7
 log_level: "info"
-output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune/singlelabel
+output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune/singlelabel_vanilla
 
 trainer:
   fast_dev_run: false
