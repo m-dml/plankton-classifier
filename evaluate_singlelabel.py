@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     experiments_paths = {
         "supervised_singlelabel_vanilla": [
-            "/gpfs/work/machnitz/plankton_logs/supervised/singlelabel/multirun/2022-07-11/15-57-23"
+            "/gpfs/work/machnitz/plankton_logs/supervised_vanilla/singlelabel/multirun/2022-07-12/09-20-42"
         ],
     }
 
