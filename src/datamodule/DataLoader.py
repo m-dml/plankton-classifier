@@ -526,7 +526,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
-    def load_multilable_dataset(self, data_path, csv_file):
+    def load_multilabel_dataset(self, data_path, csv_file):
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
@@ -550,14 +550,12 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
                     labels.values,
                 )
             )
-
         return files
 
     def prepare_data_setup(self, subset):
         csv_file = os.path.join(self.human_error2_data_path, f"multi_label_{subset}.csv")
         folder = os.path.join(self.human_error2_data_path, subset)
-        files = self.load_multilable_dataset(folder, csv_file)
-
+        files = self.load_multilabel_dataset(folder, csv_file)
         return files
 
     @staticmethod
@@ -574,3 +572,45 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             pin_memory=self.pin_memory,
             shuffle=self.shuffle_train_dataset,
         )
+
+
+class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
+
+    def __init__(
+        self,
+        human_error2_data_path,
+        which_expert_label: int,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        self.human_error2_data_path = human_error2_data_path
+        self.which_expert_label = which_expert_label
+
+    def prepare_data_setup(self, subset):
+        return PlanktonMultiLabelDataLoader.prepare_data_setup(self, subset)
+
+    def load_multilabel_dataset(self, data_path, csv_file):
+        df = pd.read_csv(csv_file)
+        df = df.drop(columns="Unnamed: 0")
+        repl_column_names = dict()
+        for column in df.columns:
+            column_new = column.strip().lower()
+            column_new = column_new[3:] if column_new.startswith("00_") else column_new
+            repl_column_names[column] = column_new
+
+        df = df.rename(columns=repl_column_names)
+
+        files = []
+        self.unique_labels = np.arange(0, self.max_label_value + 1)
+        for file, labels in df.set_index("file").iterrows():
+            files.append(
+                (
+                    self.load_image(os.path.join(data_path, file), preload=self.preload_dataset),
+                    self.choose_label_from_scientist(labels.values)
+                )
+            )
+        return files
+
+    def choose_label_from_scientist(self, label_list):
+        return label_list[self.which_expert_label]

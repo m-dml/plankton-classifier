@@ -73,6 +73,15 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
 
 @dataclass
+class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
+    _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelSingleScientistDataLoader"
+    _recursive_: bool = False
+    data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
+    human_error2_data_path: str = data_base_path + "human_error2"
+    which_expert_label: int = 0
+
+
+@dataclass
 class CIFAR10Dataset:
     _target_: str = "torchvision.datasets.CIFAR10"
     download: bool = True

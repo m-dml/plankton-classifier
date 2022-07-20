@@ -1,0 +1,22 @@
+defaults:
+  - plankton_datamodule_multilabel_single_scientist_base
+  - dataset: default
+  - _self_
+
+excluded_labels: [] # has to be  a list
+batch_size: 16
+num_workers: 0
+train_split: 0.8
+validation_split: 0.1
+shuffle_train_dataset: true
+shuffle_validation_dataset: false
+shuffle_test_dataset: false
+preload_dataset: false
+use_planktonnet_data: false
+use_klas_data: false
+use_canadian_data: false
+oversample_data: false
+data_base_path: /gpfs/work/machnitz/plankton_dataset/
+human_error2_data_path: ${datamodule.data_base_path}new_data/multi_label/
+which_expert_label: 0
+random_seed: ${random_seed}
