@@ -25,11 +25,21 @@ if __name__ == "__main__":
     #     ],
     # }
 
+    # experiments_paths = {
+    #     "supervised_singlelabel_vanilla": [
+    #         "/gpfs/work/machnitz/plankton_logs/supervised_vanilla/singlelabel/multirun/2022-07-12/09-20-42"
+    #     ],
+    # }
+
     experiments_paths = {
-        "supervised_singlelabel_vanilla": [
-            "/gpfs/work/machnitz/plankton_logs/supervised_vanilla/singlelabel/multirun/2022-07-12/09-20-42"
+        "supervised_multilabel_single_scientist": [
+            "/gpfs/work/machnitz/plankton_logs/supervised/multilabel_single_scientist/multirun/2022-07-20/17-23-55"
+        ],
+        "finetune_sgd_multilabel_single_scientist": [
+            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/multilabel_single_scientist/multirun/2022-07-20/17-33-19"
         ],
     }
+
 
     experiments = []
     for key, paths in experiments_paths.items():
