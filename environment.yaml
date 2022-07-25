@@ -6,7 +6,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.8
+  - python=3.9
   - pip
   - cudatoolkit=11.3
   - pytorch>=1.11
@@ -21,7 +21,7 @@ dependencies:
   - torchmetrics
   - matplotlib
   - ipython
-  - hydra-core
+  - hydra-core=1.1
   - jupyterlab
   - scikit-learn
   - rich
@@ -42,6 +42,5 @@ dependencies:
       - hydra-optuna-sweeper
       - hydra-submitit-launcher
       - test-tube
-      - fairscale
       - catalyst
       - https://github.com/ufoym/imbalanced-dataset-sampler/archive/master.zip # torchsampler
