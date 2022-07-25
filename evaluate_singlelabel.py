@@ -35,9 +35,9 @@ if __name__ == "__main__":
         "supervised_multilabel_single_scientist": [
             "/gpfs/work/machnitz/plankton_logs/supervised/multilabel_single_scientist/multirun/2022-07-20/17-23-55"
         ],
-        "finetune_sgd_multilabel_single_scientist": [
-            "/gpfs/work/machnitz/plankton_logs/finetune_sgd/multilabel_single_scientist/multirun/2022-07-20/17-33-19"
-        ],
+        # "finetune_sgd_multilabel_single_scientist": [
+        #     "/gpfs/work/machnitz/plankton_logs/finetune_sgd/multilabel_single_scientist/multirun/2022-07-20/17-33-19"
+        # ],
     }
 
 
