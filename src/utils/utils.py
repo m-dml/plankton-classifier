@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 import rich.syntax
 import rich.tree
 import torch
+import yaml
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
@@ -179,6 +180,11 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
         if any([return_component is None for return_component in [_key, _experiment, _epoch]]):
             raise ValueError("key, experiment or epoch is not set!")
 
+        try:
+            int(_key)
+        except ValueError:
+            return "", _experiment, _epoch
+
         return int(_key), _experiment, _epoch
 
     datamodule.setup(stage="test")
@@ -230,10 +236,20 @@ def get_split_from_checkpoint_file(__file):
 
     override_file = os.path.abspath(os.path.join(_path, ".hydra", "overrides.yaml"))
 
+    split = None
     with open(override_file, "r") as f:
         for line in f:
             if "datamodule.subsample_supervised=" in line:
                 split = np.round(float(line.split("=")[-1].strip()), 12)
                 break
 
+    if split is None:
+        hydra_config_file = os.path.abspath(os.path.join(_path, ".hydra", "config.yaml"))
+        with open(hydra_config_file) as f:
+            yaml_data = yaml.safe_load(f)
+            split = np.round(float(yaml_data["datamodule"]["subsample_supervised"]), 12)
+
+    if split is None:
+        raise RuntimeError(f"Could not infer the used Data Fraction from the overrides file. There is no "
+                           f"<datamodule.subsample_supervised> in this file: {override_file}")
     return split
