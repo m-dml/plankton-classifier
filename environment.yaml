@@ -43,4 +43,4 @@ dependencies:
       - hydra-submitit-launcher
       - test-tube
       - catalyst
-      - https://github.com/ufoym/imbalanced-dataset-sampler/archive/master.zip # torchsampler
+      - git+https://github.com/ufoym/imbalanced-dataset-sampler.git # torchsampler
