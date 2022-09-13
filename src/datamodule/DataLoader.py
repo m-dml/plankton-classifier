@@ -72,6 +72,24 @@ class PlanktonDataSet(ParentDataSet):
         return image, (label, label_name)
 
 
+class PlanktonInferenceDataSet(ParentDataSet):
+    def __init__(self, *args, **kwargs):
+        super(PlanktonInferenceDataSet, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, item):
+        image = self.files[item]
+        if not self.preload_dataset:
+            image = self.load_file(image)
+
+        if self.transform:
+            image = self.transform(image)
+
+        if isinstance(image, PIL.PngImagePlugin.PngImageFile):
+            image = transforms.ToTensor()(image)
+
+        return image
+
+
 class PlanktonMultiLabelDataSet(ParentDataSet):
     def __init__(self, *args, **kwargs):
         super(PlanktonMultiLabelDataSet, self).__init__(*args, **kwargs)
@@ -451,6 +469,39 @@ class PlanktonDataLoader(pl.LightningDataModule):
             return
         else:
             raise ValueError("Training labels are not the same as validation or test labels!")
+
+
+class PlanktonInferenceDataLoader(PlanktonDataLoader):
+    def __init__(self, *args, **kwargs):
+        super().__init__(**kwargs,)
+
+    def setup(self, *args, **kwargs):
+
+        predict_subset = []
+        for folder_with_unlabeled_files in self.unlabeled_files_to_append:
+            predict_subset += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
+
+        if len(predict_subset) == 0:
+            raise FileNotFoundError(f"Did not find any files under {self.unlabeled_files_to_append}")
+
+        self.console_logger.debug("Getting the image counts for each label")
+        self.len_train_data = int(len(predict_subset) / self.batch_size)
+
+        self.console_logger.info(f"There are {len(predict_subset)} inference files")
+
+        self.console_logger.info(f"Instantiating test dataset <{self.cfg_dataset._target_}>")
+
+        self.test_data: ParentDataSet = instantiate(
+            self.cfg_dataset,
+            _convert_="all",
+            _recursive_=False,
+            integer_labels=self.integer_class_label_dict,
+            transform=self.valid_transforms,
+            preload_dataset=self.preload_dataset,
+        )
+        self.test_data.set_files(predict_subset)
+
+        self.is_set_up = True
 
 
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):

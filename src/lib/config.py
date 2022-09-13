@@ -14,7 +14,9 @@ from src.lib.datamodule import (
     PlanktonDataSetSimCLR,
     PlanktonMultiLabelDataLoader,
     PlanktonMultiLabelDataSet,
-    PlanktonMultiLabelSingleScientistDataLoader
+    PlanktonMultiLabelSingleScientistDataLoader,
+    PlanktonInferenceDataSet,
+    PlanktonInferenceDataLoader,
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
@@ -41,6 +43,7 @@ def register_configs() -> None:
 
     # data:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
+    cs.store(name="plankton_datamodule_inference_base", node=PlanktonInferenceDataLoader, group="datamodule")
     cs.store(name="plankton_datamodule_multilabel_base", node=PlanktonMultiLabelDataLoader, group="datamodule")
     cs.store(name="plankton_datamodule_multilabel_single_scientist_base",
              node=PlanktonMultiLabelSingleScientistDataLoader,
@@ -50,6 +53,7 @@ def register_configs() -> None:
     dataset_group = "datamodule/dataset"
     cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group=dataset_group)
     cs.store(name="default_base", node=PlanktonDataSet, group=dataset_group)
+    cs.store(name="inference_base", node=PlanktonInferenceDataSet, group=dataset_group)
     cs.store(name="multilabel_base", node=PlanktonMultiLabelDataSet, group=dataset_group)
     cs.store(name="cifar10_base", node=CIFAR10Dataset, group=dataset_group)
     cs.store(name="cifar10simclr_base", node=CIFAR10DatasetSimClr, group=dataset_group)
@@ -113,6 +117,7 @@ class Config:
     profiler: Any = None
 
     evaluate: bool = False
+    inference: bool = False
     scheduler: Any = None
     random_seed: int = 42
     print_config: bool = True

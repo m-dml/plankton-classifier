@@ -1,0 +1,21 @@
+defaults:
+  - plankton_datamodule_inference_base
+  - dataset: inference
+  - _self_
+
+shuffle_test_dataset: false
+
+super_classes:
+  {
+    MarineSnow:
+      [
+        "MarineSnow_Comet",
+        "MarineSnow_Detritus",
+        "MarineSnow_FaecalPellet",
+        "MarineSnow_Jelly",
+      ],
+    Radiolaria: ["Radiolaria", "Foraminifera"],
+  }
+
+data_base_path: "./"
+random_seed: ${random_seed}

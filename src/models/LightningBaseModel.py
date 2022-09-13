@@ -206,6 +206,19 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
+    def predict_step(self, batch, batch_idx, *args, **kwargs):
+        images, labels, label_names = self._pre_process_batch(batch)
+        features, classifier_logits = self._do_gpu_parallel_step(images)
+
+        return features, labels, label_names, classifier_logits
+
+    def predict_step_end(self, test_step_outputs, *args, **kwargs):
+        features, labels, label_names, classifier_logits = test_step_outputs
+        return {
+            "labels": labels.detach(),
+            "probabilities": F.softmax(classifier_logits.detach())
+        }
+
     def _pre_process_batch(self, batch):
         images, labels = batch
         if len(labels) == 2:

@@ -139,7 +139,7 @@ def main(cfg: Config):
 
         # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):
         device = "cuda" if cfg.trainer.accelerator == "gpu" else "cpu"
-        if (cfg.load_state_dict is not None) and (not cfg.evaluate):
+        if (cfg.load_state_dict is not None) and (not cfg.evaluate or not cfg.inference):
             log.info(f"Loading model weights from {cfg.load_state_dict}")
             net = copy.deepcopy(model.model.cpu())
             # check state dict before loading:
@@ -233,6 +233,13 @@ def main(cfg: Config):
                 log.info("limited validation interval to 1 per epoch.")
             else:
                 log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
+
+        if cfg.inference:
+            if cfg.datamodule.unlabeled_files_to_append is None:
+                raise ValueError("You have to provide a folder for inference sessions. Use "
+                                 "`datamodule.unlabeled_files_to_append=/path/to/folder` when calling the script")
+
+            raise NotImplementedError
 
         # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
         if cfg.auto_tune:

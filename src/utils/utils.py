@@ -12,6 +12,7 @@ import yaml
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
+from src.models.LightningBaseModel import LightningModel
 from src.utils import LOG_LEVEL
 
 
@@ -145,19 +146,18 @@ def log_hyperparameters(
 
     return hparams
 
+def instantiate_model(ckpt_path, _datamodule, _example_input):
+    _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
+    _model.set_external_data(
+        class_labels=_datamodule.unique_labels,
+        all_labels=_datamodule.all_labels,
+        example_input_array=_example_input.detach().cpu(),
+    )
+    _model.eval()
+    return _model
+
 
 def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
-    from src.models.LightningBaseModel import LightningModel
-
-    def instantiate_model(ckpt_path, _datamodule, _example_input):
-        _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
-        _model.set_external_data(
-            class_labels=_datamodule.unique_labels,
-            all_labels=_datamodule.all_labels,
-            example_input_array=_example_input.detach().cpu(),
-        )
-        _model.eval()
-        return _model
 
     def infer_key_and_experiment_and_epoch_from_file(_checkpoint_file):
         path = os.path.normpath(_checkpoint_file)
@@ -253,3 +253,17 @@ def get_split_from_checkpoint_file(__file):
         raise RuntimeError(f"Could not infer the used Data Fraction from the overrides file. There is no "
                            f"<datamodule.subsample_supervised> in this file: {override_file}")
     return split
+
+
+def inference(checkpoint_file, trainer, datamodule, example_input):
+    datamodule.setup(stage="test")
+    dataloader = datamodule.test_dataloader()
+
+    model = instantiate_model(checkpoint_file, datamodule, example_input)
+    model.log_confusion_matrices = False
+    model.temperature_scale = False
+    model.eval()
+
+    predictions = trainer.predict(model, dataloader)
+
+    return predictions

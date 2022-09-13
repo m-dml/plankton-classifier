@@ -65,6 +65,22 @@ class PlanktonDataLoader(ParentDataloader):
 
 
 @dataclass
+class PlanktonInferenceDataLoader(PlanktonDataLoader):
+    _target_: str = "src.datamodule.DataLoader.PlanktonInferenceDataLoader"
+    use_planktonnet_data: bool = False
+    use_klas_data: bool = False
+    use_canadian_data: bool = False
+    oversample_data = False
+    data_base_path = "./"
+    unlabeled_files_to_append: Any = None
+
+
+@dataclass
+class PlanktonInferenceDataSet(PlanktonDataLoader):
+    _target_: str = "src.datamodule.DataLoader.PlanktonInferenceDataSet"
+
+
+@dataclass
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelDataLoader"
     _recursive_: bool = False
