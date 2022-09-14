@@ -27,7 +27,6 @@ class Trainer:
     log_every_n_steps: int = 50
     sync_batchnorm: bool = False
     precision: int = 32
-    weights_summary: Any = "top"
     weights_save_path: Any = None
     num_sanity_val_steps: int = 2
     resume_from_checkpoint: Any = None
