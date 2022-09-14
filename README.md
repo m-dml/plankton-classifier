@@ -30,14 +30,14 @@ Inference with a trained model
 What you need:
 - The checkpoint file of the trained model `some_file.ckpt`
 - The integer-to-labelname file `class_labels.json` that was created during training of the model
-- A folder containing images of plankton to be classified. This folder is allowed to have subfolders. The images should 
+- A folder containing images of plankton to be classified. This folder is allowed to have subfolders. The images should
 be ending on ".png".
 
 1. Install the environment with ``conda env create -f environment.yaml``.
 2. Activate the environment with ``conda activate plankton``.
 3. Make sure the checkpoint and the class-label file into one folder.
-4. Run the inference script 
-   1. Run it locally with: ``python main.py +experiment=inference/inference load_state_dict=some_file.ckpt 
+4. Run the inference script
+   1. Run it locally with: ``python main.py +experiment=inference/inference load_state_dict=some_file.ckpt
    output_dir_base_path=/path/to/store/outputs/ ``
       - on Windows make sure to also always add ``datamodule.num_workers=0``
       - This command assumes that you have a GPU and are running the program locally. For more control clone the

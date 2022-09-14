@@ -4,7 +4,6 @@ import pickle
 import sys
 
 import hydra
-import numpy as np
 import torch
 import torch.nn.functional as F
 from natsort import natsorted
@@ -64,8 +63,17 @@ def get_distribution_file(checkpoint_file):
     return os.path.join(path, "training_label_distribution.pt")
 
 
-def run_and_save(_best_checkpoint, _dataloader, _return_metrics, _key, _experiment_number, data_splits_per_experiment,
-                 trainer, datamodule, example_input):
+def run_and_save(
+    _best_checkpoint,
+    _dataloader,
+    _return_metrics,
+    _key,
+    _experiment_number,
+    data_splits_per_experiment,
+    trainer,
+    datamodule,
+    example_input,
+):
     model = instantiate_model(_best_checkpoint, datamodule, example_input)
     model.log_confusion_matrices = False
     model.temperature_scale = False
@@ -79,8 +87,8 @@ def run_and_save(_best_checkpoint, _dataloader, _return_metrics, _key, _experime
         for i, batch in tqdm(enumerate(_dataloader), total=(len(_dataloader))):
             x, batch_labels = batch
             end = start + len(batch_labels[0])
-            _labels[start: end] = batch_labels[0].squeeze()
-            _logits[start: end, :] = model(x)[1]
+            _labels[start:end] = batch_labels[0].squeeze()
+            _logits[start:end, :] = model(x)[1]
 
             start = end
 
@@ -89,7 +97,7 @@ def run_and_save(_best_checkpoint, _dataloader, _return_metrics, _key, _experime
 
     torch.save(_logits, f"test_results/logits_{_key}_{_experiment_number}.pt")
     torch.save(_labels, f"test_results/labels_{_key}_{_experiment_number}.pt")
-    with open(f"test_results/dict_{_key}_{_experiment_number}.pkl", 'wb') as f:
+    with open(f"test_results/dict_{_key}_{_experiment_number}.pkl", "wb") as f:
         pickle.dump(_return_metrics, f)
     return _logits, _labels, _return_metrics
 
@@ -122,7 +130,6 @@ def get_confidence_and_acc_single(logits, labels, n_bins=20, logits_are_probs=Fa
 
 def get_best_checkpoints(path):
     best_checkpoints = []
-    return_metrics = dict()
     all_folders = glob.glob(os.path.join(path, "*"))
     experiment_folders = []
     for folder in all_folders:

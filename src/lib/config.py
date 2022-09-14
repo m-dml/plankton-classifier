@@ -12,11 +12,11 @@ from src.lib.datamodule import (
     PlanktonDataLoader,
     PlanktonDataSet,
     PlanktonDataSetSimCLR,
+    PlanktonInferenceDataLoader,
+    PlanktonInferenceDataSet,
     PlanktonMultiLabelDataLoader,
     PlanktonMultiLabelDataSet,
     PlanktonMultiLabelSingleScientistDataLoader,
-    PlanktonInferenceDataSet,
-    PlanktonInferenceDataLoader,
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
@@ -45,9 +45,11 @@ def register_configs() -> None:
     cs.store(name="plankton_datamodule_base", node=PlanktonDataLoader, group="datamodule")
     cs.store(name="plankton_datamodule_inference_base", node=PlanktonInferenceDataLoader, group="datamodule")
     cs.store(name="plankton_datamodule_multilabel_base", node=PlanktonMultiLabelDataLoader, group="datamodule")
-    cs.store(name="plankton_datamodule_multilabel_single_scientist_base",
-             node=PlanktonMultiLabelSingleScientistDataLoader,
-             group="datamodule")
+    cs.store(
+        name="plankton_datamodule_multilabel_single_scientist_base",
+        node=PlanktonMultiLabelSingleScientistDataLoader,
+        group="datamodule",
+    )
     cs.store(name="cifar10_datamodule_base", node=CIFAR10DataLoader, group="datamodule")
 
     dataset_group = "datamodule/dataset"

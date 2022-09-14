@@ -29,9 +29,9 @@ trainer:
 datamodule:
   num_workers: 10
   batch_size: 64
-# ================================================================
-# Don't change any of the following values for inference sessions
-# ================================================================
+  # ================================================================
+  # Don't change any of the following values for inference sessions
+  # ================================================================
   oversample_data: false
   subsample_supervised: 1
   pin_memory: false

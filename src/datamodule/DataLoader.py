@@ -475,14 +475,18 @@ class PlanktonDataLoader(pl.LightningDataModule):
 
 class PlanktonInferenceDataLoader(PlanktonDataLoader):
     def __init__(self, *args, **kwargs):
-        super().__init__(**kwargs,)
+        super().__init__(
+            **kwargs,
+        )
 
     def setup(self, *args, **kwargs):
         if isinstance(self.unlabeled_files_to_append, str):
             self.unlabeled_files_to_append = [self.unlabeled_files_to_append]
         if self.unlabeled_files_to_append is None:
-            raise ValueError("You have to provide a folder of images for inference sessions. Use "
-                             "`datamodule.unlabeled_files_to_append=/path/to/folder` when calling the script")
+            raise ValueError(
+                "You have to provide a folder of images for inference sessions. Use "
+                "`datamodule.unlabeled_files_to_append=/path/to/folder` when calling the script"
+            )
 
         for filepath in self.unlabeled_files_to_append:
             if not os.path.exists(filepath):
@@ -659,7 +663,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
 
 class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
-
     def __init__(
         self,
         human_error2_data_path,
@@ -691,7 +694,7 @@ class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
             files.append(
                 (
                     self.load_image(os.path.join(data_path, file), preload=self.preload_dataset),
-                    self.choose_label_from_scientist(labels.values)
+                    self.choose_label_from_scientist(labels.values),
                 )
             )
         return files

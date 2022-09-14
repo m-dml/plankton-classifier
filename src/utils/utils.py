@@ -167,7 +167,6 @@ def instantiate_model(ckpt_path, _datamodule, _example_input):
 
 
 def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
-
     def infer_key_and_experiment_and_epoch_from_file(_checkpoint_file):
         path = os.path.normpath(_checkpoint_file)
         path_list = path.split(os.sep)
@@ -178,10 +177,10 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
         for i, element in enumerate(path_list):
             if element == "plankton_logs":
-                _experiment = path_list[i+1] + "_singlelabel"
+                _experiment = path_list[i + 1] + "_singlelabel"
 
             elif element == "logs":
-                _key = path_list[i-1]
+                _key = path_list[i - 1]
 
             elif "epoch=" in element:
                 _epoch = element.replace("epoch=", "").replace(".ckpt", "")
@@ -220,8 +219,8 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
         for i, batch in enumerate(dataloader):
             x, batch_labels = batch
             end = start + len(batch_labels[0])
-            labels[start: end] = batch_labels[0].squeeze()
-            logits[start: end, :] = model(x)[1]
+            labels[start:end] = batch_labels[0].squeeze()
+            logits[start:end, :] = model(x)[1]
             start = end
 
     labels = labels.detach().cpu().int()
@@ -229,13 +228,15 @@ def eval_and_save(checkpoint_file, trainer, datamodule, example_input):
 
     base_path = os.path.join(trainer.checkpoint_callback.dirpath, "test_results")
 
-    fraction = f"{np.round(return_metrics[experiment][key]['Data Fraction'], 12):.8f}".replace("0.", "0_").replace("1.", "1_")
+    fraction = f"{np.round(return_metrics[experiment][key]['Data Fraction'], 12):.8f}".replace("0.", "0_").replace(
+        "1.", "1_"
+    )
 
     if not os.path.isdir(base_path):
         os.makedirs(base_path)
     torch.save(logits, os.path.join(base_path, f"logits_{experiment}_{fraction}.pt"))
     torch.save(labels, os.path.join(base_path, f"labels_{experiment}_{fraction}.pt"))
-    with open(os.path.join(base_path, f"dict_{experiment}_{fraction}.pkl"), 'wb') as f:
+    with open(os.path.join(base_path, f"dict_{experiment}_{fraction}.pkl"), "wb") as f:
         pickle.dump(return_metrics, f)
     return logits, labels, return_metrics
 
@@ -259,8 +260,10 @@ def get_split_from_checkpoint_file(__file):
             split = np.round(float(yaml_data["datamodule"]["subsample_supervised"]), 12)
 
     if split is None:
-        raise RuntimeError(f"Could not infer the used Data Fraction from the overrides file. There is no "
-                           f"<datamodule.subsample_supervised> in this file: {override_file}")
+        raise RuntimeError(
+            f"Could not infer the used Data Fraction from the overrides file. There is no "
+            f"<datamodule.subsample_supervised> in this file: {override_file}"
+        )
     return split
 
 

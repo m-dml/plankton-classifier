@@ -15,7 +15,7 @@ transforms:
   - _target_: torchvision.transforms.RandomVerticalFlip
     p: 0.5
 
-#  - _target_: torchvision.transforms.AugMix
+  #  - _target_: torchvision.transforms.AugMix
 
   - _target_: torchvision.transforms.GaussianBlur
     kernel_size: 5
@@ -23,6 +23,5 @@ transforms:
   - _target_: torchvision.transforms.RandomAutocontrast
 
   - _target_: torchvision.transforms.ColorJitter
-
 
   - _target_: torchvision.transforms.ToTensor

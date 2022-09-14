@@ -104,7 +104,8 @@ def main(cfg: Config):
         if not cfg.inference:
             log.info(
                 f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
-                f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} ."
+                f"train samples={len(datamodule.train_labels)} and "
+                f"subsample_supervised={datamodule.subsample_supervised} ."
             )
 
         # generate example input array:
@@ -267,10 +268,7 @@ def main(cfg: Config):
         if cfg.evaluate:
             log.info("Starting evaluation on test data")
             return utils.eval_and_save(
-                checkpoint_file=cfg.load_state_dict,
-                trainer=trainer,
-                datamodule=datamodule,
-                example_input=example_input
+                checkpoint_file=cfg.load_state_dict, trainer=trainer, datamodule=datamodule, example_input=example_input
             )
 
         log.info("Starting training")

@@ -1,4 +1,5 @@
 import subprocess
+
 from src.utils.eval_single_helper_funcs import get_best_checkpoints
 
 if __name__ == "__main__":
@@ -40,7 +41,6 @@ if __name__ == "__main__":
         # ],
     }
 
-
     experiments = []
     for key, paths in experiments_paths.items():
         for path in paths:
@@ -48,10 +48,13 @@ if __name__ == "__main__":
 
     for experiment_str in experiments:
         experiment_str = '"' + experiment_str + '"'
-        subprocess.Popen(["python",
-                          "main.py",
-                          "-m",
-                          "+experiment=plankton/publication/evaluate_singlelabel",
-                          "hydra/launcher=strand_single",
-                          f"load_state_dict={experiment_str}",
-                          ])
+        subprocess.Popen(
+            [
+                "python",
+                "main.py",
+                "-m",
+                "+experiment=plankton/publication/evaluate_singlelabel",
+                "hydra/launcher=strand_single",
+                f"load_state_dict={experiment_str}",
+            ]
+        )

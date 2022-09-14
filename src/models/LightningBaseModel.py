@@ -111,7 +111,9 @@ class LightningModel(pl.LightningModule):
         if self.model.feature_extractor.training:
             optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
         else:
-            optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr)
+            optimizer = hydra.utils.instantiate(
+                self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr
+            )
         if self.cfg_scheduler:
 
             # total_train_steps = len(self.trainer.train_dataloader)
@@ -213,7 +215,7 @@ class LightningModel(pl.LightningModule):
         return {
             "files": list(labels),
             "predictions": torch.max(F.softmax(classifier_logits.detach()), dim=1)[1].cpu().numpy(),
-            "probabilities": F.softmax(classifier_logits.detach()).cpu().numpy()
+            "probabilities": F.softmax(classifier_logits.detach()).cpu().numpy(),
         }
 
     def _pre_process_batch(self, batch):
@@ -246,8 +248,9 @@ class LightningModel(pl.LightningModule):
                 accuracy = self.accuracy_func(class_probabilities, targets)
 
                 if self.training_class_counts:
-                    corrected_probs = self.eval_wrapper(classifier_outputs,
-                                                        correct_probabilities_with_training_prior=True)
+                    corrected_probs = self.eval_wrapper(
+                        classifier_outputs, correct_probabilities_with_training_prior=True
+                    )
                     corrected_accuracy = self.accuracy_func(corrected_probs, targets)
                     self.log(f"Accuracy_corrected_outputs/{step}", corrected_accuracy)
             except (RuntimeError, ValueError):
@@ -287,7 +290,9 @@ class LightningModel(pl.LightningModule):
         for label, acc in zip(self.class_labels, cond_accs):
             self.log(f"cond. acc {step}/{label}", acc)
 
-        cm_normed = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes, normalize="true")
+        cm_normed = torchmetrics.functional.confusion_matrix(
+            predictions, labels, num_classes=num_classes, normalize="true"
+        )
 
         self.plot_confusion_matrix(
             cm_normed.cpu().numpy(), self.class_labels, f"Confusion_Matrix_cond {step}", title=f"Accuracy {acc}"
@@ -476,7 +481,7 @@ class LightningModel(pl.LightningModule):
         best_epochs = self.get_best_epochs()
         self.remove_outdated_saves(best_epochs)
 
-        class_label_file = os.path.join(folder, f"class_labels.json")
+        class_label_file = os.path.join(folder, "class_labels.json")
         if not os.path.exists(class_label_file):
             self.console_logger.debug("Saving class_labels")
             class_label_dict = dict()
