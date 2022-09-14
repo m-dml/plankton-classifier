@@ -5,6 +5,7 @@ import pickle
 import warnings
 
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import rich.syntax
 import rich.tree
@@ -286,9 +287,12 @@ def inference(checkpoint_file, trainer, datamodule, example_input):
 
     new_output_dict = dict()
 
-    for prediction, file, probability in zip(predictions, files, probabilities):
-        new_output_dict[file] = dict()
-        new_output_dict[file]["prediction"] = label_names[prediction]
-        new_output_dict[file]["probability"] = list(probability)
+    for i, (prediction, file, probability) in enumerate(zip(predictions, files, probabilities)):
+        new_output_dict[i] = dict()
+        new_output_dict[i]["file"] = file
+        new_output_dict[i]["prediction"] = label_names[prediction]
+        for j, value in enumerate(list(probability)):
+            new_output_dict[i][f"p_{label_names[j]}"] = value
 
-    return new_output_dict
+    df = pd.DataFrame.from_dict(new_output_dict).T
+    return df

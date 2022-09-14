@@ -1,7 +1,6 @@
 import copy
 import faulthandler
 import glob
-import json
 import logging
 import os
 import platform
@@ -239,6 +238,7 @@ def main(cfg: Config):
             else:
                 log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
 
+        # If inference-mode is set the following block will run and the program will stop afterwards
         if cfg.inference:
             predictions = utils.inference(cfg.load_state_dict, trainer, datamodule, example_input)
             if isinstance(cfg.datamodule.unlabeled_files_to_append, str):
@@ -246,9 +246,16 @@ def main(cfg: Config):
             else:
                 name = cfg.datamodule.unlabeled_files_to_append[0]
 
+            name = os.path.split(name)[-1]
             name += datetime.now().strftime("%Y%m%d_%H%M%S")
-            with open(os.path.join(cfg.output_dir_base_path, name + ".json"), "w") as f:
-                json.dump(predictions, f)
+
+            output_file = os.path.abspath(os.path.join(trainer.checkpoint_callback.dirpath, name + ".csv"))
+            if not os.path.exists(os.path.split(output_file)[0]):
+                os.makedirs(os.path.split(output_file)[0])
+
+            predictions.to_csv(output_file, sep=";", index=False)
+
+            log.info(f"Wrote predictions to: <{output_file}>")
 
             return predictions
 
