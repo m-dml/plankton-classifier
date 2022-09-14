@@ -24,49 +24,28 @@ git submodule init
 git submodule update
 ```
 
+Inference with a trained model
+-------------------------------
+
+What you need:
+- The checkpoint file of the trained model `some_file.ckpt`
+- The integer-to-labelname file `class_labels.json` that was created during training of the model
+- A folder containing images of plankton to be classified. This folder is allowed to have subfolders.
+
+1. Install the environment with ``conda env create -f environment.yaml``.
+2. Activate the environment with ``conda activate plankton``.
+3. Make sure the checkpoint and the class-label file into one folder.
+4. Run the inference script 
+   1. Run it locally with: ``python main.py +experiment=inference/inference load_state_dict=some_file.ckpt 
+   output_dir_base_path=/path/to/store/outputs/ ``
+      - on Windows make sure to also always add ``datamodule.num_workers=0``
+      - This command assumes that you have a GPU and are running the program locally. For more control clone the
+      configuration file ``conf/experiment/inference/inference.yaml`` and make changes accordingly.
+
+   2. To run the inference script on a slurm cluster add ``-m`` at the end of the command. Make sure that the right
+   trainer and hydra-launcher are selected in your script.
 
 pre-commit
 ---------
 Just use `pre-commit run --all-files` at the top level of this repo, to
 let precommit handle the files.
-
-Quick refresher on git and github
----------------------------------
-
-1. Install git.
-
-2. Create a github account.
-
-3. `cd` into the directory where you want to have this code and clone this repository.
-
-    ```bash
-    git clone https://github.com/m-dml/plankton-classifier .
-
-    cd plankton-classifier
-    ```
-
-4. Create a branch for you to work on. Replace `branch_name` with your name or some else
-    unique name.
-
-    ```bash
-    git checkout -b branch_name
-    ```
-
-5. Do some code changes. Create an awesome classifier!
-
-6. Check the project status with `git status`.
-
-7. Add all files you want to upload and make a git commit:
-    ```bash
-   git add file1.py
-   git add file2.py
-   ...
-
-   git commit -m "A commit message describing your code changes"
-    ```
-   Please do not upload the camera-images!
-
-8. Push your changes to github
-    ```bash
-    git push origin branch_name
-    ```

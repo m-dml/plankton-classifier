@@ -247,7 +247,7 @@ def main(cfg: Config):
                 name = cfg.datamodule.unlabeled_files_to_append[0]
 
             name = os.path.split(name)[-1]
-            name += datetime.now().strftime("%Y%m%d_%H%M%S")
+            name += "_" + datetime.now().strftime("%Y%m%d_%H%M%S")
 
             output_file = os.path.abspath(os.path.join(trainer.checkpoint_callback.dirpath, name + ".csv"))
             if not os.path.exists(os.path.split(output_file)[0]):
