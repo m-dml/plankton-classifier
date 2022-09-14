@@ -30,7 +30,8 @@ Inference with a trained model
 What you need:
 - The checkpoint file of the trained model `some_file.ckpt`
 - The integer-to-labelname file `class_labels.json` that was created during training of the model
-- A folder containing images of plankton to be classified. This folder is allowed to have subfolders.
+- A folder containing images of plankton to be classified. This folder is allowed to have subfolders. The images should 
+be ending on ".png".
 
 1. Install the environment with ``conda env create -f environment.yaml``.
 2. Activate the environment with ``conda activate plankton``.
