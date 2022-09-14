@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import pickle
@@ -149,10 +150,14 @@ def log_hyperparameters(
 
 def instantiate_model(ckpt_path, _datamodule, _example_input):
     _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
-    training_dist_file = os.path.join(os.path.split(ckpt_path)[0], "training_label_distribution.pt")
-    training_dist = torch.load(training_dist_file)
+    class_label_file = os.path.join(os.path.split(ckpt_path)[0], "class_labels.json")
+    with open(class_label_file, "r") as f:
+        class_labels = json.load(f)
+
+    class_label_dict = dict(class_labels)
+
     _model.set_external_data(
-        class_labels=_datamodule.unique_labels,
+        class_labels=list(class_label_dict.values()),
         all_labels=_datamodule.all_labels,
         example_input_array=_example_input.detach().cpu(),
     )
