@@ -38,7 +38,7 @@ be ending on ".png".
 3. Make sure the checkpoint and the class-label file into one folder.
 4. Run the inference script
    1. Run it locally with: ``python main.py +experiment=inference/inference load_state_dict=some_file.ckpt
-   output_dir_base_path=/path/to/store/outputs/ ``
+   output_dir_base_path=/path/to/store/outputs/ datamodule.unlabeled_files_to_append=/path/to/the/image/folder``
       - on Windows make sure to also always add ``datamodule.num_workers=0``
       - This command assumes that you have a GPU and are running the program locally. For more control clone the
       configuration file ``conf/experiment/inference/inference.yaml`` and make changes accordingly.
