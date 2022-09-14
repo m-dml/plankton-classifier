@@ -42,6 +42,7 @@ be ending on ".png".
       - on Windows make sure to also always add ``datamodule.num_workers=0``
       - This command assumes that you have a GPU and are running the program locally. For more control clone the
       configuration file ``conf/experiment/inference/inference.yaml`` and make changes accordingly.
+      - To use a GPU add ``trainer.accelerator="cpu"`` to the command
 
    2. To run the inference script on a slurm cluster add ``-m`` at the end of the command. Make sure that the right
    trainer and hydra-launcher are selected in your script.
