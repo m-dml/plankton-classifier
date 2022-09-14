@@ -1,10 +1,12 @@
 import copy
 import faulthandler
 import glob
+import json
 import logging
 import os
 import platform
 import sys
+from datetime import datetime
 from typing import List
 
 import hydra
@@ -91,6 +93,7 @@ def main(cfg: Config):
             dataset=cfg.datamodule.dataset,
             is_ddp=cfg.strategy is not None,
         )
+
         datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
         # get number of training samples_per_device and epoch:
@@ -98,10 +101,12 @@ def main(cfg: Config):
         datamodule.is_ddp = False
         stepping_batches = len(datamodule.train_dataloader())
         datamodule.is_ddp = cfg.strategy is not None
-        log.info(
-            f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
-            f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} ."
-        )
+
+        if not cfg.inference:
+            log.info(
+                f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
+                f"train samples={len(datamodule.train_labels)} and subsample_supervised={datamodule.subsample_supervised} ."
+            )
 
         # generate example input array:
         for batch in datamodule.val_dataloader():
@@ -139,7 +144,7 @@ def main(cfg: Config):
 
         # load the state dict if one is provided (has to be provided for finetuning classifier in simclr):
         device = "cuda" if cfg.trainer.accelerator == "gpu" else "cpu"
-        if (cfg.load_state_dict is not None) and (not cfg.evaluate or not cfg.inference):
+        if (cfg.load_state_dict is not None) and (not cfg.evaluate and not cfg.inference):
             log.info(f"Loading model weights from {cfg.load_state_dict}")
             net = copy.deepcopy(model.model.cpu())
             # check state dict before loading:
@@ -235,11 +240,20 @@ def main(cfg: Config):
                 log.info(f"Will check validation every {cfg.trainer.val_check_interval} steps.")
 
         if cfg.inference:
-            if cfg.datamodule.unlabeled_files_to_append is None:
-                raise ValueError("You have to provide a folder for inference sessions. Use "
-                                 "`datamodule.unlabeled_files_to_append=/path/to/folder` when calling the script")
+            predictions = utils.inference(cfg.load_state_dict, trainer, datamodule, example_input)
+            import pandas as pd
+            df = pd.DataFrame(predictions)
 
-            raise NotImplementedError
+            if isinstance(cfg.datamodule.unlabeled_files_to_append, str):
+                name = cfg.datamodule.unlabeled_files_to_append
+            else:
+                name = cfg.datamodule.unlabeled_files_to_append[0]
+
+            name += datetime.now().strftime("%Y%m%d_%H%M%S")
+            with open(os.path.join(cfg.output_dir_base_path, name + ".json"), "w") as f:
+                json.dump(predictions, f)
+
+            return predictions
 
         # if activated in the config, start the pytorch lightning automatic batch-size and lr tuning process
         if cfg.auto_tune:

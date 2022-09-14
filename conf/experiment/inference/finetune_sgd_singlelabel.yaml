@@ -15,11 +15,12 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: ./data/epoch=00-v1.ckpt
+load_state_dict: D:/PycharmProjects/plankton-classifier/data/epoch=00-v1.ckpt
 scheduler: "cosine"
 random_seed: 7
 log_level: "info"
 output_dir_base_path: ./outputs
+inference: true
 
 trainer:
   accelerator: "gpu"

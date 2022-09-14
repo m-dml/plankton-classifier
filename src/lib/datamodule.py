@@ -28,6 +28,14 @@ class PlanktonMultiLabelDataSet:
 
 
 @dataclass
+class PlanktonInferenceDataSet:
+    _target_: str = "src.datamodule.DataLoader.PlanktonInferenceDataSet"
+    final_image_size: int = 500
+    preload_dataset: bool = False
+    _convert_: Any = "all"
+
+
+@dataclass
 class PlanktonDataSetSimCLR:
     _target_: str = "src.datamodule.DataLoader.PlanktonDataSetSimCLR"
     final_image_size: int = 500
@@ -73,11 +81,6 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
     oversample_data = False
     data_base_path = "./"
     unlabeled_files_to_append: Any = None
-
-
-@dataclass
-class PlanktonInferenceDataSet(PlanktonDataLoader):
-    _target_: str = "src.datamodule.DataLoader.PlanktonInferenceDataSet"
 
 
 @dataclass

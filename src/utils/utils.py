@@ -146,8 +146,11 @@ def log_hyperparameters(
 
     return hparams
 
+
 def instantiate_model(ckpt_path, _datamodule, _example_input):
     _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
+    training_dist_file = os.path.join(os.path.split(ckpt_path)[0], "training_label_distribution.pt")
+    training_dist = torch.load(training_dist_file)
     _model.set_external_data(
         class_labels=_datamodule.unique_labels,
         all_labels=_datamodule.all_labels,
@@ -263,7 +266,24 @@ def inference(checkpoint_file, trainer, datamodule, example_input):
     model.log_confusion_matrices = False
     model.temperature_scale = False
     model.eval()
+    label_names = model.class_labels
 
-    predictions = trainer.predict(model, dataloader)
+    prediction_list_of_dicts = trainer.predict(model, dataloader)
 
-    return predictions
+    predictions = []
+    files = []
+    probabilities = []
+
+    for list_item in prediction_list_of_dicts:
+        predictions += list(list_item["predictions"])
+        files += list_item["files"]
+        probabilities += list(list_item["probabilities"])
+
+    new_output_dict = dict()
+
+    for prediction, file, probability in zip(predictions, files, probabilities):
+        new_output_dict[file] = dict()
+        new_output_dict[file]["prediction"] = prediction
+        new_output_dict[file]["probability"] = list(probability)
+
+    return new_output_dict

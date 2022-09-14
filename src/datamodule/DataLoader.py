@@ -77,7 +77,8 @@ class PlanktonInferenceDataSet(ParentDataSet):
         super(PlanktonInferenceDataSet, self).__init__(*args, **kwargs)
 
     def __getitem__(self, item):
-        image = self.files[item]
+        image, _ = self.files[item]
+        image_name = str(image)
         if not self.preload_dataset:
             image = self.load_file(image)
 
@@ -87,7 +88,7 @@ class PlanktonInferenceDataSet(ParentDataSet):
         if isinstance(image, PIL.PngImagePlugin.PngImageFile):
             image = transforms.ToTensor()(image)
 
-        return image
+        return image, image_name
 
 
 class PlanktonMultiLabelDataSet(ParentDataSet):
@@ -379,8 +380,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
         for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}"), position=0, leave=True):
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
-            if label in self.excluded_labels:
-                continue
+            if self.excluded_labels is not None:
+                if label in self.excluded_labels:
+                    continue
             files.append((self.load_image(file, self.preload_dataset), label))
             self.all_labels.append(label)
 
@@ -476,8 +478,18 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
         super().__init__(**kwargs,)
 
     def setup(self, *args, **kwargs):
+        if isinstance(self.unlabeled_files_to_append, str):
+            self.unlabeled_files_to_append = [self.unlabeled_files_to_append]
+        if self.unlabeled_files_to_append is None:
+            raise ValueError("You have to provide a folder of images for inference sessions. Use "
+                             "`datamodule.unlabeled_files_to_append=/path/to/folder` when calling the script")
+
+        for filepath in self.unlabeled_files_to_append:
+            if not os.path.exists(filepath):
+                raise FileNotFoundError(f"The provided folder does not exist: <{filepath}>")
 
         predict_subset = []
+
         for folder_with_unlabeled_files in self.unlabeled_files_to_append:
             predict_subset += self.add_all_images_from_all_subdirectories(folder_with_unlabeled_files)
 
@@ -500,6 +512,27 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
             preload_dataset=self.preload_dataset,
         )
         self.test_data.set_files(predict_subset)
+
+        # the train dataset is needed only for setup but will not be used for inference:
+        self.train_data: ParentDataSet = instantiate(
+            self.cfg_dataset,
+            _convert_="all",
+            _recursive_=False,
+            integer_labels=self.integer_class_label_dict,
+            transform=self.valid_transforms,
+            preload_dataset=self.preload_dataset,
+        )
+        self.train_data.set_files(predict_subset)
+
+        self.valid_data: ParentDataSet = instantiate(
+            self.cfg_dataset,
+            _convert_="all",
+            _recursive_=False,
+            integer_labels=self.integer_class_label_dict,
+            transform=self.valid_transforms,
+            preload_dataset=self.preload_dataset,
+        )
+        self.valid_data.set_files(predict_subset)
 
         self.is_set_up = True
 

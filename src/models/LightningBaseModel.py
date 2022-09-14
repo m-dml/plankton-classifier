@@ -1,5 +1,6 @@
 import glob
 import itertools
+import json
 import os
 
 import hydra
@@ -10,8 +11,8 @@ import pytorch_lightning as pl
 import seaborn as sns
 import torch
 import torch.nn as nn
-import torchmetrics
 import torch.nn.functional as F
+import torchmetrics
 from natsort import natsorted
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 from pytorch_lightning.utilities import rank_zero_only
@@ -209,14 +210,10 @@ class LightningModel(pl.LightningModule):
     def predict_step(self, batch, batch_idx, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
-
-        return features, labels, label_names, classifier_logits
-
-    def predict_step_end(self, test_step_outputs, *args, **kwargs):
-        features, labels, label_names, classifier_logits = test_step_outputs
         return {
-            "labels": labels.detach(),
-            "probabilities": F.softmax(classifier_logits.detach())
+            "files": list(labels),
+            "predictions": torch.max(F.softmax(classifier_logits.detach()), dim=1)[1].cpu().numpy(),
+            "probabilities": F.softmax(classifier_logits.detach()).cpu().numpy()
         }
 
     def _pre_process_batch(self, batch):
@@ -478,6 +475,16 @@ class LightningModel(pl.LightningModule):
 
         best_epochs = self.get_best_epochs()
         self.remove_outdated_saves(best_epochs)
+
+        class_label_file = os.path.join(folder, f"class_labels.json")
+        if not os.path.exists(class_label_file):
+            self.console_logger.debug("Saving class_labels")
+            class_label_dict = dict()
+            for i, label in enumerate(self.class_labels):
+                class_label_dict[i] = label
+
+            with open(class_label_file, "w") as f:
+                json.dump(class_label_dict, f)
 
     @rank_zero_only
     def get_best_epochs(self):
