@@ -241,9 +241,6 @@ def main(cfg: Config):
 
         if cfg.inference:
             predictions = utils.inference(cfg.load_state_dict, trainer, datamodule, example_input)
-            import pandas as pd
-            df = pd.DataFrame(predictions)
-
             if isinstance(cfg.datamodule.unlabeled_files_to_append, str):
                 name = cfg.datamodule.unlabeled_files_to_append
             else:

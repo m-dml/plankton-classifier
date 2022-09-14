@@ -8,7 +8,6 @@ class Trainer:
     enable_checkpointing: bool = True
     default_root_dir: Any = None
     gradient_clip_val: float = 0.0
-    process_position: int = 0
     num_nodes: int = 1
     auto_select_gpus: bool = True
     enable_progress_bar: bool = True
