@@ -288,7 +288,7 @@ def inference(checkpoint_file, trainer, datamodule, example_input):
 
     for prediction, file, probability in zip(predictions, files, probabilities):
         new_output_dict[file] = dict()
-        new_output_dict[file]["prediction"] = prediction
+        new_output_dict[file]["prediction"] = label_names[prediction]
         new_output_dict[file]["probability"] = list(probability)
 
     return new_output_dict
