@@ -42,10 +42,14 @@ be ending on ".png".
       - on Windows make sure to also always add ``datamodule.num_workers=0``
       - This command assumes that you have a GPU and are running the program locally. For more control clone the
       configuration file ``conf/experiment/inference/inference.yaml`` and make changes accordingly.
-      - To use the GPU add ``trainer.accelerator="cpu"`` to the command
+      - To use the CPU add ``trainer.accelerator="cpu"`` to the command
 
    2. To run the inference script on a slurm cluster add ``-m`` at the end of the command. Make sure that the right
    trainer and hydra-launcher are selected in your script.
+   3. For easy work on strand use the following command. It will allocate a GPU node and makes the inference: 
+   ``python main.py +experiment=inference/strand load_state_dict=some_file.ckpt
+   output_dir_base_path=/path/to/store/outputs/ datamodule.unlabeled_files_to_append=/path/to/the/image/folder -m``
+
 
 pre-commit
 ---------

@@ -1,0 +1,69 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: inference
+  - override /datamodule/dataset: inference
+  - override /loss: cross_entropy_loss
+  - override /datamodule/train_transforms: finetune_plankton
+  - override /datamodule/valid_transforms: plankton_eval
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: linear
+  - override /trainer: stand
+  - override /hydra/launcher: strand_single
+  - override /optimizer: adam
+  - override /strategy: null
+  - _self_
+
+debug: false
+load_state_dict: D:/PycharmProjects/plankton-classifier/data/epoch=00-v1.ckpt
+log_level: "info"
+output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/
+inference: true
+print_config: false
+
+trainer:
+  accelerator: "gpu"
+  devices: 1
+  num_nodes: 1
+
+datamodule:
+  num_workers: 10
+  batch_size: 64
+  # ================================================================
+  # Don't change any of the following values for inference sessions
+  # ================================================================
+  oversample_data: false
+  subsample_supervised: 1
+  pin_memory: false
+  reduce_data: false # use max 10.000 images from each class
+  use_klas_data: false
+  use_canadian_data: false
+  use_planktonnet_data: false
+  preload_dataset: false
+  data_base_path: ""
+
+lightning_module:
+  log_confusion_matrices: false
+  log_images: false
+  freeze_feature_extractor: false
+  temperature_scale: false
+  log_tsne_image: false
+
+model:
+  classifier:
+    num_classes: null # size of the projection head
+    input_features: 2048
+  feature_extractor:
+    model:
+      _target_: "torchvision.models.resnet50"
+      num_classes: ${model.classifier.input_features}
+      pretrained: false
+      # first conv layer:
+    kernel_size: 7 # default is 7
+    stride: 2 # default is 2
+    channels: 3 # default is 3
+    maxpool1: true
+
+logger:
+  tensorboard:
+    default_hp_metric: false
