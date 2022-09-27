@@ -488,6 +488,8 @@ class LightningModel(pl.LightningModule):
             for i, label in enumerate(self.class_labels):
                 class_label_dict[i] = label
 
+            self.console_logger.debug(f"Class label dict: {class_label_dict}")
+
             with open(class_label_file, "w") as f:
                 json.dump(class_label_dict, f)
 
