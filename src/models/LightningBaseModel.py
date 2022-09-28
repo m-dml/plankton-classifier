@@ -486,7 +486,7 @@ class LightningModel(pl.LightningModule):
             self.console_logger.debug("Saving class_labels")
             class_label_dict = dict()
             for i, label in enumerate(self.class_labels):
-                class_label_dict[i] = label
+                class_label_dict[i] = str(label)
 
             self.console_logger.debug(f"Class label dict: {class_label_dict}")
 

@@ -131,34 +131,34 @@ class PlanktonDataSetSimCLR(ParentDataSet):
 
 class PlanktonDataLoader(pl.LightningDataModule):
     def __init__(
-        self,
-        excluded_labels,
-        batch_size,
-        num_workers,
-        train_split,  # The fraction size of the training data
-        validation_split,  # The fraction size of the validation data (rest ist test)
-        shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
-        shuffle_validation_dataset,
-        shuffle_test_dataset,
-        preload_dataset,
-        use_planktonnet_data,
-        use_klas_data,
-        use_canadian_data,
-        super_classes,
-        oversample_data,
-        klas_data_path,
-        planktonnet_data_path,
-        canadian_data_path,
-        random_seed,
-        train_transforms,
-        valid_transforms,
-        dataset,
-        reduce_data,
-        pin_memory=False,
-        unlabeled_files_to_append=None,
-        is_ddp=False,
-        subsample_supervised=100,
-        **kwargs,
+            self,
+            excluded_labels,
+            batch_size,
+            num_workers,
+            train_split,  # The fraction size of the training data
+            validation_split,  # The fraction size of the validation data (rest ist test)
+            shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
+            shuffle_validation_dataset,
+            shuffle_test_dataset,
+            preload_dataset,
+            use_planktonnet_data,
+            use_klas_data,
+            use_canadian_data,
+            super_classes,
+            oversample_data,
+            klas_data_path,
+            planktonnet_data_path,
+            canadian_data_path,
+            random_seed,
+            train_transforms,
+            valid_transforms,
+            dataset,
+            reduce_data,
+            pin_memory=False,
+            unlabeled_files_to_append=None,
+            is_ddp=False,
+            subsample_supervised=100,
+            **kwargs,
     ):
         super().__init__()
 
@@ -543,9 +543,9 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
 
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def __init__(
-        self,
-        human_error2_data_path,
-        **kwargs,
+            self,
+            human_error2_data_path,
+            **kwargs,
     ):
         super().__init__(
             **kwargs,
@@ -622,14 +622,15 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             column_new = column.strip().lower()
             column_new = column_new[3:] if column_new.startswith("00_") else column_new
             repl_column_names[column] = column_new
-            if not column == "file":
+            if column != "file":
+                self.unique_labels += list(df[column].unique())
+                self.unique_labels = list(set(self.unique_labels))
                 df[column] = df[column].astype("category").cat.codes.astype(int)
 
         df = df.rename(columns=repl_column_names)
 
         files = []
         self.max_label_value = df.drop(labels="file", axis=1).max().max()
-        self.unique_labels = np.arange(0, self.max_label_value + 1)
         for file, labels in df.set_index("file").iterrows():
             files.append(
                 (
@@ -664,10 +665,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
 class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     def __init__(
-        self,
-        human_error2_data_path,
-        which_expert_label: int,
-        **kwargs,
+            self,
+            human_error2_data_path,
+            which_expert_label: int,
+            **kwargs,
     ):
         super().__init__(**kwargs)
 

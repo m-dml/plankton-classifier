@@ -15,11 +15,11 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: D:/PycharmProjects/plankton-classifier/data/epoch=00-v1.ckpt
+load_state_dict: D:/PycharmProjects/plankton-classifier/outputs/multilabel/outputs/2022-09-28/08-14-03/logs/checkpoints/epoch=02.ckpt
 log_level: "info"
-output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/
+output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/inference
 inference: true
-print_config: false
+print_config: true
 
 trainer:
   accelerator: "gpu"
