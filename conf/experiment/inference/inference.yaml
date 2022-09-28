@@ -15,7 +15,7 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: D:/PycharmProjects/plankton-classifier/outputs/multilabel/outputs/2022-09-28/08-14-03/logs/checkpoints/epoch=02.ckpt
+load_state_dict: D:/PycharmProjects/plankton-classifier/outputs/multilabel/outputs/2022-09-28/09-53-56/logs/checkpoints/epoch=04.ckpt
 log_level: "info"
 output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/inference
 inference: true

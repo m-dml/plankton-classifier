@@ -15,6 +15,7 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
+from sklearn import preprocessing
 
 from src.utils import utils
 
@@ -552,6 +553,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         )
 
         self.human_error2_data_path = human_error2_data_path
+        self.unique_labels = None
 
     def setup(self, stage=None):
         train_subset = self.prepare_data_setup("train")
@@ -618,14 +620,22 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
+
+        all_labels = []
         for column in df.columns:
             column_new = column.strip().lower()
             column_new = column_new[3:] if column_new.startswith("00_") else column_new
             repl_column_names[column] = column_new
+
             if column != "file":
-                self.unique_labels += list(df[column].unique())
-                self.unique_labels = list(set(self.unique_labels))
-                df[column] = df[column].astype("category").cat.codes.astype(int)
+                all_labels += (df[column].values.tolist())
+
+        le = preprocessing.LabelEncoder()
+        le.fit(all_labels)
+        self.unique_labels = le.classes_.tolist()
+        for column in df.columns:
+            if column != "file":
+                df[column] = le.transform(df[column].values)
 
         df = df.rename(columns=repl_column_names)
 
