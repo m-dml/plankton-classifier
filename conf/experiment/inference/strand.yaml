@@ -42,7 +42,7 @@ datamodule:
   preload_dataset: false
   data_base_path: ""
   unlabeled_files_to_append:
-    - "/p/project/hai_simclr/plankton_data/new_data/multi_label/test"
+    - "/gpfs/work/machnitz/plankton_dataset/new_data/multi_label/test"
 
 lightning_module:
   log_confusion_matrices: false
