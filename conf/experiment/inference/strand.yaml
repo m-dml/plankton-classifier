@@ -15,9 +15,9 @@ defaults:
   - _self_
 
 debug: false
-load_state_dict: D:/PycharmProjects/plankton-classifier/data/epoch=00-v1.ckpt
+load_state_dict: /gpfs/work/machnitz/plankton_logs/finetune_sgd/multilabel/multirun/2022-09-28/10-04-57/0/logs/checkpoints/epoch=10.ckpt
 log_level: "info"
-output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/
+output_dir_base_path: /gpfs/work/machnitz/plankton_logs/inference/multilabel/
 inference: true
 print_config: false
 
@@ -41,6 +41,8 @@ datamodule:
   use_planktonnet_data: false
   preload_dataset: false
   data_base_path: ""
+  unlabeled_files_to_append:
+    - "/p/project/hai_simclr/plankton_data/new_data/multi_label/test"
 
 lightning_module:
   log_confusion_matrices: false
