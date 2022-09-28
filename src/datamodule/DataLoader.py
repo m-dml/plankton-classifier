@@ -12,10 +12,10 @@ import torch
 from catalyst.data.sampler import BalanceClassSampler, DistributedSamplerWrapper
 from hydra.utils import instantiate
 from PIL import Image
+from sklearn import preprocessing
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
-from sklearn import preprocessing
 
 from src.utils import utils
 
@@ -132,34 +132,34 @@ class PlanktonDataSetSimCLR(ParentDataSet):
 
 class PlanktonDataLoader(pl.LightningDataModule):
     def __init__(
-            self,
-            excluded_labels,
-            batch_size,
-            num_workers,
-            train_split,  # The fraction size of the training data
-            validation_split,  # The fraction size of the validation data (rest ist test)
-            shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
-            shuffle_validation_dataset,
-            shuffle_test_dataset,
-            preload_dataset,
-            use_planktonnet_data,
-            use_klas_data,
-            use_canadian_data,
-            super_classes,
-            oversample_data,
-            klas_data_path,
-            planktonnet_data_path,
-            canadian_data_path,
-            random_seed,
-            train_transforms,
-            valid_transforms,
-            dataset,
-            reduce_data,
-            pin_memory=False,
-            unlabeled_files_to_append=None,
-            is_ddp=False,
-            subsample_supervised=100,
-            **kwargs,
+        self,
+        excluded_labels,
+        batch_size,
+        num_workers,
+        train_split,  # The fraction size of the training data
+        validation_split,  # The fraction size of the validation data (rest ist test)
+        shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
+        shuffle_validation_dataset,
+        shuffle_test_dataset,
+        preload_dataset,
+        use_planktonnet_data,
+        use_klas_data,
+        use_canadian_data,
+        super_classes,
+        oversample_data,
+        klas_data_path,
+        planktonnet_data_path,
+        canadian_data_path,
+        random_seed,
+        train_transforms,
+        valid_transforms,
+        dataset,
+        reduce_data,
+        pin_memory=False,
+        unlabeled_files_to_append=None,
+        is_ddp=False,
+        subsample_supervised=100,
+        **kwargs,
     ):
         super().__init__()
 
@@ -544,9 +544,9 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
 
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def __init__(
-            self,
-            human_error2_data_path,
-            **kwargs,
+        self,
+        human_error2_data_path,
+        **kwargs,
     ):
         super().__init__(
             **kwargs,
@@ -628,7 +628,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             repl_column_names[column] = column_new
 
             if column != "file":
-                all_labels += (df[column].values.tolist())
+                all_labels += df[column].values.tolist()
 
         le = preprocessing.LabelEncoder()
         le.fit(all_labels)
@@ -675,10 +675,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
 class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     def __init__(
-            self,
-            human_error2_data_path,
-            which_expert_label: int,
-            **kwargs,
+        self,
+        human_error2_data_path,
+        which_expert_label: int,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
