@@ -44,7 +44,7 @@ def create_unsupervised_dataset_from_folder_structure(
     srcpath, dstpath, dst_prefix, unsupervised, shard_size, extension
 ):
     basenames = getListOfFiles(os.path.expanduser(srcpath))
-    basenames = [bsnam for bsnam in basenames if os.path.splitext(bsnam)[1] in extension]
+    basenames = [bsnam for bsnam in basenames if os.path.splitext(bsnam)[1] == extension]
     if not os.path.isdir(os.path.expanduser(dstpath)):
         os.makedirs(os.path.expanduser(dstpath))
     sink = wds.ShardWriter(os.path.join(dstpath, dst_prefix + "data_shard-%07d.tar"), maxsize=shard_size)
