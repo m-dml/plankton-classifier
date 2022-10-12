@@ -2,6 +2,7 @@ import torch
 import webdataset
 from torchvision.transforms import transforms
 
+
 class BaseWebDataset(torch.utils.data.Dataset):
     def __init__(self, integer_labels, transform):
         self.integer_labels = integer_labels
@@ -26,12 +27,12 @@ class FinetuneWebDataset(BaseWebDataset):
 
 
 class PretrainWebDataset(BaseWebDataset):
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __getitem__(self, index):
         for sample in super().__getitem__(index):
-            image = sample["input"],
+            image = sample["input"]
             image_copy = image.copy()
 
             if self.transforms:
@@ -40,4 +41,4 @@ class PretrainWebDataset(BaseWebDataset):
             else:
                 raise ValueError("Transforms must be defined for pretraining")
 
-            yield (image, image_copy), (torch.tensor(self.integer_labels[label_name]))
+            yield (image, image_copy), (torch.tensor([0]))
