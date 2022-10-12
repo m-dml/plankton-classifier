@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 12 14:06:25 2022
-
-@author: smalldatalooser
-"""
-
 import argparse
 import os
 
@@ -19,28 +11,15 @@ parser.add_argument("--unsupervised", help="Will the Dataset be used for Pretrai
 parser.add_argument("--shard_size", default=1e9, help="Maximum size of Dataset Shard in Bytes")
 
 
-def getListOfFiles(dirName):
-    listOfFile = os.listdir(dirName)
-    allFiles = list()
-    # Iterate over all the entries
-    for entry in listOfFile:
-        # Create full path
-        fullPath = os.path.join(dirName, entry)
-        # If entry is a directory then get the list of files in this directory
-        if os.path.isdir(fullPath):
-            allFiles = allFiles + getListOfFiles(fullPath)
-        else:
-            allFiles.append(fullPath)
-
-    return allFiles
-
-
-def get_basenames(parent_dir):
-    return getListOfFiles(parent_dir)
+def get_list_of_files(dir_name):
+    list_of_files = list()
+    for (dirpath, dirnames, filenames) in os.walk(dir_name):
+        list_of_files += [os.path.join(dirpath, file) for file in filenames]
+    return list_of_files
 
 
 def create_unsupervised_dataset_from_folder_structure(srcpath, dstpath, dst_prefix, unsupervised, shard_size):
-    basenames = getListOfFiles(os.path.expanduser(srcpath))
+    basenames = get_list_of_files(os.path.expanduser(srcpath))
     if not os.path.isdir(os.path.expanduser(dstpath)):
         os.makedirs(os.path.expanduser(dstpath))
     sink = wds.ShardWriter(os.path.join(dstpath, dst_prefix + "data_shard-%07d.tar"), maxsize=shard_size)
