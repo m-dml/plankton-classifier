@@ -17,6 +17,8 @@ from src.lib.datamodule import (
     PlanktonMultiLabelDataLoader,
     PlanktonMultiLabelDataSet,
     PlanktonMultiLabelSingleScientistDataLoader,
+    PretrainWebDataset,
+    FinetuneWebDataset
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
@@ -59,6 +61,8 @@ def register_configs() -> None:
     cs.store(name="multilabel_base", node=PlanktonMultiLabelDataSet, group=dataset_group)
     cs.store(name="cifar10_base", node=CIFAR10Dataset, group=dataset_group)
     cs.store(name="cifar10simclr_base", node=CIFAR10DatasetSimClr, group=dataset_group)
+    cs.store(name="pretrain_webdataset_base", node=PretrainWebDataset, group=dataset_group)
+    cs.store(name="finetune_webdataset_base", node=FinetuneWebDataset, group=dataset_group)
 
     # external objects:
     cs.store(name="base_trainer", node=Trainer, group="trainer")

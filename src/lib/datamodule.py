@@ -5,6 +5,19 @@ from omegaconf import MISSING
 
 
 @dataclass
+class PretrainWebDataset:
+    __target__: str = "src.datamodule.WebDataset.PretrainWebDataset"
+    integer_labels: bool = MISSING
+    transform: Any = MISSING
+
+
+class FinetuneWebDataset:
+    __target__: str = "src.datamodule.WebDataset.FinetuneWebDataset"
+    integer_labels: bool = MISSING
+    transform: Any = MISSING
+
+
+@dataclass
 class ParentDataloader:
     pin_memory: bool = False
     batch_size: int = 16

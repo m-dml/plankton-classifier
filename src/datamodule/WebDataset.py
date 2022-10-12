@@ -3,8 +3,9 @@ import webdataset
 from torchvision.transforms import transforms
 
 
-class BaseWebDataset(torch.utils.data.Dataset):
-    def __init__(self, integer_labels, transform):
+class BaseWebDataset(webdataset):
+    def __init__(self, integer_labels, transform, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.integer_labels = integer_labels
         self.transform = transform
 
@@ -13,8 +14,8 @@ class FinetuneWebDataset(BaseWebDataset):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def __getitem__(self, index):
-        for sample in super().__getitem__(index):
+    def __iter__(self):
+        for sample in super().__iter__():
             image, label_name = sample["input"], sample["label"]
 
             if self.transforms:
@@ -30,8 +31,8 @@ class PretrainWebDataset(BaseWebDataset):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def __getitem__(self, index):
-        for sample in super().__getitem__(index):
+    def __iter__(self):
+        for sample in super().__iter__():
             image = sample["input"]
             image_copy = image.copy()
 
