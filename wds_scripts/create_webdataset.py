@@ -17,6 +17,7 @@ parser.add_argument("dstpath", help="Path to destination directory of the WebDat
 parser.add_argument("--dst_prefix", default="", help="Prefix for shard file names")
 parser.add_argument("--unsupervised", help="Will the Dataset be used for Pretraining? (Bool)", action="store_true")
 parser.add_argument("--shard_size", default=1e9, help="Maximum size of Dataset Shard in Bytes")
+parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
 
 
 def getListOfFiles(dirName):
@@ -39,8 +40,11 @@ def get_basenames(parent_dir):
     return getListOfFiles(parent_dir)
 
 
-def create_unsupervised_dataset_from_folder_structure(srcpath, dstpath, dst_prefix, unsupervised, shard_size):
+def create_unsupervised_dataset_from_folder_structure(
+    srcpath, dstpath, dst_prefix, unsupervised, shard_size, extension
+):
     basenames = getListOfFiles(os.path.expanduser(srcpath))
+    basenames = [bsnam for bsnam in basenames if os.path.splitext(bsnam)[1] in extension]
     if not os.path.isdir(os.path.expanduser(dstpath)):
         os.makedirs(os.path.expanduser(dstpath))
     sink = wds.ShardWriter(os.path.join(dstpath, dst_prefix + "data_shard-%07d.tar"), maxsize=shard_size)
