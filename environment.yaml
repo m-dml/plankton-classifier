@@ -34,6 +34,7 @@ dependencies:
   - onnx
   - pillow
   - tqdm
+  - webdataset
   - pip:
       - onnxruntime-gpu
       - lightning-bolts
