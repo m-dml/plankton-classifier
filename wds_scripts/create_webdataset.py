@@ -68,7 +68,7 @@ async def prepare_command(commands):
     await gather_with_concurrency(8, *coroutines)
 
 
-def main(*args, **kwargs):
+def main(logger, *args, **kwargs):
     coroutines = []
     for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
         logging.info("Processing folder: {}".format(subfolder))
@@ -85,7 +85,20 @@ def main(*args, **kwargs):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-    main(**vars(args))
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=[
+                logging.StreamHandler()
+            ]
+        )
+    logger = logging.getLogger()
+    main(**vars(args), logger=logger)
