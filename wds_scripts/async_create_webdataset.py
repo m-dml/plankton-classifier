@@ -46,7 +46,7 @@ def main(_arg_list):
                          "--dst_prefix", config["dst_prefix"],
                          "--unsupervised",
                          "--verbose",
-                         "--shard_size", config["shard_size"],
+                         "--shard_size", str(config["shard_size"]),
                          "--extension", config["extension"]])
 
     loop = asyncio.get_event_loop()
