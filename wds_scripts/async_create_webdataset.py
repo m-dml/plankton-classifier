@@ -7,16 +7,9 @@ import tarfile
 from tqdm import tqdm
 
 
-def extract(input_file, output_path, pbar=None):
-    tar = tarfile.open(input_file)
-    tar.extractall(path=output_path)
-    tar.close()
-    if pbar:
-        pbar.update(1)
-
-
 async def custom_system_command(command, pbar=None):
     command_list = command
+    print(f"Running command: {command_list}")
     proc = await asyncio.create_subprocess_exec(*command_list)
     returncode = await proc.wait()
     if pbar:
@@ -75,7 +68,7 @@ if __name__ == "__main__":
 
     folders = [x for x in glob.glob(os.path.join(args["src_path"], "*")) if os.path.isdir(x)]
     arg_list = []
-    for folder in tqdm(folders):
+    for folder in folders:
         these_args = args.copy()
         these_args["src_path"] = folder
         these_args["dst_path"] = os.path.join(args["dst_path"], os.path.basename(folder))
