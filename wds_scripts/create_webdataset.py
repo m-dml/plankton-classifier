@@ -3,6 +3,8 @@ import asyncio
 import logging
 import os
 import sys
+from concurrent.futures import ProcessPoolExecutor
+import functools
 
 import webdataset as wds
 
@@ -49,27 +51,12 @@ async def create_unsupervised_dataset_from_folder_structure(
     sink.close()
 
 
-async def apply_command(arguments):
-    return asyncio.run(create_unsupervised_dataset_from_folder_structure(**arguments))
-
-
-async def gather_with_concurrency(n, *tasks):
-    semaphore = asyncio.Semaphore(n)
-
-    async def sem_task(task):
-        async with semaphore:
-            return await task
-
-    return await asyncio.gather(*(sem_task(task) for task in tasks))
-
-
-async def prepare_command(commands):
-    coroutines = [apply_command(command) for command in commands]
-    await gather_with_concurrency(8, *coroutines)
-
-
-def main(logger, *args, **kwargs):
+def main(*args, **kwargs):
     coroutines = []
+
+    loop = asyncio.get_event_loop()
+    executor = ProcessPoolExecutor(2)
+
     for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
         logging.info("Adding folder to be processed: {}".format(subfolder))
         these_kwargs = kwargs.copy()
@@ -80,9 +67,9 @@ def main(logger, *args, **kwargs):
         if not os.path.exists(these_kwargs["dst_path"]):
             os.makedirs(these_kwargs["dst_path"])
         coroutines.append(these_kwargs)
+        loop.run_in_executor(executor, functools.partial(create_unsupervised_dataset_from_folder_structure, kwargs))
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(prepare_command(coroutines))
+    loop.run_forever()
 
 
 if __name__ == "__main__":
@@ -105,5 +92,5 @@ if __name__ == "__main__":
                 logging.StreamHandler(sys.stdout)
             ]
         )
-    logger = logging.getLogger()
-    main(**vars(args), logger=logger)
+
+    main(**vars(args))
