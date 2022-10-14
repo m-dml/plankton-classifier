@@ -71,6 +71,8 @@ if __name__ == "__main__":
     parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
     args = parser.parse_args()
 
+    print(args["src_path"])
+
     folders = [x for x in glob.glob(os.path.join(args["src_path"], "*")) if os.path.isdir(x)]
     arg_list = []
     for folder in tqdm(folders):
