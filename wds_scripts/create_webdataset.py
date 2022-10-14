@@ -67,7 +67,8 @@ def main(*args, **kwargs):
         if not os.path.exists(these_kwargs["dst_path"]):
             os.makedirs(these_kwargs["dst_path"])
         coroutines.append(these_kwargs)
-        loop.run_in_executor(executor, functools.partial(create_unsupervised_dataset_from_folder_structure, kwargs))
+        loop.run_in_executor(executor,
+                             functools.partial(create_unsupervised_dataset_from_folder_structure, **kwargs))
 
     loop.run_forever()
 
