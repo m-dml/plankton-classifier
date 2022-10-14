@@ -71,9 +71,10 @@ async def prepare_command(commands):
 def main(*args, **kwargs):
     coroutines = []
     for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
+        logging.info("Processing folder: {}".format(subfolder))
         these_kwargs = kwargs.copy()
-        these_kwargs["src_path"] = os.path.join(kwargs["src_path"], subfolder)
-        these_kwargs["dst_prefix"] = os.path.join(kwargs["dst_prefix"], subfolder)
+        these_kwargs["src_path"] = os.path.join(kwargs["src_path"], os.path.basename(subfolder))
+        these_kwargs["dst_prefix"] = os.path.join(kwargs["dst_prefix"], os.path.basename(subfolder))
         if not os.path.exists(these_kwargs["dst_prefix"]):
             os.makedirs(these_kwargs["dst_prefix"])
         coroutines.append(these_kwargs)
