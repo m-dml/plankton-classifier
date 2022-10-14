@@ -52,11 +52,9 @@ async def create_unsupervised_dataset_from_folder_structure(
 
 
 def main(*args, **kwargs):
-    coroutines = []
-
     loop = asyncio.get_event_loop()
     executor = ProcessPoolExecutor(2)
-
+    futures = []
     for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
         logging.info("Adding folder to be processed: {}".format(subfolder))
         these_kwargs = kwargs.copy()
@@ -66,11 +64,10 @@ def main(*args, **kwargs):
         logging.debug("dst_prefix is now: {}".format(these_kwargs["dst_path"]))
         if not os.path.exists(these_kwargs["dst_path"]):
             os.makedirs(these_kwargs["dst_path"])
-        coroutines.append(these_kwargs)
-        loop.run_in_executor(executor,
-                             functools.partial(create_unsupervised_dataset_from_folder_structure, **kwargs))
+        futures.append(loop.run_in_executor(executor,
+                             functools.partial(create_unsupervised_dataset_from_folder_structure, **kwargs)))
 
-    loop.run_forever()
+    loop.run_until_complete(asyncio.gather(*futures))
 
 
 if __name__ == "__main__":
