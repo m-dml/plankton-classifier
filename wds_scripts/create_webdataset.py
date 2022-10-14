@@ -10,7 +10,7 @@ parser.add_argument("src_path", help="Path to parent directory containing image 
 parser.add_argument("dst_path", help="Path to destination directory of the WebDataset")
 parser.add_argument("--dst_prefix", default="", help="Prefix for shard file names")
 parser.add_argument("--unsupervised", help="Will the Dataset be used for Pretraining? (Bool)", action="store_true")
-parser.add_argument("--shard_size", default=1e9, help="Maximum size of Dataset Shard in Bytes")
+parser.add_argument("--shard_size", default=1e9, help="Maximum size of Dataset Shard in Bytes", type=float)
 parser.add_argument("--verbose", action="store_true", help="Prints additional information")
 parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
 
