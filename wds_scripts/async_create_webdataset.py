@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--shard_size", default=1e9, help="Maximum size of Dataset Shard in Bytes")
     parser.add_argument("--verbose", action="store_true", help="Prints additional information")
     parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
 
     print(args["src_path"])
 
