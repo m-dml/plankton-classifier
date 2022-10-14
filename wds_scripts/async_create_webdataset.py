@@ -45,7 +45,7 @@ async def prepare_system_command(commands):
 
 def main(_arg_list):
     commands = []
-    for config in sorted(_arg_list):
+    for config in _arg_list:
 
         commands.append(["python",
                          config["src_path"],
