@@ -1,10 +1,6 @@
 import argparse
-import asyncio
 import logging
 import os
-import sys
-from concurrent.futures import ProcessPoolExecutor
-import functools
 
 import webdataset as wds
 
@@ -18,7 +14,7 @@ parser.add_argument("--verbose", action="store_true", help="Prints additional in
 parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
 
 
-async def create_unsupervised_dataset_from_folder_structure(
+def create_unsupervised_dataset_from_folder_structure(
     src_path, dst_path, dst_prefix, unsupervised, extension, shard_size, *_, **__
 ):
     if not os.path.isdir(os.path.expanduser(dst_path)):
@@ -51,24 +47,6 @@ async def create_unsupervised_dataset_from_folder_structure(
     sink.close()
 
 
-def main(*args, **kwargs):
-    loop = asyncio.get_event_loop()
-    # executor = ProcessPoolExecutor(2)
-    futures = []
-    for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
-        logging.info("Adding folder to be processed: {}".format(subfolder))
-        these_kwargs = kwargs.copy()
-        these_kwargs["src_path"] = os.path.join(kwargs["src_path"], os.path.basename(subfolder))
-        these_kwargs["dst_path"] = os.path.join(kwargs["dst_path"], os.path.basename(subfolder))
-        logging.debug("src_path is now: {}".format(these_kwargs["src_path"]))
-        logging.debug("dst_prefix is now: {}".format(these_kwargs["dst_path"]))
-        if not os.path.exists(these_kwargs["dst_path"]):
-            os.makedirs(these_kwargs["dst_path"])
-        futures.append(create_unsupervised_dataset_from_folder_structure(**these_kwargs))
-
-    loop.run_until_complete(asyncio.gather(*futures))
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
 
@@ -90,4 +68,4 @@ if __name__ == "__main__":
             ]
         )
 
-    main(**vars(args))
+    create_unsupervised_dataset_from_folder_structure(**vars(args))
