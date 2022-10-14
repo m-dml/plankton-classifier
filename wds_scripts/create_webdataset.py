@@ -64,7 +64,7 @@ def main(*args, **kwargs):
         logging.debug("dst_prefix is now: {}".format(these_kwargs["dst_path"]))
         if not os.path.exists(these_kwargs["dst_path"]):
             os.makedirs(these_kwargs["dst_path"])
-        futures.append(functools.partial(create_unsupervised_dataset_from_folder_structure, **kwargs))
+        futures.append(create_unsupervised_dataset_from_folder_structure(**these_kwargs))
 
     loop.run_until_complete(asyncio.gather(*futures))
 
