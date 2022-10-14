@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 import os
 
@@ -14,7 +15,7 @@ parser.add_argument("--verbose", action="store_true", help="Prints additional in
 parser.add_argument("--extension", default="png", help="image format/ file extension (png/jpg)")
 
 
-def create_unsupervised_dataset_from_folder_structure(
+async def create_unsupervised_dataset_from_folder_structure(
     src_path, dst_path, dst_prefix, unsupervised, extension, shard_size, *_, **__
 ):
     if not os.path.isdir(os.path.expanduser(dst_path)):
@@ -45,7 +46,40 @@ def create_unsupervised_dataset_from_folder_structure(
 
             sink.write(sample)
     sink.close()
-    return True
+
+
+async def apply_command(arguments):
+    proc = await create_unsupervised_dataset_from_folder_structure(**arguments)
+    return proc
+
+
+async def gather_with_concurrency(n, *tasks):
+    semaphore = asyncio.Semaphore(n)
+
+    async def sem_task(task):
+        async with semaphore:
+            return await task
+
+    return await asyncio.gather(*(sem_task(task) for task in tasks))
+
+
+async def prepare_command(commands):
+    coroutines = [apply_command(command) for command in commands]
+    await gather_with_concurrency(8, *coroutines)
+
+
+def main(*args, **kwargs):
+    coroutines = []
+    for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
+        these_kwargs = kwargs.copy()
+        these_kwargs["src_path"] = os.path.join(kwargs["src_path"], subfolder)
+        these_kwargs["dst_prefix"] = os.path.join(kwargs["dst_prefix"], subfolder)
+        if not os.path.exists(these_kwargs["dst_prefix"]):
+            os.makedirs(these_kwargs["dst_prefix"])
+        coroutines.append(these_kwargs)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(prepare_command(coroutines))
 
 
 if __name__ == "__main__":
@@ -53,4 +87,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
-    create_unsupervised_dataset_from_folder_structure(**vars(args))
+    main(**vars(args))
