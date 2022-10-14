@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import sys
 
 import webdataset as wds
 
@@ -85,19 +86,21 @@ def main(logger, *args, **kwargs):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.StreamHandler()
-        ]
-    )
+
     if args.verbose:
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(asctime)s [%(levelname)s] %(message)s",
             handlers=[
-                logging.StreamHandler()
+                logging.StreamHandler(sys.stdout)
+            ]
+        )
+    else:
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=[
+                logging.StreamHandler(sys.stdout)
             ]
         )
     logger = logging.getLogger()
