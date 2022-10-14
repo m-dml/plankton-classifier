@@ -50,8 +50,7 @@ async def create_unsupervised_dataset_from_folder_structure(
 
 
 async def apply_command(arguments):
-    proc = await create_unsupervised_dataset_from_folder_structure(**arguments)
-    return proc
+    return create_unsupervised_dataset_from_folder_structure(**arguments)
 
 
 async def gather_with_concurrency(n, *tasks):
@@ -72,7 +71,7 @@ async def prepare_command(commands):
 def main(logger, *args, **kwargs):
     coroutines = []
     for subfolder in [f.path for f in os.scandir(kwargs["src_path"]) if f.is_dir()]:
-        logging.info("Processing folder: {}".format(subfolder))
+        logging.info("Adding folder to be processed: {}".format(subfolder))
         these_kwargs = kwargs.copy()
         these_kwargs["src_path"] = os.path.join(kwargs["src_path"], os.path.basename(subfolder))
         these_kwargs["dst_path"] = os.path.join(kwargs["dst_path"], os.path.basename(subfolder))
@@ -91,7 +90,7 @@ if __name__ == "__main__":
 
     if args.verbose:
         logging.basicConfig(
-            level=logging.DEBUG,
+            level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
             handlers=[
                 logging.StreamHandler(sys.stdout)
