@@ -75,11 +75,11 @@ def main(logger, *args, **kwargs):
         logging.info("Processing folder: {}".format(subfolder))
         these_kwargs = kwargs.copy()
         these_kwargs["src_path"] = os.path.join(kwargs["src_path"], os.path.basename(subfolder))
-        these_kwargs["dst_prefix"] = os.path.join(kwargs["dst_prefix"], os.path.basename(subfolder))
+        these_kwargs["dst_path"] = os.path.join(kwargs["dst_path"], os.path.basename(subfolder))
         logging.debug("src_path is now: {}".format(these_kwargs["src_path"]))
-        logging.debug("dst_prefix is now: {}".format(these_kwargs["dst_prefix"]))
-        if not os.path.exists(these_kwargs["dst_prefix"]):
-            os.makedirs(these_kwargs["dst_prefix"])
+        logging.debug("dst_prefix is now: {}".format(these_kwargs["dst_path"]))
+        if not os.path.exists(these_kwargs["dst_path"]):
+            os.makedirs(these_kwargs["dst_path"])
         coroutines.append(these_kwargs)
 
     loop = asyncio.get_event_loop()
