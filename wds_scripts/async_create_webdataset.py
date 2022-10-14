@@ -2,22 +2,13 @@ import argparse
 import asyncio
 import glob
 import os
-import tarfile
-
-from tqdm import tqdm
 
 
-async def custom_system_command(command, pbar=None):
+async def custom_system_command(command):
     command_list = command
     print(f"Running command: {command_list}")
     proc = await asyncio.create_subprocess_exec(*command_list)
     returncode = await proc.wait()
-    if pbar:
-        pbar.update(1)
-
-    file = command[2]
-    os.remove(file)
-
     return returncode
 
 

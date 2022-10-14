@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import sys
 
 import webdataset as wds
 
