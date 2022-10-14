@@ -50,7 +50,7 @@ async def create_unsupervised_dataset_from_folder_structure(
 
 
 async def apply_command(arguments):
-    return create_unsupervised_dataset_from_folder_structure(**arguments)
+    return asyncio.run(create_unsupervised_dataset_from_folder_structure(**arguments))
 
 
 async def gather_with_concurrency(n, *tasks):
@@ -93,7 +93,8 @@ if __name__ == "__main__":
             level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
             handlers=[
-                logging.StreamHandler(sys.stdout)
+                logging.StreamHandler(sys.stdout),
+                logging.FileHandler("create_webdataset.log")
             ]
         )
     else:
