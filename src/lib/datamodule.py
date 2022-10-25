@@ -11,10 +11,16 @@ class PretrainWebDataset:
     transform: Any = MISSING
 
 
+@dataclass
 class FinetuneWebDataset:
     __target__: str = "src.datamodule.WebDataset.FinetuneWebDataset"
     integer_labels: bool = MISSING
     transform: Any = MISSING
+
+
+@dataclass
+class WebdataLoader:
+    __target__: str = "webdataset."
 
 
 @dataclass
