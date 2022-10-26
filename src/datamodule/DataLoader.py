@@ -652,7 +652,8 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         return files
 
     def prepare_data_setup(self, subset):
-        csv_file = os.path.join(self.csv_data_path, f"multi_label_{subset}.csv")
+        csv_file = glob.glob(os.path.join(self.csv_data_path, f"*subset*.csv"))
+        self.console_logger.info(f"Loading data from {csv_file}")
         folder = os.path.join(self.csv_data_path, subset)
         files = self.load_multilabel_dataset(folder, csv_file)
         return files
