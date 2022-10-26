@@ -653,7 +653,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
     def prepare_data_setup(self, subset):
         csv_file = glob.glob(os.path.join(self.csv_data_path, f"*subset*.csv"))
-        self.console_logger.info(f"Loading data from <{csv_file}>")
+        self.console_logger.info(f"Loading data from <{self.csv_data_path} ; {csv_file}>")
         folder = os.path.join(self.csv_data_path, subset)
         if not os.path.isdir(folder):
             folder = self.csv_data_path
