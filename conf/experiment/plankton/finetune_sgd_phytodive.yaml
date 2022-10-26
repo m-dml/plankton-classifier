@@ -3,7 +3,7 @@
 defaults:
   - override /datamodule: plankton_multilabel
   - override /datamodule/dataset: multilabel
-  - override /loss: kl_div_loss
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: finetune_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
@@ -12,7 +12,6 @@ defaults:
   - override /hydra/launcher: strand_single
   - override /optimizer: sgd
   - override /strategy: null
-  - override /metric: multi_label_accuracy
   - _self_
 
 debug: false
