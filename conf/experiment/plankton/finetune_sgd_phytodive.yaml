@@ -54,7 +54,7 @@ datamodule:
   use_canadian_data: false
   use_planktonnet_data: false
   preload_dataset: false
-  csv_data_path: /gpfs/work/vaswani/LPcruises/rois
+  csv_data_path: /gpfs/work/machnitz/plankton_dataset/phytodive
   data_base_path: /gpfs/work/vaswani/LPcruises/rois
 
 lightning_module:
