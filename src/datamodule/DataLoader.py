@@ -632,6 +632,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
             if column != "file":
                 all_labels += df[column].values.tolist()
+
+        if "nan" in all_labels:
+            self.console_logger.error(f"Encountered 'nan' in all_labels at {all_labels.index('nan')}. "
+                                      f"The according image is {df.iloc[all_labels.index('nan')]['file']}")
         self.console_logger.debug(f"All unique labels are {np.unique(all_labels)}")
         le = preprocessing.LabelEncoder()
         le.fit(all_labels)
