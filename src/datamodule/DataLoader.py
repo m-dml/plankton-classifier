@@ -622,6 +622,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
+        self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
 
         all_labels = []
         for column in df.columns:
@@ -631,7 +632,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
             if column != "file":
                 all_labels += df[column].values.tolist()
-
+        self.console_logger.debug(f"All unique labels are {np.unique(all_labels)}")
         le = preprocessing.LabelEncoder()
         le.fit(all_labels)
         self.unique_labels = le.classes_.tolist()
