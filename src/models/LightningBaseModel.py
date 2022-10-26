@@ -242,6 +242,8 @@ class LightningModel(pl.LightningModule):
             accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
         else:
             targets = labels.detach().view(-1).to(torch.int).cpu()
+            self.console_logger.debug(f"classifier_outputs.shape = {classifier_outputs.shape}, "
+                                      f"labels.shape = {labels.shape}")
             loss = self.loss_func(classifier_outputs, labels.view(-1).long())
             try:
                 class_probabilities = F.softmax(classifier_outputs.detach(), dim=1).detach().cpu()
