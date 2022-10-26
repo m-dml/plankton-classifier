@@ -623,9 +623,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
         self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
-
-        self.console_logger.warning(f"Found {df.isna().sum()} rows with NaN values. I will drop them.")
-        df = df.dropna
+        nan_vals = df.isna().sum().sum()
+        self.console_logger.warning(f"Found {nan_vals} rows with NaN values. I will drop them.")
+        df = df.dropna()
         all_labels = []
         for column in df.columns:
             column_new = column.strip().lower()
