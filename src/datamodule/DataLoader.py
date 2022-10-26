@@ -220,7 +220,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
             raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
 
         self.is_set_up = False
-        self.console_logger.info("Successfully initialised up datamodule.")
+        self.console_logger.info("Successfully initialised the datamodule.")
 
     def setup(self, stage=None):
         # if self.is_set_up:
@@ -654,7 +654,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         return files
 
     def prepare_data_setup(self, subset):
-        csv_file = glob.glob(os.path.join(self.csv_data_path, f"*{subset}*.csv"))[0]
+        file_struct = os.path.join(self.csv_data_path, f"*{subset}*.csv")
+        self.console_logger.info(f"Trying to load csv file from <{file_struct}>")
+        csv_file = glob.glob(file_struct)[0]
         if not os.path.isfile(csv_file):
             raise FileNotFoundError(f"Could not find csv file <{csv_file}> in "
                                     f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>")
