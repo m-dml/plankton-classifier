@@ -147,6 +147,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         use_canadian_data,
         super_classes,
         oversample_data,
+        data_base_path,
         klas_data_path,
         planktonnet_data_path,
         canadian_data_path,
@@ -190,6 +191,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.shuffle_test_dataset = shuffle_test_dataset
         self.preload_dataset = preload_dataset
 
+        self.data_base_path = data_base_path
         self.klas_data_path = klas_data_path
         self.planktonnet_data_path = planktonnet_data_path
         self.canadian_data_path = canadian_data_path
@@ -656,7 +658,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         self.console_logger.info(f"Loading data from <{self.csv_data_path} ; {csv_file}>")
         folder = os.path.join(self.csv_data_path, subset)
         if not os.path.isdir(folder):
-            folder = self.csv_data_path
+            self.console_logger.warning(f"Could not find folder <{folder}>. Using <{self.data_base_path}> instead.")
+            folder = self.data_base_path
+            if not os.path.isdir(folder):
+                raise FileNotFoundError(f"Could not find <{folder}>")
         self.console_logger.info(f"Reading relative paths in csv file starting from <{folder}>")
         files = self.load_multilabel_dataset(folder, csv_file)
         return files
