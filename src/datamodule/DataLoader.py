@@ -638,7 +638,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         le = preprocessing.LabelEncoder()
         le.fit(all_labels)
-        self.unique_labels = le.classes_.tolist()
+        if self.unique_labels is None:
+            self.unique_labels = le.classes_.tolist()
+        else:
+            self.unique_labels = sorted(list(set(self.unique_labels + le.classes_.tolist())))
         self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
         self.console_logger.debug(f"All unique labels from np.unique are {np.unique(all_labels)}")
 
