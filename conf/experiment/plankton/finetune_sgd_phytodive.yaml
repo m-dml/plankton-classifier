@@ -39,6 +39,8 @@ logger:
     default_hp_metric: false
 
 datamodule:
+  super_classes: {}
+  excluded_labels: []
   num_workers: 10
   batch_size: 64
   oversample_data: true
