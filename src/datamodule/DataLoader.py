@@ -545,14 +545,14 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def __init__(
         self,
-        human_error2_data_path,
+        csv_data_path,
         **kwargs,
     ):
         super().__init__(
             **kwargs,
         )
 
-        self.human_error2_data_path = human_error2_data_path
+        self.csv_data_path = csv_data_path
         self.unique_labels = None
 
     def setup(self, stage=None):
@@ -652,8 +652,8 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         return files
 
     def prepare_data_setup(self, subset):
-        csv_file = os.path.join(self.human_error2_data_path, f"multi_label_{subset}.csv")
-        folder = os.path.join(self.human_error2_data_path, subset)
+        csv_file = os.path.join(self.csv_data_path, f"multi_label_{subset}.csv")
+        folder = os.path.join(self.csv_data_path, subset)
         files = self.load_multilabel_dataset(folder, csv_file)
         return files
 
@@ -676,13 +676,13 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     def __init__(
         self,
-        human_error2_data_path,
+        csv_data_path,
         which_expert_label: int,
         **kwargs,
     ):
         super().__init__(**kwargs)
 
-        self.human_error2_data_path = human_error2_data_path
+        self.csv_data_path = csv_data_path
         self.which_expert_label = which_expert_label
 
     def prepare_data_setup(self, subset):

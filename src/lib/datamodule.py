@@ -107,7 +107,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelDataLoader"
     _recursive_: bool = False
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
-    human_error2_data_path: str = data_base_path + "human_error2"
+    csv_data_path: str = data_base_path + "human_error2"
 
 
 @dataclass
@@ -115,7 +115,7 @@ class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelSingleScientistDataLoader"
     _recursive_: bool = False
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
-    human_error2_data_path: str = data_base_path + "human_error2"
+    csv_data_path: str = data_base_path + "human_error2"
     which_expert_label: int = 0
 
 
