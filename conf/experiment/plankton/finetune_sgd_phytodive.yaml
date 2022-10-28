@@ -1,6 +1,7 @@
 # @package _global_
 
 defaults:
+  - /scheduler: reduce_lr_on_plateau
   - override /datamodule: plankton_multilabel
   - override /datamodule/dataset: multilabel
   - override /loss: cross_entropy_loss
@@ -17,7 +18,6 @@ defaults:
 
 debug: false
 load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_model_799.weights
-scheduler: null
 random_seed: 7
 log_level: "info"
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune_sgd/phytodive/
@@ -89,6 +89,9 @@ optimizer:
 callbacks:
   early_stopping:
     monitor: "loss/Validation"
-    patience: 10
+    patience: 20
     verbose: true
     mode: "min"
+
+scheduler:
+  patience: 5

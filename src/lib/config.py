@@ -4,7 +4,7 @@ from typing import Any
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
-from src.lib.callbacks import CheckpointCallback, EarlyStoppingCallback, GPUMonitur, LRMonitor, ReduceLearningRateOnPlateau
+from src.lib.callbacks import CheckpointCallback, EarlyStoppingCallback, GPUMonitur, LRMonitor
 from src.lib.datamodule import (
     CIFAR10DataLoader,
     CIFAR10Dataset,
@@ -20,6 +20,7 @@ from src.lib.datamodule import (
     PretrainWebDataset,
     FinetuneWebDataset
 )
+from src.lib.scheduler import ReduceLRonPlateau, CosineAnnealingWarmStart, CosineAnnealingLR
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
@@ -77,7 +78,6 @@ def register_configs() -> None:
     cs.store(name="gpu_monitoring", node=GPUMonitur, group="callbacks/gpu_monitoring")
     cs.store(name="early_stopping", node=EarlyStoppingCallback, group="callbacks/early_stopping")
     cs.store(name="lr_monitor", node=LRMonitor, group="callbacks/lr_monitor")
-    cs.store(name="reduce_lr_on_plateau", node=ReduceLearningRateOnPlateau, group="callbacks/reduce_lr_on_plateau")
 
     # optimizer:
     optimizer_group = "optimizer"
@@ -85,6 +85,12 @@ def register_configs() -> None:
     cs.store(name="sgd", node=SGD, group=optimizer_group)
     cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
     cs.store(name="lars", node=LARS, group=optimizer_group)
+
+    # scheduler:
+    scheduler_group = "scheduler"
+    cs.store(name="reduce_lr_on_plateau", node=ReduceLRonPlateau, group=scheduler_group)
+    cs.store(name="linear_warmup_decay", node=CosineAnnealingWarmStart, group=scheduler_group)
+    cs.store(name="cosine", node=CosineAnnealingLR, group=scheduler_group)
 
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
@@ -122,10 +128,10 @@ class Config:
     metric: Any = MISSING
     strategy: Any = None
     profiler: Any = None
+    scheduler: Any = None
 
     evaluate: bool = False
     inference: bool = False
-    scheduler: Any = None
     random_seed: int = 42
     print_config: bool = True
     debug: bool = False

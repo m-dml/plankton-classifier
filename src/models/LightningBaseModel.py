@@ -120,7 +120,7 @@ class LightningModel(pl.LightningModule):
             total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
             self.console_logger.info("total_train_steps are {}".format(total_train_steps))
 
-            if self.cfg_scheduler == "linear_warmup_decay":
+            if self.cfg_scheduler._target_ == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
                 self.console_logger.info(
                     f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup."
@@ -133,7 +133,7 @@ class LightningModel(pl.LightningModule):
                     "frequency": 1,
                     "name": "Lars-LR",
                 }
-            elif self.cfg_scheduler == "cosine":
+            elif self.cfg_scheduler._target_ == "cosine":
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_train_steps, eta_min=0.0),
                     "interval": "step",
@@ -141,10 +141,10 @@ class LightningModel(pl.LightningModule):
                     "name": "Cosine LR",
                 }
             else:
-                raise NotImplementedError(
-                    f"The scheduler {self.cfg_scheduler} is not implemented. Please use one of "
-                    f"[linear_warmup_decay, cosine] or none."
-                )
+                scheduler = {
+                    "scheduler": hydra.utils.instantiate(self.cfg_scheduler, optimizer=optimizer),
+                    "monitor": "loss/Validation",
+                             }
             return [optimizer], [scheduler]
 
         return optimizer
