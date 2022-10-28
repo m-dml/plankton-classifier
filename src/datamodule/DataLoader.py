@@ -638,12 +638,6 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         le = preprocessing.LabelEncoder()
         le.fit(all_labels)
-        if self.unique_labels is None:
-            self.unique_labels = le.classes_.tolist()
-        else:
-            self.unique_labels = sorted(list(set(self.unique_labels + le.classes_.tolist())))
-        self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
-        self.console_logger.debug(f"All unique labels from np.unique are {np.unique(all_labels)}")
 
         for column in df.columns:
             if column != "file":
@@ -651,13 +645,25 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
         df = df.rename(columns=repl_column_names)
 
+        if self.unique_labels is None:
+            self.unique_labels = le.classes_.tolist()
+            self.max_label_value = df.drop(labels="file", axis=1).max().max()
+        if not set(le.classes_.tolist()).issubset(self.unique_labels):
+            new_labels = set(le.classes_.tolist()).difference(set(self.unique_labels))
+            raise ValueError(f"The labels {new_labels} from <{csv_file}> are not in the list of training labels.")
+        if (set(le.classes_.tolist()) != set(self.unique_labels)) and set(le.classes_.tolist()).issubset(self.unique_labels):
+            self.console_logger.warning(f"There are labels in the training dataset that are not in <{csv_file}> dataset.")
+
+        self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
+        self.console_logger.debug(f"All unique labels from np.unique are {np.unique(all_labels)}")
+
         files = []
-        self.max_label_value = df.drop(labels="file", axis=1).max().max()
+
         for file, labels in df.set_index("file").iterrows():
             files.append(
                 (
                     self.load_image(os.path.join(data_path, file), preload=self.preload_dataset),
-                    self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
+                    self.multi_labels_to_probabilities(labels.values),
                     labels.values,
                 )
             )
@@ -681,10 +687,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         files = self.load_multilabel_dataset(folder, csv_file)
         return files
 
-    @staticmethod
-    def multi_labels_to_probabilities(labels, max_label_value):
-        n_bins = len(np.arange(0, max_label_value))
-        probabilities = np.histogram(labels, bins=n_bins + 1, range=(0, n_bins))[0] / len(labels)
+    def multi_labels_to_probabilities(self, labels):
+        n_bins = len(self.unique_labels)
+        probabilities = np.histogram(labels, bins=n_bins, range=(0, n_bins))[0] / len(labels)
         return probabilities
 
     def train_dataloader(self):
