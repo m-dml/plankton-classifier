@@ -1,8 +1,9 @@
+from abc import abstractmethod
+
 import hydra.utils
+import pytorch_lightning as pl
 import torch
 import webdataset
-from abc import abstractmethod
-import pytorch_lightning as pl
 
 
 class BaseWebDataset(webdataset.WebDataset):
@@ -46,30 +47,32 @@ class PretrainWebDataset(BaseWebDataset):
 
 
 class WebDataLoader(pl.LightningDataModule):
-    def __init__(self,
-                 excluded_labels,
-                 batch_size,
-                 num_workers,
-                 train_split,  # The fraction size of the training data
-                 validation_split,  # The fraction size of the validation data (rest ist test)
-                 shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
-                 shuffle_validation_dataset,
-                 super_classes,
-                 oversample_data,
-                 random_seed,
-                 train_transforms,
-                 valid_transforms,
-                 data_base_path,
-                 dataset,
-                 is_in_simclr_mode,
-                 reduce_data,
-                 pin_memory=False,
-                 unlabeled_files_to_append=None,
-                 is_ddp=False,
-                 subsample_supervised=100,
-                 shuffle_size=5000,
-                 *args,
-                 **kwargs):
+    def __init__(
+        self,
+        excluded_labels,
+        batch_size,
+        num_workers,
+        train_split,  # The fraction size of the training data
+        validation_split,  # The fraction size of the validation data (rest ist test)
+        shuffle_train_dataset,  # whether to shuffle the train dataset (bool)
+        shuffle_validation_dataset,
+        super_classes,
+        oversample_data,
+        random_seed,
+        train_transforms,
+        valid_transforms,
+        data_base_path,
+        dataset,
+        is_in_simclr_mode,
+        reduce_data,
+        pin_memory=False,
+        unlabeled_files_to_append=None,
+        is_ddp=False,
+        subsample_supervised=100,
+        shuffle_size=5000,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.excluded_labels = excluded_labels
         self.batch_size = batch_size
@@ -96,18 +99,16 @@ class WebDataLoader(pl.LightningDataModule):
         else:
             raise ValueError("Mode must be either 'fit' or 'eval'")
 
-        dataset = (hydra.utils.instantiate(self.cfg_dataset)
-                   .shuffle(shuffle)
-                   .decode("pil")
-                   .tu_tuple()
-                   .map_tuple(transforms, lambda x: x)  # lamda for not transforming the labels (identity func)
-                   .batched(self.batch_size, partial=False)
-                   )
+        dataset = (
+            hydra.utils.instantiate(self.cfg_dataset)
+            .shuffle(shuffle)
+            .decode("pil")
+            .tu_tuple()
+            .map_tuple(transforms, lambda x: x)  # lamda for not transforming the labels (identity func)
+            .batched(self.batch_size, partial=False)
+        )
 
         loader = webdataset.WebLoader(dataset, batch_size=None, shuffle=False, num_workers=self.num_workers)
 
         if mode is "fit":
             loader = loader.ddp_equalize(dataset_size // self.batch_size)
-
-
-

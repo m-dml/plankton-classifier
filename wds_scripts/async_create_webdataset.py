@@ -31,15 +31,22 @@ def main(_arg_list):
     commands = []
     for config in _arg_list:
 
-        commands.append(["python",
-                         "create_webdataset.py",
-                         config["src_path"],
-                         config["dst_path"],
-                         "--dst_prefix", config["dst_prefix"],
-                         "--unsupervised",
-                         "--verbose",
-                         "--shard_size", str(config["shard_size"]),
-                         "--extension", config["extension"]])
+        commands.append(
+            [
+                "python",
+                "create_webdataset.py",
+                config["src_path"],
+                config["dst_path"],
+                "--dst_prefix",
+                config["dst_prefix"],
+                "--unsupervised",
+                "--verbose",
+                "--shard_size",
+                str(config["shard_size"]),
+                "--extension",
+                config["extension"],
+            ]
+        )
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(prepare_system_command(commands))

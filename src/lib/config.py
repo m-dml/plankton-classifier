@@ -9,6 +9,7 @@ from src.lib.datamodule import (
     CIFAR10DataLoader,
     CIFAR10Dataset,
     CIFAR10DatasetSimClr,
+    FinetuneWebDataset,
     PlanktonDataLoader,
     PlanktonDataSet,
     PlanktonDataSetSimCLR,
@@ -18,9 +19,7 @@ from src.lib.datamodule import (
     PlanktonMultiLabelDataSet,
     PlanktonMultiLabelSingleScientistDataLoader,
     PretrainWebDataset,
-    FinetuneWebDataset
 )
-from src.lib.scheduler import ReduceLRonPlateau, CosineAnnealingWarmStart, CosineAnnealingLR
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
@@ -29,6 +28,7 @@ from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.profiler import NoProfiler, PytorchProfiler
+from src.lib.scheduler import CosineAnnealingLR, CosineAnnealingWarmStart, ReduceLRonPlateau
 from src.lib.trainer import Trainer
 
 

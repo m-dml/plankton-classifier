@@ -55,18 +55,13 @@ if __name__ == "__main__":
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
-            handlers=[
-                logging.StreamHandler(sys.stdout),
-                logging.FileHandler("create_webdataset.log")
-            ]
+            handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("create_webdataset.log")],
         )
     else:
         logging.basicConfig(
             level=logging.WARNING,
             format="%(asctime)s [%(levelname)s] %(message)s",
-            handlers=[
-                logging.StreamHandler(sys.stdout)
-            ]
+            handlers=[logging.StreamHandler(sys.stdout)],
         )
 
     create_unsupervised_dataset_from_folder_structure(**vars(args))

@@ -638,7 +638,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
             if column != "file":
                 all_labels += df[column].values.tolist()
-        
+
         if self.label_encoder is None:
             self.label_encoder = preprocessing.LabelEncoder()
             self.label_encoder.fit(all_labels)
@@ -655,8 +655,12 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         if not set(np.unique(all_labels)).issubset(self.unique_labels):
             new_labels = set(np.unique(all_labels)).difference(set(self.unique_labels))
             raise ValueError(f"The labels {new_labels} from <{csv_file}> are not in the list of training labels.")
-        if (set(np.unique(all_labels)) != set(self.unique_labels)) and set(np.unique(all_labels)).issubset(self.unique_labels):
-            self.console_logger.warning(f"There are labels in the training dataset that are not in <{csv_file}> dataset.")
+        if (set(np.unique(all_labels)) != set(self.unique_labels)) and set(np.unique(all_labels)).issubset(
+            self.unique_labels
+        ):
+            self.console_logger.warning(
+                f"There are labels in the training dataset that are not in <{csv_file}> dataset."
+            )
 
         self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
         self.console_logger.debug(f"All unique labels from np.unique are {np.unique(all_labels)}")
@@ -678,8 +682,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         self.console_logger.info(f"Trying to load csv file from <{file_struct}>")
         csv_file = glob.glob(file_struct)[0]
         if not os.path.isfile(csv_file):
-            raise FileNotFoundError(f"Could not find csv file <{csv_file}> in "
-                                    f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>")
+            raise FileNotFoundError(
+                f"Could not find csv file <{csv_file}> in " f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>"
+            )
         self.console_logger.info(f"Loading data from <{self.csv_data_path} ; {csv_file}>")
         folder = os.path.join(self.csv_data_path, subset)
         if not os.path.isdir(folder):
