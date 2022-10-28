@@ -4,7 +4,7 @@ from typing import Any
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
-from src.lib.callbacks import CheckpointCallback, EarlyStoppingCallback, GPUMonitur, LRMonitor
+from src.lib.callbacks import CheckpointCallback, EarlyStoppingCallback, GPUMonitur, LRMonitor, ReduceLearningRateOnPlateau
 from src.lib.datamodule import (
     CIFAR10DataLoader,
     CIFAR10Dataset,
@@ -77,6 +77,7 @@ def register_configs() -> None:
     cs.store(name="gpu_monitoring", node=GPUMonitur, group="callbacks/gpu_monitoring")
     cs.store(name="early_stopping", node=EarlyStoppingCallback, group="callbacks/early_stopping")
     cs.store(name="lr_monitor", node=LRMonitor, group="callbacks/lr_monitor")
+    cs.store(name="reduce_lr_on_plateau", node=ReduceLearningRateOnPlateau, group="callbacks/reduce_lr_on_plateau")
 
     # optimizer:
     optimizer_group = "optimizer"
