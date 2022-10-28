@@ -32,15 +32,3 @@ class EarlyStoppingCallback:
 class LRMonitor:
     _target_: str = "pytorch_lightning.callbacks.lr_monitor.LearningRateMonitor"
     logging_interval: str = "step"
-
-
-@dataclass
-class ReduceLearningRateOnPlateau:
-    _target_: str = "pytorch_lightning.callbacks.ReduceLROnPlateau"
-    monitor: str = "Accuracy/Validation"
-    factor: float = 0.1
-    patience: int = 10
-    verbose: bool = True
-    mode: str = "max"
-    min_delta: float = 0.00
-    eps: float = 1e-08
