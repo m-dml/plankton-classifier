@@ -3,7 +3,7 @@
 defaults:
   - override /datamodule: plankton_multilabel
   - override /datamodule/dataset: multilabel
-  - override /loss: kl_div_loss
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: finetune_plankton
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
@@ -12,7 +12,7 @@ defaults:
   - override /hydra/launcher: strand_single
   - override /optimizer: sgd
   - override /strategy: null
-  - override /metric: multi_label_accuracy
+  - override /metric: accuracy
   - _self_
 
 debug: false
@@ -57,6 +57,7 @@ datamodule:
   preload_dataset: false
   csv_data_path: /gpfs/work/machnitz/plankton_dataset/phytodive
   data_base_path: /gpfs/work/vaswani/LPcruises/rois
+  convert_probabilities_to_majority_vote: true
 
 lightning_module:
   log_confusion_matrices: false

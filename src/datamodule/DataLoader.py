@@ -548,6 +548,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def __init__(
         self,
         csv_data_path,
+        convert_probabilities_to_majority_vote,
         **kwargs,
     ):
         super().__init__(
@@ -557,6 +558,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         self.label_encoder = None
         self.csv_data_path = csv_data_path
         self.unique_labels = None
+        self.convert_probabilities_to_majority_vote = convert_probabilities_to_majority_vote
 
     def setup(self, stage=None):
         train_subset = self.prepare_data_setup("train")
@@ -692,6 +694,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def multi_labels_to_probabilities(self, labels):
         n_bins = len(self.unique_labels)
         probabilities = np.histogram(labels, bins=n_bins, range=(0, n_bins))[0] / len(labels)
+
+        if self.convert_probabilities_to_majority_vote:
+            probabilities = np.argmax(probabilities)
         return probabilities
 
     def train_dataloader(self):

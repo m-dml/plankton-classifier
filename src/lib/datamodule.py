@@ -108,6 +108,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     _recursive_: bool = False
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
     csv_data_path: str = data_base_path + "human_error2"
+    convert_probabilities_to_majority_vote: bool = False
 
 
 @dataclass
