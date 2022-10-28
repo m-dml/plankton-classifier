@@ -17,9 +17,9 @@ defaults:
 
 debug: false
 load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_model_799.weights
-scheduler: "cosine"
+scheduler: null
 random_seed: 7
-log_level: "debug"
+log_level: "info"
 output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune_sgd/phytodive/
 
 trainer:

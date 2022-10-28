@@ -554,6 +554,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             **kwargs,
         )
 
+        self.label_encoder = None
         self.csv_data_path = csv_data_path
         self.unique_labels = None
 
@@ -635,23 +636,24 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 
             if column != "file":
                 all_labels += df[column].values.tolist()
-
-        le = preprocessing.LabelEncoder()
-        le.fit(all_labels)
+        
+        if self.label_encoder is None:
+            self.label_encoder = preprocessing.LabelEncoder()
+            self.label_encoder.fit(all_labels)
 
         for column in df.columns:
             if column != "file":
-                df[column] = le.transform(df[column].values)
+                df[column] = self.label_encoder.transform(df[column].values)
 
         df = df.rename(columns=repl_column_names)
 
         if self.unique_labels is None:
-            self.unique_labels = le.classes_.tolist()
+            self.unique_labels = self.label_encoder.classes_.tolist()
             self.max_label_value = df.drop(labels="file", axis=1).max().max()
-        if not set(le.classes_.tolist()).issubset(self.unique_labels):
-            new_labels = set(le.classes_.tolist()).difference(set(self.unique_labels))
+        if not set(np.unique(all_labels)).issubset(self.unique_labels):
+            new_labels = set(np.unique(all_labels)).difference(set(self.unique_labels))
             raise ValueError(f"The labels {new_labels} from <{csv_file}> are not in the list of training labels.")
-        if (set(le.classes_.tolist()) != set(self.unique_labels)) and set(le.classes_.tolist()).issubset(self.unique_labels):
+        if (set(np.unique(all_labels)) != set(self.unique_labels)) and set(np.unique(all_labels)).issubset(self.unique_labels):
             self.console_logger.warning(f"There are labels in the training dataset that are not in <{csv_file}> dataset.")
 
         self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
