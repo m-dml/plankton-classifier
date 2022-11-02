@@ -381,6 +381,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
         for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}"), position=0, leave=True):
+            if os.path.getsize(file) <= 30:  # smallest image(tiff) is 35 bytes (single black pixel png is 67 bytes)
+                continue  # skip empty files
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
             if self.excluded_labels is not None:
