@@ -3,12 +3,13 @@ import os
 import hydra.utils
 import pytorch_lightning as pl
 import torch
-import webdataset
 import torchvision
+import webdataset
+
 from src.utils import utils
 
 
-class WebDataLoader(pl.LightningDataModule):  # noqa: D101
+class WebDataLoader(pl.LightningDataModule):
     def __init__(
         self,
         excluded_labels,
@@ -63,8 +64,10 @@ class WebDataLoader(pl.LightningDataModule):  # noqa: D101
                     self.urls.append(os.path.join(dir_path, file))
 
         self.train_data = self.urls[: int(len(self.urls) * self.train_split)]
-        self.validation_data = self.urls[int(len(self.urls) * self.train_split): int(len(self.urls) * self.validation_split)]
-        self.test_data = self.urls[int(len(self.urls) * self.validation_split):]
+        self.validation_data = self.urls[
+            int(len(self.urls) * self.train_split) : int(len(self.urls) * self.validation_split)
+        ]
+        self.test_data = self.urls[int(len(self.urls) * self.validation_split) :]
 
     def make_loader(self, urls, mode="fit"):
         shuffle = 0
