@@ -5,22 +5,24 @@ from omegaconf import MISSING
 
 
 @dataclass
-class PretrainWebDataset:
-    __target__: str = "src.datamodule.WebDataset.PretrainWebDataset"
-    integer_labels: bool = MISSING
-    transform: Any = MISSING
-
-
-@dataclass
-class FinetuneWebDataset:
-    __target__: str = "src.datamodule.WebDataset.FinetuneWebDataset"
-    integer_labels: bool = MISSING
-    transform: Any = MISSING
-
-
-@dataclass
 class WebdataLoader:
-    __target__: str = "webdataset."
+    _target_: str = "src.datamodule.WebDataset.WebDataLoader"
+    excluded_labels: Any = None
+    batch_size: int = MISSING
+    num_workers: int = MISSING
+    train_split: float = 0.7  # The fraction size of the training data
+    validation_split: float = 0.1  # The fraction size of the validation data (rest ist test)
+    shuffle_train_dataset: bool = True  # whether to shuffle the train dataset (bool)
+    shuffle_validation_dataset: bool = False
+    super_classes: Any = None  # TODO: implement super classes
+    oversample_data: bool = True  # TODO: implement oversampling
+    random_seed: int = 42
+    train_transforms: Any = None
+    valid_transforms: Any = None
+    data_base_path: str = MISSING
+    is_in_simclr_mode: bool = False
+    subsample_supervised: float = 1  # TODO: implement subsampling
+    shuffle_size: int = 5000
 
 
 @dataclass

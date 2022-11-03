@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 from typing import List
 
+from omegaconf import open_dict
 import hydra
 import numpy as np
 import pytorch_lightning as pl
@@ -43,6 +44,7 @@ if platform.system() == "Windows":
 
 # register the structured configs:
 register_configs()
+
 
 # set up advanced logging:
 
@@ -83,6 +85,10 @@ def main(cfg: Config):
         train_transforms: Compose = hydra.utils.instantiate(cfg.datamodule.train_transforms)
         valid_transforms: Compose = hydra.utils.instantiate(cfg.datamodule.valid_transforms)
 
+        if "dataset" not in cfg.datamodule.keys():
+            with open_dict(cfg.datamodule):
+                cfg.datamodule.dataset = None
+
         # Init Lightning datamodule
         log.info(f"Instantiating datamodule <{cfg.datamodule._target_}>")
         datamodule: LightningDataModule = hydra.utils.instantiate(
@@ -93,6 +99,7 @@ def main(cfg: Config):
             is_ddp=cfg.strategy is not None,
         )
 
+        datamodule.prepare_data()
         datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
         # get number of training samples_per_device and epoch:
@@ -115,7 +122,7 @@ def main(cfg: Config):
                 example_input = torch.stack(example_input).detach().cpu()
             break
 
-        log.info(f"Size of one batch is: {example_input.element_size() * example_input.nelement() / 2**20} mb")
+        log.info(f"Size of one batch is: {example_input.element_size() * example_input.nelement() / 2 ** 20} mb")
 
         is_in_simclr_mode = example_input.shape[0] == 2  # if first dimension is 2, then it is in simclr mode -> True
         log.info(f"Model is in simclr mode?: <{is_in_simclr_mode}>")

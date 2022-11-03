@@ -25,7 +25,6 @@ class WebDataLoader(pl.LightningDataModule):
         train_transforms,
         valid_transforms,
         data_base_path,
-        dataset,
         is_in_simclr_mode,
         subsample_supervised=100,  # TODO: implement subsampling
         shuffle_size=5000,
@@ -33,7 +32,7 @@ class WebDataLoader(pl.LightningDataModule):
         **kwargs
     ):
         torch.manual_seed(random_seed)
-        super().__init__(*args, **kwargs)
+        super().__init__(*args)
 
         self.console_logger = utils.get_logger(__name__)
         self.no_augmentations_log_state = False  # Used to log only once if no augmentations are defined
@@ -49,7 +48,6 @@ class WebDataLoader(pl.LightningDataModule):
         self.shuffle_train_dataset = shuffle_train_dataset
         self.shuffle_validation_dataset = shuffle_validation_dataset
         self.shuffle_size = shuffle_size
-        self.cfg_dataset = dataset
         self.data_base_path = data_base_path
         self.train_transforms = train_transforms
         self.valid_transforms = valid_transforms
@@ -58,16 +56,19 @@ class WebDataLoader(pl.LightningDataModule):
         self.validation_split = validation_split
 
     def prepare_data(self, *args, **kwargs):
+        if not os.path.exists(self.data_base_path):
+            raise NotADirectoryError(f"Data base path <{self.data_base_path}> does not exist")
         for dir_path, _, filenames in os.walk(self.data_base_path):
             for file in filenames:
                 if file.endswith(".tar"):
                     self.urls.append(os.path.join(dir_path, file))
 
-        self.train_data = self.urls[: int(len(self.urls) * self.train_split)]
+        num_files = len(self.urls)
+        self.train_data = self.urls[: int(num_files * self.train_split)]
         self.validation_data = self.urls[
-            int(len(self.urls) * self.train_split) : int(len(self.urls) * self.validation_split)
+            int(num_files * self.train_split) : int(num_files * self.validation_split)
         ]
-        self.test_data = self.urls[int(len(self.urls) * self.validation_split) :]
+        self.test_data = self.urls[: int(num_files * self.validation_split)]
 
     def make_loader(self, urls, mode="fit"):
         shuffle = 0
