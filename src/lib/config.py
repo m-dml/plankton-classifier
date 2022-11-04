@@ -17,7 +17,7 @@ from src.lib.datamodule import (
     PlanktonMultiLabelDataLoader,
     PlanktonMultiLabelDataSet,
     PlanktonMultiLabelSingleScientistDataLoader,
-    WebdataLoader
+    WebdataLoader,
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
@@ -129,6 +129,7 @@ class Config:
     scheduler: Any = None
 
     evaluate: bool = False
+    pretrain: bool = False
     inference: bool = False
     random_seed: int = 42
     print_config: bool = True

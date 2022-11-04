@@ -4,3 +4,4 @@ defaults:
   - _self_
 
 excluded_labels: [] # has to be  a list
+is_in_simclr_mode: ${pretrain}

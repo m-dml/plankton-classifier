@@ -159,7 +159,6 @@ def instantiate_model(ckpt_path, _datamodule, _example_input):
 
     _model.set_external_data(
         class_labels=list(class_label_dict.values()),
-        all_labels=_datamodule.all_labels,
         example_input_array=_example_input.detach().cpu(),
     )
     _model.eval()

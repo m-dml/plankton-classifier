@@ -223,9 +223,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.info("Successfully initialised the datamodule.")
 
     def setup(self, stage=None):
-        # if self.is_set_up:
-        #     self.console_logger.warning("The Datamodule was already set up and therefore this setup will be skipped.")
-        #     return
 
         self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
@@ -236,10 +233,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.debug("Loading Test data")
         test_subset = self.prepare_data_setup(subset="test")
         self.console_logger.debug(f"len(test_subset) = {len(test_subset)}")
-
-        assert len(train_subset) > 0, "No training data!"
-        assert len(valid_subset) > 0, "No validation data!"
-        assert len(test_subset) > 0, "No test data!"
 
         if self.unlabeled_files_to_append:
             self.console_logger.debug("Trying to load unlabeled files")
@@ -256,6 +249,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.canadian_data_path)}")
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
+
+        if len(valid_subset) == 0:
+            valid_idx_start = int(len(train_subset) * self.train_split)
+            valid_idx_end = int(len(train_subset) * (self.train_split + self.validation_split))
+
+            valid_subset = train_subset[valid_idx_start:valid_idx_end]
+            test_subset = train_subset[valid_idx_end:]
+            train_subset = train_subset[:valid_idx_start]
 
         self.console_logger.debug("Separating labels from images")
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)

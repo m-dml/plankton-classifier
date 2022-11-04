@@ -8,12 +8,12 @@ import sys
 from datetime import datetime
 from typing import List
 
-from omegaconf import open_dict
 import hydra
 import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
+from omegaconf import open_dict
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
 from torchvision.transforms import Compose
@@ -64,6 +64,8 @@ def main(cfg: Config):
     pl.seed_everything(cfg.random_seed)
     np.random.seed(cfg.random_seed)
 
+    is_in_simclr_mode = cfg.pretrain
+
     try:
         # Init Lightning callbacks
         callbacks: List[Callback] = []
@@ -103,15 +105,17 @@ def main(cfg: Config):
         datamodule.setup(stage="fit")  # manually set up the datamodule here, so an example batch can be drawn
 
         # get number of training samples_per_device and epoch:
-
         datamodule.is_ddp = False
-        stepping_batches = len(datamodule.train_dataloader())
+        try:
+            stepping_batches = len(datamodule.train_dataloader())
+        except TypeError:
+            stepping_batches = cfg.trainer.max_steps
         datamodule.is_ddp = cfg.strategy is not None
 
         if not cfg.inference:
             log.info(
                 f"Inferred batches per epoch={stepping_batches}, while batch_size={datamodule.batch_size} and overall "
-                f"train samples={len(datamodule.train_labels)} and "
+                f"train files={len(datamodule.train_data)} and "
                 f"subsample_supervised={datamodule.subsample_supervised} ."
             )
 
@@ -124,7 +128,6 @@ def main(cfg: Config):
 
         log.info(f"Size of one batch is: {example_input.element_size() * example_input.nelement() / 2 ** 20} mb")
 
-        is_in_simclr_mode = example_input.shape[0] == 2  # if first dimension is 2, then it is in simclr mode -> True
         log.info(f"Model is in simclr mode?: <{is_in_simclr_mode}>")
 
         # Init Lightning model
@@ -145,7 +148,6 @@ def main(cfg: Config):
 
         model.set_external_data(
             class_labels=datamodule.unique_labels,
-            all_labels=datamodule.all_labels,
             example_input_array=example_input.detach().cpu(),
         )
 

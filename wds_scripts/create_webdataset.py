@@ -22,7 +22,8 @@ def create_unsupervised_dataset_from_folder_structure(
         os.makedirs(os.path.expanduser(dst_path))
         logging.info("Created Directory: {}".format(dst_path))
 
-    sink = wds.ShardWriter(os.path.join(dst_path, f".{dst_prefix}_data_shard-%07d.tar"), maxsize=shard_size)
+    file_name = f"{dst_prefix}_data_shard-%07d.tar" if dst_prefix else "data_shard-%07d.tar"
+    sink = wds.ShardWriter(os.path.join(dst_path, file_name), maxsize=shard_size)
     for (dir_path, _, filenames) in os.walk(src_path):
         list_of_files = [os.path.join(dir_path, file) for file in filenames]
         logging.info("Processing folder: {}".format(dir_path))
@@ -35,14 +36,13 @@ def create_unsupervised_dataset_from_folder_structure(
         for file in list_of_files:
             with open(file, "rb") as stream:
                 image = stream.read()
+
+            image_id = os.path.splitext(file)[0].replace(".", "_")
             clss = os.path.basename(os.path.dirname(file))
             if unsupervised:
-                sample = {
-                    "__key__": os.path.splitext(file)[0],
-                    "input.png": image,
-                }
+                sample = {"__key__": image_id, "input.png": image}
             else:
-                sample = {"__key__": os.path.splitext(file)[0], "input.png": image, "label.txt": clss}
+                sample = {"__key__": image_id, "input.png": image, "label.txt": clss}
 
             sink.write(sample)
     sink.close()

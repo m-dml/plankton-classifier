@@ -14,15 +14,16 @@ class WebdataLoader:
     validation_split: float = 0.1  # The fraction size of the validation data (rest ist test)
     shuffle_train_dataset: bool = True  # whether to shuffle the train dataset (bool)
     shuffle_validation_dataset: bool = False
-    super_classes: Any = None  # TODO: implement super classes
-    oversample_data: bool = True  # TODO: implement oversampling
+    super_classes: Any = None
+    oversample_data: bool = True
     random_seed: int = 42
     train_transforms: Any = None
     valid_transforms: Any = None
     data_base_path: str = MISSING
     is_in_simclr_mode: bool = False
-    subsample_supervised: float = 1  # TODO: implement subsampling
+    subsample_supervised: float = 1
     shuffle_size: int = 5000
+    label_list: Any = None
 
 
 @dataclass

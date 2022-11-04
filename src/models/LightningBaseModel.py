@@ -61,7 +61,6 @@ class LightningModel(pl.LightningModule):
 
         self.example_input_array = None
         self.class_labels = None
-        self.all_labels = None
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = hydra.utils.instantiate(self.cfg_metric)
 
@@ -87,11 +86,10 @@ class LightningModel(pl.LightningModule):
         self.batch_size = batch_size
         self.temperature_scale = temperature_scale
 
-    def set_external_data(self, class_labels, all_labels, example_input_array):
+    def set_external_data(self, class_labels, example_input_array):
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
-        self.all_labels = all_labels
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -115,9 +113,10 @@ class LightningModel(pl.LightningModule):
                 self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr
             )
         if self.cfg_scheduler:
-
             # total_train_steps = len(self.trainer.train_dataloader)
             total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
+            if total_train_steps <= 0:
+                total_train_steps = max(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
             self.console_logger.info("total_train_steps are {}".format(total_train_steps))
 
             if self.cfg_scheduler._target_ == "linear_warmup_decay":
