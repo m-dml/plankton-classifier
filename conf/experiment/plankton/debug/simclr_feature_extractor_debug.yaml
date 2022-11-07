@@ -26,10 +26,9 @@ trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 5
-  max_steps: 100
-  limit_train_batches: 50
+  max_steps: 200
+  limit_train_batches: 20
   limit_val_batches: 5
-  min_epochs: 4
   accelerator: "gpu"
   devices: 1
   precision: 32
@@ -41,7 +40,7 @@ logger:
 
 datamodule:
   num_workers: 0
-  batch_size: 64 # batch size per GPU
+  batch_size: 8 # batch size per GPU
   oversample_data: false
   pin_memory: false
   reduce_data: false # use max 10.000 images from each class
