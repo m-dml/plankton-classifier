@@ -42,7 +42,7 @@ datamodule:
   num_workers: 0
   batch_size: 64 # batch size per GPU
   oversample_data: false
-  data_base_path: "D:/PycharmProjects/plankton-classifier/data/webdataset"
+  data_base_path: "D:/PycharmProjects/plankton-classifier/data/webdataset/strand/"
   train_split: 0.66
   validation_split: 0.33
 

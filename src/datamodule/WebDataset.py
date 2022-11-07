@@ -9,22 +9,6 @@ import webdataset
 from src.utils import utils
 
 
-class CustomWebDataset(webdataset.WebDataset):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    # def __len__(self):
-    #     return -1
-
-
-class CustomWebLoader(webdataset.WebLoader):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    # def __len__(self):
-    #     return -1
-
-
 class WebDataLoader(pl.LightningDataModule):
     def __init__(
         self,
@@ -112,7 +96,7 @@ class WebDataLoader(pl.LightningDataModule):
 
         if self.is_in_simclr_mode:
             dataset = (
-                CustomWebDataset(urls)
+                webdataset.WebDataset(urls)
                 .shuffle(shuffle)
                 .decode("pil")
                 .to_tuple("input.png")
@@ -122,7 +106,7 @@ class WebDataLoader(pl.LightningDataModule):
 
         else:
             dataset = (
-                CustomWebDataset(urls)
+                webdataset.WebDataset(urls)
                 .shuffle(shuffle)
                 .decode("pil", "txt")
                 .tu_tuple("input.png", "label.txt")
@@ -130,7 +114,7 @@ class WebDataLoader(pl.LightningDataModule):
                 .batched(self.batch_size, pagrtial=False)
             )
 
-        loader = CustomWebLoader(dataset, batch_size=None, shuffle=False, num_workers=self.num_workers)
+        loader = webdataset.WebLoader(dataset, batch_size=None, shuffle=False, num_workers=self.num_workers)
         return loader
 
     @staticmethod
