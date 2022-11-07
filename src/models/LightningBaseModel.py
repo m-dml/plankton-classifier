@@ -256,7 +256,8 @@ class LightningModel(pl.LightningModule):
                     corrected_accuracy = self.accuracy_func(corrected_probs, targets)
                     self.log(f"Accuracy_corrected_outputs/{step}", corrected_accuracy)
             except (RuntimeError, ValueError):
-                pass
+                self.console_logger.warning("Could not compute probability corrected values. All validation metric "
+                                            "values are uncorrected.")
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"loss/{step}", loss)

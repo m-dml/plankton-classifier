@@ -23,7 +23,7 @@ print_config: false
 
 trainer:
   accelerator: "gpu"
-  devices: 2
+  devices: 1
   num_nodes: 1
   sync_batchnorm: true
 

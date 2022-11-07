@@ -43,7 +43,7 @@ class WebDataLoader(pl.LightningDataModule):
         self.valid_data = None
         self.test_data = None
 
-        self.excluded_labels = excluded_labels
+        self.excluded_labels = excluded_labels  # TODO: implement excluded labels
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.shuffle_train_dataset = shuffle_train_dataset
@@ -101,7 +101,8 @@ class WebDataLoader(pl.LightningDataModule):
                 .decode("pil")
                 .to_tuple("input.png")
                 .map_tuple(lambda x: self.transform(x, augmentations))
-                .batched(self.batch_size, partial=False, collation_fn=self.batch_collate_fn_pretrain)
+                .batched(self.batch_size, partial=False)
+                .map(self.post_collate_unsupervised)
             )
 
         else:
@@ -118,23 +119,15 @@ class WebDataLoader(pl.LightningDataModule):
         return loader
 
     @staticmethod
-    def batch_collate_fn_pretrain(samples):
-        assert isinstance(samples[0], (list, tuple)), type(samples[0])
-        image_list = []
-        image_copy_list = []
-        labels = []
-        for sample in samples:
-            sample = sample[0]
-            image_list.append(sample[0][0])
-            image_copy_list.append(sample[0][1])
-            labels.append(sample[1])
-        image = torch.stack(image_list)
-        image_copy = torch.stack(image_copy_list)
-        labels = torch.stack(labels)
-        return (image, image_copy), labels
+    def post_collate_unsupervised(samples):
+        samples = samples  # for debugger TODO: Delete this line
+        tuple_images, labels = list(zip(*samples[0]))  # samples should be a list of lists of tuples. The inner list contains the content.
+        tuple_images = torch.stack(tuple_images, dim=1)
+        image, image_copy = tuple_images
+
+        return (image, image_copy), torch.stack(labels)
 
     def transform(self, image, augmentations):
-        image = image
         if self.is_in_simclr_mode:
             image_copy = image.copy()
             if augmentations:
@@ -146,7 +139,7 @@ class WebDataLoader(pl.LightningDataModule):
             else:
                 raise ValueError("Transforms must be defined for pretraining")
 
-            return (image, image_copy), (torch.tensor([0]))
+            return torch.stack([image, image_copy]), (torch.tensor([0]))
 
         else:
             if augmentations:
