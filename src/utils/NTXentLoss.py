@@ -1,4 +1,4 @@
-"""Code from simclr implementation of pl bolts"""
+"""Code from simclr implementation of pl bolts."""
 
 import math
 
@@ -32,7 +32,7 @@ class SyncFunction(torch.autograd.Function):
 
 class NTXentLoss(nn.Module):
     def __init__(self, temperature=0.5, sync_ddp=True):
-        super(NTXentLoss, self).__init__()
+        super().__init__()
         self.sync_ddp = sync_ddp
         self.temperature = temperature
         self.eps = 1e-6

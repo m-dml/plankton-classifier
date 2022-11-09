@@ -20,13 +20,13 @@ def create_unsupervised_dataset_from_folder_structure(
 ):
     if not os.path.isdir(os.path.expanduser(dst_path)):
         os.makedirs(os.path.expanduser(dst_path))
-        logging.info("Created Directory: {}".format(dst_path))
+        logging.info(f"Created Directory: {dst_path}")
 
     file_name = f"{dst_prefix}_data_shard-%07d.tar" if dst_prefix else "data_shard-%07d.tar"
     sink = wds.ShardWriter(os.path.join(dst_path, file_name), maxsize=shard_size)
     for (dir_path, _, filenames) in os.walk(src_path):
         list_of_files = [os.path.join(dir_path, file) for file in filenames]
-        logging.info("Processing folder: {}".format(dir_path))
+        logging.info(f"Processing folder: {dir_path}")
 
         list_of_files = [
             basename

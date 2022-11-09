@@ -1,0 +1,20 @@
+[tool.vulture]
+exclude = ["conf/", "data/", "docs/", "notebooks/", "output*/", "src/external/"]
+make_whitelist = true
+min_confidence = 70
+paths = ["main.py", "src/"]
+sort_by_size = true
+verbose = false
+
+[tool.pylint]
+max-line-length = 120
+exclude-protected = ["_asdict", "_fields", "_replace", "_source", "_make", "_target_"]
+logging-format-style = "new"
+disable=[
+    "logging-fstring-interpolation",
+    "too-many-branches",
+    "too-many-statements",
+    "logging-fstring-interpolation",
+    "too-many-locals",
+]
+generated-members=["torch.*"]

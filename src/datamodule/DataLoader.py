@@ -2,7 +2,7 @@ import glob
 import os
 import pathlib
 from abc import abstractmethod
-from typing import Any, List, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -47,13 +47,13 @@ class ParentDataSet(Dataset):
         return len(self.files)
 
     @abstractmethod
-    def __getitem__(self, index) -> (Any, Union[torch.Tensor, List], str):
-        return Any, Union[torch.Tensor, List], str
+    def __getitem__(self, index) -> (Any, Union[torch.Tensor, list], str):
+        return Any, Union[torch.Tensor, list], str
 
 
 class PlanktonDataSet(ParentDataSet):
     def __init__(self, *args, **kwargs):
-        super(PlanktonDataSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __getitem__(self, item):
         image, label_name = self.files[item]
@@ -75,7 +75,7 @@ class PlanktonDataSet(ParentDataSet):
 
 class PlanktonInferenceDataSet(ParentDataSet):
     def __init__(self, *args, **kwargs):
-        super(PlanktonInferenceDataSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __getitem__(self, item):
         image, _ = self.files[item]
@@ -94,7 +94,7 @@ class PlanktonInferenceDataSet(ParentDataSet):
 
 class PlanktonMultiLabelDataSet(ParentDataSet):
     def __init__(self, *args, **kwargs):
-        super(PlanktonMultiLabelDataSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __getitem__(self, item):
         image, label_probabilities, labels = self.files[item]
@@ -112,7 +112,7 @@ class PlanktonMultiLabelDataSet(ParentDataSet):
 
 class PlanktonDataSetSimCLR(ParentDataSet):
     def __init__(self, *args, **kwargs):
-        super(PlanktonDataSetSimCLR, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         assert self.transform is not None, "Transform should be set"
 
     def __getitem__(self, item):

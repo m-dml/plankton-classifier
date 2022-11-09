@@ -5,16 +5,15 @@ import torch.nn.functional as F
 
 class SimCLRLoss(nn.Module):
     def __init__(self, temperature=0.5):
-        super(SimCLRLoss, self).__init__()
+        super().__init__()
         self.temperature = temperature
 
     def __call__(self, proj_features_combined: torch.Tensor, *args) -> torch.Tensor:
 
-        """
-        custom_simclr_contrastive_loss(proj_feat1, proj_feat2)
-        Returns contrastive loss, given sets of projected features, with positive
-        pairs matched along the batch dimension.
-        Required args:
+        """custom_simclr_contrastive_loss(proj_feat1, proj_feat2) Returns
+        contrastive loss, given sets of projected features, with positive pairs
+        matched along the batch dimension. Required args:
+
         - proj_features_combined (2D torch Tensor): projected features for both images
             augmentations (2*batch_size x feat_size)
         Returns:

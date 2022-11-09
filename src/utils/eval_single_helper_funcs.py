@@ -144,7 +144,7 @@ def get_best_checkpoints(path):
     for experiment_number, experiment_path in enumerate(tqdm(experiment_folders)):
         # print(experiment_number)
         found_best_checkpoint = False
-        with open(os.path.join(experiment_path, "main.log"), "r") as f:
+        with open(os.path.join(experiment_path, "main.log")) as f:
             complete_log = f.readlines()
             for line in complete_log:
                 # print(line)

@@ -1,4 +1,4 @@
-from typing import List
+from collections.abc import Iterable
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,15 +8,15 @@ class Classifier(nn.Module):
     def __init__(
         self,
         num_classes: int,
-        hidden_layers: List[int] = (1000, 1000),
+        hidden_layers: Iterable = (1000, 1000),
         activation=nn.ReLU(),
         input_features: int = 1000,
         normalize: bool = False,
         bias_in_last_layer: bool = True,
     ):
-        super(Classifier, self).__init__()
+        super().__init__()
         self.normalize = normalize
-        self.hidden_layers = hidden_layers
+        self.hidden_layers = list(hidden_layers)
         self.num_classes = num_classes
         self.activation = activation
         self.hidden_layers.insert(0, input_features)
@@ -40,7 +40,7 @@ class Classifier(nn.Module):
 
 class CustomResnet(nn.Module):
     def __init__(self, model, kernel_size=7, stride=2, channels=3, maxpool1=True):
-        super(CustomResnet, self).__init__()
+        super().__init__()
         self.model = model
 
         if not maxpool1:

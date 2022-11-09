@@ -12,7 +12,7 @@ from src.utils import utils
 
 class CIFAR10SimClrDataSet(CIFAR10):
     def __init__(self, transform=None, *args, **kwargs):
-        super(CIFAR10SimClrDataSet, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.transform = transform
 
         assert self.transform is not None, "Transform must be set"
@@ -48,7 +48,7 @@ class CIFAR10DataLoader(pl.LightningDataModule):
         pin_memory: bool = False,
         **kwargs,
     ):
-        super(CIFAR10DataLoader, self).__init__()
+        super().__init__()
 
         self.cfg_dataset = dataset
         self.data_path = data_base_path

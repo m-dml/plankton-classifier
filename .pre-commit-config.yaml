@@ -10,15 +10,46 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+      - id: check-case-conflict
       - id: debug-statements
       - id: detect-private-key
 
+  # reformat code to the highest python version specified
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.2.0
+    hooks:
+      - id: pyupgrade
+        args: [--py39-plus, --keep-percent-format]
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v1.7.7
+    hooks:
+      - id: autoflake
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --expand-star-imports
+          - --remove-duplicate-keys
+          - --remove-unused-variables
+
+  # finds unreferenced (dead) python code
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: "v2.4" # or any later Vulture version
+    hooks:
+      - id: vulture
+
   # python code formatting
   - repo: https://github.com/psf/black
-    rev: 22.8.0
+    rev: 22.10.0
     hooks:
       - id: black
         args: [--line-length, "120"]
+
+  # Reformat doc sctrings
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.0
+    hooks:
+      - id: docformatter
 
   # python import sorting
   - repo: https://github.com/PyCQA/isort
@@ -28,10 +59,9 @@ repos:
 
   # yaml formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.0-alpha.0
+    rev: v3.0.0-alpha.4
     hooks:
       - id: prettier
-        types: [yaml]
         args: [--line-length, "120", --end-of-line, "lf"]
 
   # python code analysis
@@ -39,3 +69,18 @@ repos:
     rev: 5.0.4
     hooks:
       - id: flake8
+
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks:
+      - id: interrogate
+        args: [--fail-under=100, --verbose]
+
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [ python ]
+        require_serial: true

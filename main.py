@@ -1,3 +1,12 @@
+"""Entry Level Script to the classifier. Everything can be run from here. Use.
+
+```bash
+python main.py --help
+```
+
+to see all available options.
+"""
+
 import copy
 import faulthandler
 import glob
@@ -6,19 +15,18 @@ import os
 import platform
 import sys
 from datetime import datetime
-from typing import List
 
 import hydra
 import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import instantiate
-from omegaconf import open_dict
+from omegaconf import DictConfig, open_dict
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.loggers import LightningLoggerBase
 from torchvision.transforms import Compose
 
-from src.lib.config import Config, register_configs
+from src.lib.config import register_configs
 from src.models.BaseModels import concat_feature_extractor_and_classifier
 from src.utils import utils
 
@@ -28,6 +36,7 @@ logger.addHandler(handler)
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
+    """Handle exceptions and log them to a file."""
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
@@ -38,7 +47,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 sys.excepthook = handle_exception
 
 faulthandler.enable()
-# sometimes windows and matplotlib don't play well together. Therefore we have to configure win for plt:
+# sometimes windows and matplotlib don't play well together. Therefor, we have to configure win for plt:
 if platform.system() == "Windows":
     os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -50,7 +59,13 @@ register_configs()
 
 
 @hydra.main(config_name="config", config_path="conf")
-def main(cfg: Config):
+def main(cfg: DictConfig):
+    """Main function to run the script.
+
+    Args:
+        cfg (DictConfig): Hydra created config object.
+    """
+
     utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings
     utils.set_log_levels(cfg.log_level)
     log = utils.get_logger("main.main", cfg.log_level)
@@ -68,7 +83,7 @@ def main(cfg: Config):
 
     try:
         # Init Lightning callbacks
-        callbacks: List[Callback] = []
+        callbacks: list[Callback] = []
         if "callbacks" in cfg:
             for _, cb_conf in cfg["callbacks"].items():
                 if "_target_" in cb_conf:
@@ -76,12 +91,12 @@ def main(cfg: Config):
                     callbacks.append(hydra.utils.instantiate(cb_conf))
 
         # Init Lightning loggers
-        logger: List[LightningLoggerBase] = []
+        cfg_logger: list[LightningLoggerBase] = []
         if "logger" in cfg:
             for _, lg_conf in cfg["logger"].items():
                 if "_target_" in lg_conf:
                     log.info(f"Instantiating logger <{lg_conf._target_}>")
-                    logger.append(hydra.utils.instantiate(lg_conf))
+                    cfg_logger.append(hydra.utils.instantiate(lg_conf))
 
         # Init Transformations
         train_transforms: Compose = hydra.utils.instantiate(cfg.datamodule.train_transforms)
@@ -162,9 +177,9 @@ def main(cfg: Config):
             log.info(f"Old state dict has {len_old_state_dict} entries.")
             try:
                 pretrained_state_dict = torch.load(cfg.load_state_dict, map_location=torch.device(device))
-            except Exception as e:
-                log.error(e)
-                raise e
+            except Exception as exception:
+                log.error(exception)
+                raise exception
             for key in pretrained_state_dict.keys():
                 # make sure feature extractor weights are the same format:
                 if key not in this_state_dict and not key.startswith("classifier."):
@@ -172,7 +187,7 @@ def main(cfg: Config):
                     net.load_state_dict(pretrained_state_dict, strict=True)
 
             keys_to_drop = [key for key in pretrained_state_dict.keys() if key.startswith("classifier")]
-            [pretrained_state_dict.pop(key_to_drop) for key_to_drop in keys_to_drop]
+            _ = [pretrained_state_dict.pop(key_to_drop) for key_to_drop in keys_to_drop]
             missing_keys, unexpected_keys = net.load_state_dict(pretrained_state_dict, strict=False)
             log.warning(f"Missing keys: {missing_keys}")
             log.warning(f"Unexpected keys: {unexpected_keys}")
@@ -219,7 +234,7 @@ def main(cfg: Config):
         # log hparam metrics to tensorboard:
         log.info("Logging hparams to tensorboard")
         hydra_params = utils.log_hyperparameters(config=cfg, model=model)
-        for this_logger in logger:
+        for this_logger in cfg_logger:
             if "tensorboard" in str(this_logger):
                 log.info("Add hparams to tensorboard")
                 this_logger.log_hyperparams(hydra_params, {"hp/loss": 0, "hp/accuracy": 0, "hp/epoch": 0})
@@ -235,7 +250,7 @@ def main(cfg: Config):
         trainer: Trainer = instantiate(
             cfg.trainer,
             strategy=cfg.strategy,
-            logger=logger,
+            logger=cfg_logger,
             callbacks=callbacks,
             _convert_="partial",
             profiler=cfg.profiler,
@@ -287,15 +302,15 @@ def main(cfg: Config):
         if trainer.checkpoint_callback.best_model_path is not None:
             log.info(f"Best checkpoint path:\n{trainer.checkpoint_callback.best_model_path}")
 
-    except Exception as e:
+    except Exception as exception:
         log.exception("Error occurred during main().")
-        print("Error!", e)
-        raise e
+        print("Error!", exception)
+        raise exception
 
     return trainer.callback_metrics["hp/accuracy"].item()
 
 
 if __name__ == "__main__":
-    log = utils.get_logger("__main__", "info")
-    log.info("Starting python script")
-    main()
+    entry_log = utils.get_logger("__main__", "info")
+    entry_log.info("Starting python script")
+    main()  # pylint: disable=no-value-for-parameter

@@ -113,11 +113,10 @@ class LightningModel(pl.LightningModule):
                 self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr
             )
         if self.cfg_scheduler:
-            # total_train_steps = len(self.trainer.train_dataloader)
             total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
             if total_train_steps <= 0:
                 total_train_steps = max(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
-            self.console_logger.info("total_train_steps are {}".format(total_train_steps))
+            self.console_logger.info(f"total_train_steps are {total_train_steps}")
 
             if self.cfg_scheduler._target_ == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
@@ -148,7 +147,7 @@ class LightningModel(pl.LightningModule):
 
         return optimizer
 
-    def training_step(self, batch, batch_idx, *args, **kwargs):
+    def training_step(self, batch, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
 
@@ -170,7 +169,7 @@ class LightningModel(pl.LightningModule):
     def on_validation_epoch_start(self) -> None:
         self.console_logger.debug("Starting validation")
 
-    def validation_step(self, batch, batch_idx, *args, **kwargs):
+    def validation_step(self, batch, _, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
         features, classifier_logits = self._do_gpu_parallel_step(images)
@@ -192,7 +191,7 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
-    def test_step(self, batch, batch_idx, *args, **kwargs):
+    def test_step(self, batch, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
 
@@ -208,7 +207,7 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
-    def predict_step(self, batch, batch_idx, *args, **kwargs):
+    def predict_step(self, batch, *args, **kwargs):
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
         return {
@@ -237,7 +236,7 @@ class LightningModel(pl.LightningModule):
         accuracy = 0  # set initial value, for the case of multi-label training
         predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         self.console_logger.debug(
-            f"classifier_outputs.shape = {classifier_outputs.shape}, " f"labels.shape = {labels.shape}"
+            f"classifier_outputs.shape = {classifier_outputs.shape}, labels.shape = {labels.shape}"
         )
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
             loss = self.loss_func(F.log_softmax(classifier_outputs.float(), dim=1), labels.float())
@@ -257,7 +256,7 @@ class LightningModel(pl.LightningModule):
                     self.log(f"Accuracy_corrected_outputs/{step}", corrected_accuracy)
             except (RuntimeError, ValueError):
                 self.console_logger.warning(
-                    "Could not compute probability corrected values. All validation metric " "values are uncorrected."
+                    "Could not compute probability corrected values. All validation metric values are uncorrected."
                 )
 
         # lets log some values for inspection (for example in tensorboard):
@@ -320,7 +319,7 @@ class LightningModel(pl.LightningModule):
                 if int(cm[i, j]) == float(cm[i, j]):
                     plt.text(j, i, str(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
                 else:
-                    plt.text(j, i, "{:.2f}".format(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
+                    plt.text(j, i, f"{cm[i, j]:.2f}", horizontalalignment="center", color=color, fontsize=8)
 
         plt.tight_layout()
         plt.xlabel("True label")

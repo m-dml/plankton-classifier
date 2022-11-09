@@ -42,6 +42,7 @@ def set_log_levels(level="INFO"):
 
 def extras(config: DictConfig) -> None:
     """A couple of optional utilities, controlled by main config file:
+
     - disabling warnings
     - easier access to debug mode
     - forcing debug friendly configuration
@@ -99,6 +100,7 @@ def print_config(
     resolve: bool = True,
 ) -> None:
     """Prints content of DictConfig using Rich library and its tree structure.
+
     Args:
         config (DictConfig): Configuration composed by Hydra.
         fields (Sequence[str], optional): Determines which main fields from config will
@@ -127,9 +129,10 @@ def log_hyperparameters(
     config: DictConfig,
     model: pl.LightningModule,
 ) -> dict:
-    """This method controls which parameters from Hydra config are saved by Lightning loggers.
-    Additionaly saves:
-        - number of trainable model parameters
+    """This method controls which parameters from Hydra config are saved by
+    Lightning loggers. Additionaly saves:
+
+    - number of trainable model parameters
     """
 
     hparams = {}
@@ -152,7 +155,7 @@ def log_hyperparameters(
 def instantiate_model(ckpt_path, _datamodule, _example_input):
     _model = LightningModel.load_from_checkpoint(checkpoint_path=ckpt_path)
     class_label_file = os.path.join(os.path.split(ckpt_path)[0], "class_labels.json")
-    with open(class_label_file, "r") as f:
+    with open(class_label_file) as f:
         class_labels = json.load(f)
 
     class_label_dict = dict(class_labels)
@@ -246,7 +249,7 @@ def get_split_from_checkpoint_file(__file):
     override_file = os.path.abspath(os.path.join(_path, ".hydra", "overrides.yaml"))
 
     split = None
-    with open(override_file, "r") as f:
+    with open(override_file) as f:
         for line in f:
             if "datamodule.subsample_supervised=" in line:
                 split = np.round(float(line.split("=")[-1].strip()), 12)
