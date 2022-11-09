@@ -147,6 +147,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         use_canadian_data,
         super_classes,
         oversample_data,
+        data_base_path,
         klas_data_path,
         planktonnet_data_path,
         canadian_data_path,
@@ -190,6 +191,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.shuffle_test_dataset = shuffle_test_dataset
         self.preload_dataset = preload_dataset
 
+        self.data_base_path = data_base_path
         self.klas_data_path = klas_data_path
         self.planktonnet_data_path = planktonnet_data_path
         self.canadian_data_path = canadian_data_path
@@ -218,12 +220,9 @@ class PlanktonDataLoader(pl.LightningDataModule):
             raise ValueError("Usage of the Planktonnet data is not permitted for the paper")
 
         self.is_set_up = False
-        self.console_logger.info("Successfully initialised up datamodule.")
+        self.console_logger.info("Successfully initialised the datamodule.")
 
     def setup(self, stage=None):
-        # if self.is_set_up:
-        #     self.console_logger.warning("The Datamodule was already set up and therefore this setup will be skipped.")
-        #     return
 
         self.console_logger.debug("Loading Training data")
         train_subset = self.prepare_data_setup(subset="train")
@@ -234,10 +233,6 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.console_logger.debug("Loading Test data")
         test_subset = self.prepare_data_setup(subset="test")
         self.console_logger.debug(f"len(test_subset) = {len(test_subset)}")
-
-        assert len(train_subset) > 0, "No training data!"
-        assert len(valid_subset) > 0, "No validation data!"
-        assert len(test_subset) > 0, "No test data!"
 
         if self.unlabeled_files_to_append:
             self.console_logger.debug("Trying to load unlabeled files")
@@ -254,6 +249,14 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.canadian_data_path)}")
             if self.use_planktonnet_data:
                 raise FileNotFoundError(f"Did not find any files under {os.path.abspath(self.planktonnet_data_path)}")
+
+        if len(valid_subset) == 0:
+            valid_idx_start = int(len(train_subset) * self.train_split)
+            valid_idx_end = int(len(train_subset) * (self.train_split + self.validation_split))
+
+            valid_subset = train_subset[valid_idx_start:valid_idx_end]
+            test_subset = train_subset[valid_idx_end:]
+            train_subset = train_subset[:valid_idx_start]
 
         self.console_logger.debug("Separating labels from images")
         self.unique_labels, self.train_labels = np.unique(list(list(zip(*train_subset))[1]), return_inverse=True)
@@ -379,6 +382,8 @@ class PlanktonDataLoader(pl.LightningDataModule):
     def _add_data_from_folder(self, folder, file_ext="png"):
         files = []
         for file in tqdm(pathlib.Path(folder).rglob(f"*.{file_ext}"), position=0, leave=True):
+            if os.path.getsize(file) <= 30:  # smallest image(tiff) is 35 bytes (single black pixel png is 67 bytes)
+                continue  # skip empty files
             label = os.path.split(folder)[-1]
             label = self._find_super_class(label)
             if self.excluded_labels is not None:
@@ -545,15 +550,18 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
 class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     def __init__(
         self,
-        human_error2_data_path,
+        csv_data_path,
+        convert_probabilities_to_majority_vote,
         **kwargs,
     ):
         super().__init__(
             **kwargs,
         )
 
-        self.human_error2_data_path = human_error2_data_path
+        self.label_encoder = None
+        self.csv_data_path = csv_data_path
         self.unique_labels = None
+        self.convert_probabilities_to_majority_vote = convert_probabilities_to_majority_vote
 
     def setup(self, stage=None):
         train_subset = self.prepare_data_setup("train")
@@ -620,7 +628,11 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         df = pd.read_csv(csv_file)
         df = df.drop(columns="Unnamed: 0")
         repl_column_names = dict()
-
+        self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
+        nan_vals = df.isna().sum().sum()
+        if nan_vals > 0:
+            self.console_logger.warning(f"Found {nan_vals} rows with NaN values. I will drop them.")
+        df = df.dropna()
         all_labels = []
         for column in df.columns:
             column_new = column.strip().lower()
@@ -630,37 +642,69 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             if column != "file":
                 all_labels += df[column].values.tolist()
 
-        le = preprocessing.LabelEncoder()
-        le.fit(all_labels)
-        self.unique_labels = le.classes_.tolist()
+        if self.label_encoder is None:
+            self.label_encoder = preprocessing.LabelEncoder()
+            self.label_encoder.fit(all_labels)
+
         for column in df.columns:
             if column != "file":
-                df[column] = le.transform(df[column].values)
+                df[column] = self.label_encoder.transform(df[column].values)
 
         df = df.rename(columns=repl_column_names)
 
+        if self.unique_labels is None:
+            self.unique_labels = self.label_encoder.classes_.tolist()
+            self.max_label_value = df.drop(labels="file", axis=1).max().max()
+        if not set(np.unique(all_labels)).issubset(self.unique_labels):
+            new_labels = set(np.unique(all_labels)).difference(set(self.unique_labels))
+            raise ValueError(f"The labels {new_labels} from <{csv_file}> are not in the list of training labels.")
+        if (set(np.unique(all_labels)) != set(self.unique_labels)) and set(np.unique(all_labels)).issubset(
+            self.unique_labels
+        ):
+            self.console_logger.warning(
+                f"There are labels in the training dataset that are not in <{csv_file}> dataset."
+            )
+
+        self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
+        self.console_logger.debug(f"All unique labels from np.unique are {np.unique(all_labels)}")
+
         files = []
-        self.max_label_value = df.drop(labels="file", axis=1).max().max()
+
         for file, labels in df.set_index("file").iterrows():
             files.append(
                 (
                     self.load_image(os.path.join(data_path, file), preload=self.preload_dataset),
-                    self.multi_labels_to_probabilities(labels.values, max_label_value=self.max_label_value),
+                    self.multi_labels_to_probabilities(labels.values),
                     labels.values,
                 )
             )
         return files
 
     def prepare_data_setup(self, subset):
-        csv_file = os.path.join(self.human_error2_data_path, f"multi_label_{subset}.csv")
-        folder = os.path.join(self.human_error2_data_path, subset)
+        file_struct = os.path.join(self.csv_data_path, f"*{subset}*.csv")
+        self.console_logger.info(f"Trying to load csv file from <{file_struct}>")
+        csv_file = glob.glob(file_struct)[0]
+        if not os.path.isfile(csv_file):
+            raise FileNotFoundError(
+                f"Could not find csv file <{csv_file}> in " f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>"
+            )
+        self.console_logger.info(f"Loading data from <{self.csv_data_path} ; {csv_file}>")
+        folder = os.path.join(self.csv_data_path, subset)
+        if not os.path.isdir(folder):
+            self.console_logger.warning(f"Could not find folder <{folder}>. Using <{self.data_base_path}> instead.")
+            folder = self.data_base_path
+            if not os.path.isdir(folder):
+                raise FileNotFoundError(f"Could not find <{folder}>")
+        self.console_logger.info(f"Reading relative paths in csv file starting from <{folder}>")
         files = self.load_multilabel_dataset(folder, csv_file)
         return files
 
-    @staticmethod
-    def multi_labels_to_probabilities(labels, max_label_value):
-        n_bins = len(np.arange(0, max_label_value))
-        probabilities = np.histogram(labels, bins=n_bins + 1, range=(0, n_bins))[0] / len(labels)
+    def multi_labels_to_probabilities(self, labels):
+        n_bins = len(self.unique_labels)
+        probabilities = np.histogram(labels, bins=n_bins, range=(0, n_bins))[0] / len(labels)
+
+        if self.convert_probabilities_to_majority_vote:
+            probabilities = np.argmax(probabilities)
         return probabilities
 
     def train_dataloader(self):
@@ -676,13 +720,13 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
 class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     def __init__(
         self,
-        human_error2_data_path,
+        csv_data_path,
         which_expert_label: int,
         **kwargs,
     ):
         super().__init__(**kwargs)
 
-        self.human_error2_data_path = human_error2_data_path
+        self.csv_data_path = csv_data_path
         self.which_expert_label = which_expert_label
 
     def prepare_data_setup(self, subset):

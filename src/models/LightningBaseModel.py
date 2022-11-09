@@ -61,7 +61,6 @@ class LightningModel(pl.LightningModule):
 
         self.example_input_array = None
         self.class_labels = None
-        self.all_labels = None
         self.loss_func = hydra.utils.instantiate(self.cfg_loss)
         self.accuracy_func = hydra.utils.instantiate(self.cfg_metric)
 
@@ -87,11 +86,10 @@ class LightningModel(pl.LightningModule):
         self.batch_size = batch_size
         self.temperature_scale = temperature_scale
 
-    def set_external_data(self, class_labels, all_labels, example_input_array):
+    def set_external_data(self, class_labels, example_input_array):
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
-        self.all_labels = all_labels
 
     def forward(self, images, *args, **kwargs):
         if self.is_in_simclr_mode:
@@ -115,12 +113,13 @@ class LightningModel(pl.LightningModule):
                 self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr
             )
         if self.cfg_scheduler:
-
             # total_train_steps = len(self.trainer.train_dataloader)
             total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
+            if total_train_steps <= 0:
+                total_train_steps = max(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
             self.console_logger.info("total_train_steps are {}".format(total_train_steps))
 
-            if self.cfg_scheduler == "linear_warmup_decay":
+            if self.cfg_scheduler._target_ == "linear_warmup_decay":
                 warmup_steps = int(total_train_steps * 0.01)  # Use 1% of training for warmup
                 self.console_logger.info(
                     f"Total train steps are {total_train_steps}, so {warmup_steps} will be used for warmup."
@@ -133,7 +132,7 @@ class LightningModel(pl.LightningModule):
                     "frequency": 1,
                     "name": "Lars-LR",
                 }
-            elif self.cfg_scheduler == "cosine":
+            elif self.cfg_scheduler._target_ == "cosine":
                 scheduler = {
                     "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, total_train_steps, eta_min=0.0),
                     "interval": "step",
@@ -141,10 +140,10 @@ class LightningModel(pl.LightningModule):
                     "name": "Cosine LR",
                 }
             else:
-                raise NotImplementedError(
-                    f"The scheduler {self.cfg_scheduler} is not implemented. Please use one of "
-                    f"[linear_warmup_decay, cosine] or none."
-                )
+                scheduler = {
+                    "scheduler": hydra.utils.instantiate(self.cfg_scheduler, optimizer=optimizer),
+                    "monitor": "loss/Validation",
+                }
             return [optimizer], [scheduler]
 
         return optimizer
@@ -237,6 +236,9 @@ class LightningModel(pl.LightningModule):
     def _do_gpu_accumulated_step(self, classifier_outputs, labels, label_names, step):
         accuracy = 0  # set initial value, for the case of multi-label training
         predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
+        self.console_logger.debug(
+            f"classifier_outputs.shape = {classifier_outputs.shape}, " f"labels.shape = {labels.shape}"
+        )
         if isinstance(self.loss_func, torch.nn.KLDivLoss):
             loss = self.loss_func(F.log_softmax(classifier_outputs.float(), dim=1), labels.float())
             accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
@@ -254,7 +256,8 @@ class LightningModel(pl.LightningModule):
                     corrected_accuracy = self.accuracy_func(corrected_probs, targets)
                     self.log(f"Accuracy_corrected_outputs/{step}", corrected_accuracy)
             except (RuntimeError, ValueError):
-                pass
+                self.console_logger.warning("Could not compute probability corrected values. All validation metric "
+                                            "values are uncorrected.")
 
         # lets log some values for inspection (for example in tensorboard):
         self.log(f"loss/{step}", loss)

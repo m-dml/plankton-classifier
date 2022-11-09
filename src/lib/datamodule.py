@@ -5,6 +5,28 @@ from omegaconf import MISSING
 
 
 @dataclass
+class WebdataLoader:
+    _target_: str = "src.datamodule.WebDataset.WebDataLoader"
+    excluded_labels: Any = None
+    batch_size: int = MISSING
+    num_workers: int = MISSING
+    train_split: float = 0.7  # The fraction size of the training data
+    validation_split: float = 0.1  # The fraction size of the validation data (rest ist test)
+    shuffle_train_dataset: bool = True  # whether to shuffle the train dataset (bool)
+    shuffle_validation_dataset: bool = False
+    super_classes: Any = None
+    oversample_data: bool = True
+    random_seed: int = 42
+    train_transforms: Any = None
+    valid_transforms: Any = None
+    data_base_path: str = MISSING
+    is_in_simclr_mode: bool = False
+    subsample_supervised: float = 1
+    shuffle_size: int = 5000
+    label_list: Any = None
+
+
+@dataclass
 class ParentDataloader:
     pin_memory: bool = False
     batch_size: int = 16
@@ -88,7 +110,8 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
     _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelDataLoader"
     _recursive_: bool = False
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
-    human_error2_data_path: str = data_base_path + "human_error2"
+    csv_data_path: str = data_base_path + "human_error2"
+    convert_probabilities_to_majority_vote: bool = False
 
 
 @dataclass
@@ -96,7 +119,7 @@ class PlanktonMultiLabelSingleScientistDataLoader(PlanktonDataLoader):
     _target_: str = "src.datamodule.DataLoader.PlanktonMultiLabelSingleScientistDataLoader"
     _recursive_: bool = False
     data_base_path: str = "/gpfs/work/machnitz/plankton_dataset/"
-    human_error2_data_path: str = data_base_path + "human_error2"
+    csv_data_path: str = data_base_path + "human_error2"
     which_expert_label: int = 0
 
 

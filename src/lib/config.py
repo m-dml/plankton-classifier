@@ -17,6 +17,7 @@ from src.lib.datamodule import (
     PlanktonMultiLabelDataLoader,
     PlanktonMultiLabelDataSet,
     PlanktonMultiLabelSingleScientistDataLoader,
+    WebdataLoader,
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
@@ -26,6 +27,7 @@ from src.lib.model import Classifier, CustomResnet, ResNet
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.profiler import NoProfiler, PytorchProfiler
+from src.lib.scheduler import CosineAnnealingLR, CosineAnnealingWarmStart, ReduceLRonPlateau
 from src.lib.trainer import Trainer
 
 
@@ -51,6 +53,7 @@ def register_configs() -> None:
         group="datamodule",
     )
     cs.store(name="cifar10_datamodule_base", node=CIFAR10DataLoader, group="datamodule")
+    cs.store(name="webdata_datamodule_base", node=WebdataLoader, group="datamodule")
 
     dataset_group = "datamodule/dataset"
     cs.store(name="simclr_base", node=PlanktonDataSetSimCLR, group=dataset_group)
@@ -80,6 +83,12 @@ def register_configs() -> None:
     cs.store(name="sgd", node=SGD, group=optimizer_group)
     cs.store(name="rmsprop", node=RMSprop, group=optimizer_group)
     cs.store(name="lars", node=LARS, group=optimizer_group)
+
+    # scheduler:
+    scheduler_group = "scheduler"
+    cs.store(name="reduce_lr_on_plateau", node=ReduceLRonPlateau, group=scheduler_group)
+    cs.store(name="linear_warmup_decay", node=CosineAnnealingWarmStart, group=scheduler_group)
+    cs.store(name="cosine", node=CosineAnnealingLR, group=scheduler_group)
 
     # loss:
     cs.store(name="nll_loss", node=NLLLoss, group="loss")
@@ -117,10 +126,11 @@ class Config:
     metric: Any = MISSING
     strategy: Any = None
     profiler: Any = None
+    scheduler: Any = None
 
     evaluate: bool = False
+    pretrain: bool = False
     inference: bool = False
-    scheduler: Any = None
     random_seed: int = 42
     print_config: bool = True
     debug: bool = False

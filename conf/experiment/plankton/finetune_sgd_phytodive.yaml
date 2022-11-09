@@ -1,0 +1,97 @@
+# @package _global_
+
+defaults:
+  - /scheduler: reduce_lr_on_plateau
+  - override /datamodule: plankton_multilabel
+  - override /datamodule/dataset: multilabel
+  - override /loss: cross_entropy_loss
+  - override /datamodule/train_transforms: auto_augment
+  - override /datamodule/valid_transforms: plankton_eval
+  - override /model/feature_extractor: simclr_resnet
+  - override /model/classifier: linear
+  - override /trainer: strand
+  - override /hydra/launcher: strand_single
+  - override /optimizer: sgd
+  - override /strategy: null
+  - override /metric: accuracy
+  - _self_
+
+debug: false
+load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_model_799.weights
+random_seed: 7
+log_level: "info"
+output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune_sgd/phytodive/
+
+trainer:
+  fast_dev_run: false
+  num_sanity_val_steps: 5
+  max_epochs: 1000
+  accelerator: "gpu"
+  devices: 1
+  precision: 32
+  num_nodes: 1
+  sync_batchnorm: false # since just using 1 gpu
+  replace_sampler_ddp: false
+  log_every_n_steps: 1
+  max_steps: -1
+
+logger:
+  tensorboard:
+    default_hp_metric: false
+
+datamodule:
+  super_classes: {}
+  excluded_labels: []
+  num_workers: 10
+  batch_size: 64
+  oversample_data: true
+  # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
+  # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
+  # downsample (For Klaas data 4000 samples mean 100% data):
+  subsample_supervised: 1
+  pin_memory: false
+  reduce_data: false # use max 10.000 images from each class
+  use_klas_data: false
+  use_canadian_data: false
+  use_planktonnet_data: false
+  preload_dataset: false
+  csv_data_path: /gpfs/work/machnitz/plankton_dataset/phytodive
+  data_base_path: /gpfs/work/vaswani/LPcruises/rois
+  convert_probabilities_to_majority_vote: true
+
+lightning_module:
+  log_confusion_matrices: false
+  log_images: false
+  freeze_feature_extractor: false
+  temperature_scale: false
+  log_tsne_image: false
+
+model:
+  classifier:
+    num_classes: null # size of the projection head
+    input_features: 2048
+  feature_extractor:
+    model:
+      _target_: "torchvision.models.resnet50"
+      num_classes: ${model.classifier.input_features}
+      pretrained: false
+      # first conv layer:
+    kernel_size: 7 # default is 7
+    stride: 2 # default is 2
+    channels: 3 # default is 3
+    maxpool1: true
+
+optimizer:
+  nesterov: false
+  momentum: 0.9
+  lr: 0.066
+
+callbacks:
+  early_stopping:
+    monitor: "loss/Validation"
+    patience: 50
+    verbose: true
+    mode: "min"
+
+scheduler:
+  patience: 5

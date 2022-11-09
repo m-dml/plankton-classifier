@@ -137,7 +137,7 @@ def get_best_checkpoints(path):
         try:
             if num_folder.isnumeric():
                 experiment_folders.append(folder)
-        except:
+        except:  # noqa E722
             print(f"Skipping {folder}")
 
     # fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(20, 15), sharex=True, sharey=True)

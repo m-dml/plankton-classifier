@@ -1,0 +1,7 @@
+defaults:
+  - webdata_datamodule_base
+  - dataset: null
+  - _self_
+
+excluded_labels: [] # has to be  a list
+is_in_simclr_mode: ${pretrain}
