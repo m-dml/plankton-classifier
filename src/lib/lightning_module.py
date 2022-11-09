@@ -7,7 +7,7 @@ from src.lib.optimizer import Optimizer
 
 @dataclass
 class LitModule:
-    _target_: str = "src.models.LightningBaseModel.LightningModel"
+    _target_: str = "src.models.lightning_module.LightningModel"
     _recursive_: bool = False
     log_confusion_matrices: bool = False
     log_images: bool = False

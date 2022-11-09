@@ -1,7 +1,14 @@
+"""
+Module containing the implementation of the LightningModule.
+This is where the training, validation and testing steps are defined,
+which means it defines how the data flows through the model.
+"""
+
 import glob
 import itertools
 import json
 import os
+from typing import Union
 
 import hydra
 import matplotlib.pyplot as plt
@@ -10,15 +17,17 @@ import pandas as pd
 import pytorch_lightning as pl
 import seaborn as sns
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics
 from natsort import natsorted
+from omegaconf import DictConfig
 from pl_bolts.optimizers.lr_scheduler import linear_warmup_decay
 from pytorch_lightning.utilities import rank_zero_only
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 from sklearn.linear_model import SGDClassifier
 from sklearn.manifold import TSNE
 from sklearn.metrics import balanced_accuracy_score
+from torch import nn
 
 from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
 from src.models.base_models import concat_feature_extractor_and_classifier
@@ -27,31 +36,55 @@ from src.utils.EvalWrapper import EvalWrapper
 
 
 class LightningModel(pl.LightningModule):
+    """
+    Class defining the methods as described in the pytorch-lightning documentation.
+    """
+
     def __init__(
         self,
-        log_images,
-        log_confusion_matrices,
-        log_tsne_image,
-        optimizer,
-        scheduler,
-        feature_extractor,
-        classifier,
-        loss,
-        metric,
-        freeze_feature_extractor,
-        is_in_simclr_mode,
-        batch_size,
-        temperature_scale,
-        num_steps_per_epoch,
-        num_unique_labels=None,
+        log_images: bool,
+        log_confusion_matrices: bool,
+        log_tsne_image: bool,
+        optimizer: DictConfig,
+        scheduler: DictConfig,
+        feature_extractor: DictConfig,
+        classifier: DictConfig,
+        loss: DictConfig,
+        metric: DictConfig,
+        freeze_feature_extractor: bool,
+        is_in_simclr_mode: bool,
+        batch_size: int,
+        temperature_scale: bool,  # TODO: Implement / fix temperature scaling
+        num_steps_per_epoch: int,
+        num_unique_labels: int = None,
     ):
+        """
+        Constructor of the LightningModule.
+
+        Args:
+            log_images (bool): Whether to log images to tensorboard.
+            log_confusion_matrices (bool): Whether to log confusion matrices to tensorboard.
+            log_tsne_image (bool): Whether to log a t-SNE image of the last feature extractor layer to tensorboard.
+            optimizer (DictConfig): Hydra-configuration of the optimizer.
+            scheduler (optional, DictConfig): Hydra-configuration of the scheduler.
+            feature_extractor (DictConfig): Hydra-configuration of the feature extractor.
+            classifier (DictConfig): Hydra-configuration of the classifier part of the model.
+            loss (DictConfig): Hydra-configuration of the loss function.
+            metric (DictConfig): Hydra-configuration of the metric.
+            freeze_feature_extractor (bool): Whether to freeze the weights of the feature extractor.
+            is_in_simclr_mode (bool): Whether the model is used in SimCLR mode (pretraining).
+            batch_size (int): Batch size.
+            temperature_scale (bool): Whether to use temperature scaling (deprecated at the moment).
+            num_steps_per_epoch (int): Number of training steps per epoch.
+            num_unique_labels (int, optional): Number of unique labels in the dataset. Defaults to None.
+        """
 
         super().__init__()
 
         self.eval_wrapper = None
         self.training_class_counts = None
         self.num_steps_per_epoch = num_steps_per_epoch
-        self.lr = optimizer.lr
+        self.learning_rate = optimizer.lr
         self.cfg_optimizer = optimizer
         self.cfg_loss = loss
         self.cfg_scheduler = scheduler
@@ -79,19 +112,43 @@ class LightningModel(pl.LightningModule):
         self.log_images = log_images
         self.log_confusion_matrices = log_confusion_matrices
         self.log_tsne_image = log_tsne_image
-        self.confusion_matrix = dict()
+        self.confusion_matrix = {}
         self.console_logger = utils.get_logger("LightningBaseModel")
         self.console_logger.debug("Test Debug")
         self.is_in_simclr_mode = is_in_simclr_mode
         self.batch_size = batch_size
         self.temperature_scale = temperature_scale
 
-    def set_external_data(self, class_labels, example_input_array):
+    def set_external_data(self, class_labels: list, example_input_array: torch.Tensor):
+        """
+        Instead of adding large data during the init, it can be added here to speed up the initialization of the model
+        substantially. This is due to OmegaConf not being able to handle large data efficiently, so this method is
+        called after hydras instantiation.
+
+        Args:
+            class_labels (list): List of class labels.
+            example_input_array (torch.Tensor): Example input used to build the model graph.
+        """
 
         self.example_input_array = example_input_array
         self.class_labels = class_labels
 
-    def forward(self, images, *args, **kwargs):
+    def forward(    # pylint: disable=arguments-differ
+        self, images: torch.Tensor, *args, **kwargs
+    ) -> (torch.Tensor, torch.Tensor):
+        """
+        Standard forward method of a pytorch model. It behaves differently depending on if the model is in SimCLR
+        (pretraining) mode.
+        Args:
+            images (torch.Tensor): Input images. Shape will vary depending on the mode. In simclr mode it will be
+                (2, batch_size, channels, height, width). The 2 is due to the two differently augmented images.
+                If not in SimCLR mode, the shape will be (batch_size, channels, height, width).
+        Returns:
+            (torch.Tensor, torch.Tensor):
+                - In SimCLR mode: The concatenated features of the two images and the concatenated logits of the
+                SimCLR-head.
+                - Else: Returns the output of the feature extractor and the output of the classifier.
+        """
         if self.is_in_simclr_mode:
             features_0 = self.feature_extractor(images[0])
             features_1 = self.feature_extractor(images[1])
@@ -106,11 +163,17 @@ class LightningModel(pl.LightningModule):
         return features, predictions
 
     def configure_optimizers(self):
+        """
+        Configures the optimizer and scheduler. If the scheduler is not None, it will be returned as well.
+        If the feature extractor is frozen, the optimizer will only be initialized with the classifier weights.
+        """
         if self.model.feature_extractor.training:
-            optimizer = hydra.utils.instantiate(self.cfg_optimizer, params=self.model.parameters(), lr=self.lr)
+            optimizer = hydra.utils.instantiate(
+                self.cfg_optimizer, params=self.model.parameters(), lr=self.learning_rate
+            )
         else:
             optimizer = hydra.utils.instantiate(
-                self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.lr
+                self.cfg_optimizer, params=self.model.classifier.parameters(), lr=self.learning_rate
             )
         if self.cfg_scheduler:
             total_train_steps = min(self.trainer.max_steps, int(self.num_steps_per_epoch * self.trainer.max_epochs))
@@ -147,15 +210,31 @@ class LightningModel(pl.LightningModule):
 
         return optimizer
 
-    def training_step(self, batch, *args, **kwargs):
+    def training_step(  # pylint: disable=arguments-differ
+        self, batch: Union[torch.Tensor, tuple[torch.Tensor, ...], list[torch.Tensor]], *args, **kwargs
+    ) -> STEP_OUTPUT:
+        """
+        Training step of the model. It will be called by the Lightning Trainer. It will forward the batch through the
+        model and calculate the loss. Everything in this method will be done on each GPU separately.
+
+        Args:
+            batch Union[torch.Tensor, tuple[torch.Tensor, ...], list[torch.Tensor]]:
+                The output of your :class:`~torch.utils.data.DataLoader`. A tensor, tuple or list.
+
+        Returns:
+            features (torch.Tensor): See "features" in the forward method.
+            labels (torch.Tensor): The encoded integer labels of the batch (in SimCLR will be all 0).
+            label_names (torch.Tensor): The string labels of the batch (in SimCLR will be all 0).
+            classifier_logits (torch.Tensor): See "predictions" in the forward method.
+        """
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
 
         return features, labels, label_names, classifier_logits
 
-    def training_step_end(self, training_step_outputs, *args, **kwargs):
+    def training_step_end(self, training_step_outputs, *_, **__):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = training_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Training")
+        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Training")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -169,14 +248,14 @@ class LightningModel(pl.LightningModule):
     def on_validation_epoch_start(self) -> None:
         self.console_logger.debug("Starting validation")
 
-    def validation_step(self, batch, _, *args, **kwargs):
+    def validation_step(self, batch, _, *args, **kwargs):  # pylint: disable=arguments-differ
         images, labels, label_names = self._pre_process_batch(batch)
         self.console_logger.debug(f"Size of batch in validation_step: {len(labels)}")
         features, classifier_logits = self._do_gpu_parallel_step(images)
 
         return features, labels, label_names, classifier_logits
 
-    def validation_step_end(self, validation_step_outputs, *args, **kwargs):
+    def validation_step_end(self, validation_step_outputs, *args, **kwargs):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
         loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Validation")
@@ -191,15 +270,15 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
-    def test_step(self, batch, *args, **kwargs):
+    def test_step(self, batch, *args, **kwargs):  # pylint: disable=arguments-differ
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
 
         return features, labels, label_names, classifier_logits
 
-    def test_step_end(self, test_step_outputs, *args, **kwargs):
+    def test_step_end(self, test_step_outputs, *args, **kwargs):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = test_step_outputs
-        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Testing")
+        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Testing")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -207,9 +286,9 @@ class LightningModel(pl.LightningModule):
             "classifier": classifier_logits.detach(),
         }
 
-    def predict_step(self, batch, *args, **kwargs):
-        images, labels, label_names = self._pre_process_batch(batch)
-        features, classifier_logits = self._do_gpu_parallel_step(images)
+    def predict_step(self, batch, *_, **__):
+        images, labels, _ = self._pre_process_batch(batch)
+        _, classifier_logits = self._do_gpu_parallel_step(images)
         return {
             "files": list(labels),
             "predictions": torch.max(F.softmax(classifier_logits.detach()), dim=1)[1].cpu().numpy(),
@@ -269,7 +348,7 @@ class LightningModel(pl.LightningModule):
         if isinstance(outputs[0], list):
             outputs = [item for sublist in outputs for item in sublist]
 
-        res = dict()
+        res = {}
         for key in outputs[0]:
             res[key] = []
             for ele in outputs:
@@ -279,12 +358,12 @@ class LightningModel(pl.LightningModule):
         predictions = predictions.cpu()
         labels = torch.cat(res["labels"]).int().cpu()
         num_classes = len(self.class_labels)
-        cm = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes)
+        confusion_matrix = torchmetrics.functional.confusion_matrix(predictions, labels, num_classes=num_classes)
 
         acc = self.accuracy_func(predictions.squeeze(), labels.squeeze())
 
         self.plot_confusion_matrix(
-            cm.cpu().numpy(), self.class_labels, f"Confusion_Matrix {step}", title=f"Accuracy {acc}"
+            confusion_matrix.cpu().numpy(), self.class_labels, f"Confusion_Matrix {step}", title=f"Accuracy {acc}"
         )
 
         cond_acc_func = torchmetrics.Accuracy(average="none", num_classes=num_classes)
@@ -301,9 +380,9 @@ class LightningModel(pl.LightningModule):
             cm_normed.cpu().numpy(), self.class_labels, f"Confusion_Matrix_cond {step}", title=f"Accuracy {acc}"
         )
 
-    def plot_confusion_matrix(self, cm, class_names, figname, title):
+    def plot_confusion_matrix(self, confusion_matrix, class_names, figname, title):
         figure = plt.figure(figsize=(15, 15))
-        plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+        plt.imshow(confusion_matrix, interpolation="nearest", cmap=plt.cm.Blues)
         plt.title(title)
         plt.colorbar()
         tick_marks = torch.arange(len(class_names))
@@ -311,15 +390,17 @@ class LightningModel(pl.LightningModule):
         plt.yticks(tick_marks, class_names)
 
         # Use white text if squares are dark; otherwise black.
-        threshold = cm.max() / 2.0
+        threshold = confusion_matrix.max() / 2.0
 
-        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-            color = "white" if cm[i, j] > threshold else "black"
-            if cm[i, j] > 0.01:
-                if int(cm[i, j]) == float(cm[i, j]):
-                    plt.text(j, i, str(cm[i, j]), horizontalalignment="center", color=color, fontsize=8)
+        for i, j in itertools.product(range(confusion_matrix.shape[0]), range(confusion_matrix.shape[1])):
+            color = "white" if confusion_matrix[i, j] > threshold else "black"
+            if confusion_matrix[i, j] > 0.01:
+                if int(confusion_matrix[i, j]) == float(confusion_matrix[i, j]):
+                    plt.text(j, i, str(confusion_matrix[i, j]), horizontalalignment="center", color=color, fontsize=8)
                 else:
-                    plt.text(j, i, f"{cm[i, j]:.2f}", horizontalalignment="center", color=color, fontsize=8)
+                    plt.text(
+                        j, i, f"{confusion_matrix[i, j]:.2f}", horizontalalignment="center", color=color, fontsize=8
+                    )
 
         plt.tight_layout()
         plt.xlabel("True label")
@@ -360,7 +441,7 @@ class LightningModel(pl.LightningModule):
         if isinstance(outputs[0], list):
             outputs = [item for sublist in outputs for item in sublist]
 
-        res = dict()
+        res = {}
         for key in outputs[0]:
             res[key] = []
             for ele in outputs:
@@ -374,48 +455,64 @@ class LightningModel(pl.LightningModule):
         self._create_tsne_image(labels, features, "Feature Extractor")
         self._log_online_accuracy(features, labels)
 
-    def _log_online_accuracy(self, x, y):
-        if len(np.unique(y)) < 2:
+    def _log_online_accuracy(  # TODO: check if this can actually still be used
+        self, features: np.ndarray, labels: np.ndarray
+    ):
+        """
+        Builds a simple SGD linear classifier on the fly and fits it to the SimCLR features using the provided labels to
+        get an estimate of the accuracy of a classifier when using the SimCLR features.
+
+        Args:
+            features (np.ndarray): The features extracted by the SimCLR model.
+            labels (np.ndarray): The labels classes.
+        """
+        if len(np.unique(labels)) < 2:
             self.console_logger.warning("Not enough classes to evaluate classifier in online mode")
             return
-        train_size = int(len(x) / 2)
+        train_size = int(len(features) / 2)
         clf = SGDClassifier(max_iter=1000, tol=1e-3)
-        clf.fit(x[:train_size], y[:train_size])
-        predictions = clf.predict(x[train_size:])
-        balanced_acc = balanced_accuracy_score(y_true=y[train_size:], y_pred=predictions)
+        clf.fit(features[:train_size], labels[:train_size])
+        predictions = clf.predict(features[train_size:])
+        balanced_acc = balanced_accuracy_score(y_true=labels[train_size:], y_pred=predictions)
 
-        mean_acc = clf.score(x[train_size:], y[train_size:])
+        mean_acc = clf.score(features[train_size:], labels[train_size:])
         self.log("Online Linear ACC", mean_acc)
         self.log("Online Linear balanced ACC", balanced_acc)
 
     def _create_tsne_image(self, labels, features, name):
         tsne = TSNE().fit_transform(features)
 
-        tx, ty = tsne[:, 0], tsne[:, 1]
-        tx = (tx - np.min(tx)) / (np.max(tx) - np.min(tx))
-        ty = (ty - np.min(ty)) / (np.max(ty) - np.min(ty))
+        tsne_x_values, tsny_y_values = tsne[:, 0], tsne[:, 1]
+        tsne_x_values = (tsne_x_values - np.min(tsne_x_values)) / (np.max(tsne_x_values) - np.min(tsne_x_values))
+        tsny_y_values = (tsny_y_values - np.min(tsny_y_values)) / (np.max(tsny_y_values) - np.min(tsny_y_values))
 
-        class_label_dict = dict()
+        class_label_dict = {}
         for i, label in enumerate(self.class_labels):
             class_label_dict[i] = label
 
         class_names = [class_label_dict[label] for label in labels.flatten().tolist()]
-        df = pd.DataFrame({"x": tx.flatten(), "y": ty.flatten(), "label": class_names}).sort_values(by="label")
-        num_points = len(df)
-        fig, ax2 = plt.subplots(figsize=(8, 8))
-        g = sns.jointplot(x="x", y="y", hue="label", data=df, ax=ax2, palette="deep", marginal_ticks=True, s=10)
+        data_frame = pd.DataFrame(
+            {"x": tsne_x_values.flatten(), "y": tsny_y_values.flatten(), "label": class_names}
+        ).sort_values(by="label")
+        num_points = len(data_frame)
+        _, ax2 = plt.subplots(figsize=(8, 8))
+        jointplot = sns.jointplot(
+            x="x", y="y", hue="label", data=data_frame, ax=ax2, palette="deep", marginal_ticks=True, s=10
+        )
 
-        box = g.fig.axes[0].get_position()
-        g.fig.axes[0].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
+        box = jointplot.fig.axes[0].get_position()
+        jointplot.fig.axes[0].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
 
-        box = g.fig.axes[2].get_position()
-        g.fig.axes[2].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
+        box = jointplot.fig.axes[2].get_position()
+        jointplot.fig.axes[2].set_position([box.x0, box.y0 + box.height * 0.4, box.width, box.height * 0.6])
 
-        g.fig.axes[0].legend(loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3)
-        g.fig.set_size_inches(8, 12)
+        jointplot.fig.axes[0].legend(
+            loc="upper center", bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=3
+        )
+        jointplot.fig.set_size_inches(8, 12)
         plt.suptitle(f"TSNE regression for {name} | {num_points} points")
         # plt.tight_layout()
-        self.logger.experiment.add_figure(f"TSNE Scatter {name}", g.fig, self.global_step)
+        self.logger.experiment.add_figure(f"TSNE Scatter {name}", jointplot.fig, self.global_step)
         plt.close("all")
 
     def on_train_start(self):
@@ -433,7 +530,7 @@ class LightningModel(pl.LightningModule):
             os.makedirs(save_path)
         torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
-    def on_save_checkpoint(self, *args, **kwargs) -> None:
+    def on_save_checkpoint(self, *_, **__) -> None:
         def get_version_number():
             _best_epochs = natsorted(self.get_best_epochs())
             return _best_epochs[-1]
@@ -487,21 +584,21 @@ class LightningModel(pl.LightningModule):
         class_label_file = os.path.join(folder, "class_labels.json")
         if not os.path.exists(class_label_file):
             self.console_logger.debug("Saving class_labels")
-            class_label_dict = dict()
+            class_label_dict = {}
             for i, label in enumerate(self.class_labels):
                 class_label_dict[i] = str(label)
 
             self.console_logger.debug(f"Class label dict: {class_label_dict}")
 
-            with open(class_label_file, "w") as f:
-                json.dump(class_label_dict, f)
+            with open(class_label_file, "w") as output_file:
+                json.dump(class_label_dict, output_file)
 
     @rank_zero_only
     def get_best_epochs(self):
         self.console_logger.debug("Getting best epochs")
         best_k_models = self.trainer.checkpoint_callback.best_k_models
         best_epochs = []
-        for key, value in best_k_models.items():
+        for key, _ in best_k_models.items():
             best_epochs.append(os.path.basename(key).replace("epoch=", "").replace(".ckpt", ""))
 
         self.console_logger.debug(f"Best inferred epochs are: {best_epochs}")

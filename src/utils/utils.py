@@ -14,7 +14,7 @@ import yaml
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 
-from src.models.LightningBaseModel import LightningModel
+from src.models.lightning_module import LightningModel
 from src.utils import LOG_LEVEL
 
 
