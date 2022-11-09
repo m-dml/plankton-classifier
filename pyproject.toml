@@ -22,7 +22,7 @@ disable=[
     "too-many-instance-attributes",
     "too-many-public-methods",
     "too-many-arguments",
-    "missing-module-docstring",  # docstrings are handled by vulture, so we don't need pylint to check them again
+    "missing-module-docstring",  # docstrings are handled by interrogate, so we don't need pylint to check them again
     "missing-class-docstring",
     "missing-function-docstring",
 ]
