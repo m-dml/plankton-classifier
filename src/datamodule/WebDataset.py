@@ -59,8 +59,10 @@ class WebDataLoader(pl.LightningDataModule):
         self.subsample_supervised = subsample_supervised  # TODO: implement subsampling
         self.unique_labels = label_list or []
         if not self.is_in_simclr_mode and len(self.unique_labels) <= 1:
-            raise ValueError(f"Finetune mode requires at least two labels, but only got {self.unique_labels}. "
-                             f"Labels can be set using datamodule.label_list")
+            raise ValueError(
+                f"Finetune mode requires at least two labels, but only got {self.unique_labels}. "
+                f"Labels can be set using datamodule.label_list"
+            )
         if self.is_in_simclr_mode:
             self.training_class_counts = None
 
@@ -120,8 +122,9 @@ class WebDataLoader(pl.LightningDataModule):
 
     @staticmethod
     def post_collate_unsupervised(samples):
-        samples = samples  # for debugger TODO: Delete this line
-        tuple_images, labels = list(zip(*samples[0]))  # samples should be a list of lists of tuples. The inner list contains the content.
+        tuple_images, labels = list(
+            zip(*samples[0])
+        )  # samples should be a list of lists of tuples. The inner list contains the content.
         tuple_images = torch.stack(tuple_images, dim=1)
         image, image_copy = tuple_images
 
