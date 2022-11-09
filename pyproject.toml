@@ -1,10 +1,11 @@
 [tool.vulture]
 exclude = ["conf/", "data/", "docs/", "notebooks/", "output*/", "src/external/"]
-make_whitelist = true
-min_confidence = 70
+make_whitelist = false
+min_confidence = 100
 paths = ["main.py", "src/"]
 sort_by_size = true
 verbose = false
+
 
 [tool.pylint]
 max-line-length = 120
@@ -16,5 +17,13 @@ disable=[
     "too-many-statements",
     "logging-fstring-interpolation",
     "too-many-locals",
-]
+    "too-many-arguments"]
 generated-members=["torch.*"]
+
+
+[tool.docformatter]
+recursive = true
+wrap-summaries = 79
+wrap-descriptions = 72
+blank = true
+force-wrap = true

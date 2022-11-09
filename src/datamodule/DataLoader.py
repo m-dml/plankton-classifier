@@ -39,7 +39,8 @@ class ParentDataSet(Dataset):
         labels = [self.integer_labels[label_name] for label_name in label_names]
         return labels
 
-    def load_file(self, file):
+    @staticmethod
+    def load_file(file):
         this_image = Image.open(file)
         return this_image
 
@@ -48,6 +49,7 @@ class ParentDataSet(Dataset):
 
     @abstractmethod
     def __getitem__(self, index) -> (Any, Union[torch.Tensor, list], str):
+        del index  # for pylint and vulture compliance
         return Any, Union[torch.Tensor, list], str
 
 

@@ -27,7 +27,7 @@ from pytorch_lightning.loggers import LightningLoggerBase
 from torchvision.transforms import Compose
 
 from src.lib.config import register_configs
-from src.models.BaseModels import concat_feature_extractor_and_classifier
+from src.models.base_models import concat_feature_extractor_and_classifier
 from src.utils import utils
 
 logger = utils.get_logger(__name__)

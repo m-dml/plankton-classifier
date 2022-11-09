@@ -21,7 +21,7 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import balanced_accuracy_score
 
 from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
-from src.models.BaseModels import concat_feature_extractor_and_classifier
+from src.models.base_models import concat_feature_extractor_and_classifier
 from src.utils import utils
 from src.utils.EvalWrapper import EvalWrapper
 
@@ -433,7 +433,7 @@ class LightningModel(pl.LightningModule):
             os.makedirs(save_path)
         torch.save(self.training_class_counts, os.path.join(save_path, "training_label_distribution.pt"))
 
-    def on_save_checkpoint(self, checkpoint) -> None:
+    def on_save_checkpoint(self, *args, **kwargs) -> None:
         def get_version_number():
             _best_epochs = natsorted(self.get_best_epochs())
             return _best_epochs[-1]

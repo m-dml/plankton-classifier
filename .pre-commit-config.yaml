@@ -34,7 +34,7 @@ repos:
 
   # finds unreferenced (dead) python code
   - repo: https://github.com/jendrikseipp/vulture
-    rev: "v2.4" # or any later Vulture version
+    rev: "v2.6" # or any later Vulture version
     hooks:
       - id: vulture
 
@@ -50,6 +50,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: docformatter
+        args: [--config, "pyproject.toml"]
 
   # python import sorting
   - repo: https://github.com/PyCQA/isort
@@ -82,5 +83,5 @@ repos:
         name: pylint
         entry: pylint
         language: system
-        types: [ python ]
+        types: [python]
         require_serial: true

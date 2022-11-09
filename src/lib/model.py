@@ -14,7 +14,7 @@ class ResNet:
 
 @dataclass
 class CustomResnet:
-    _target_: str = "src.models.BaseModels.CustomResnet"
+    _target_: str = "src.models.base_models.CustomResnet"
     kernel_size: int = 7
     stride: int = 2
     channels: int = 3
@@ -24,7 +24,7 @@ class CustomResnet:
 
 @dataclass
 class Classifier:
-    _target_: str = "src.models.BaseModels.Classifier"
+    _target_: str = "src.models.base_models.Classifier"
     hidden_layers: Iterable = (1000, 1000)
     activation: Any = MISSING
     input_features: int = 1000
