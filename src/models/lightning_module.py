@@ -133,7 +133,7 @@ class LightningModel(pl.LightningModule):
         self.example_input_array = example_input_array
         self.class_labels = class_labels
 
-    def forward(    # pylint: disable=arguments-differ
+    def forward(  # pylint: disable=arguments-differ
         self, images: torch.Tensor, *args, **kwargs
     ) -> (torch.Tensor, torch.Tensor):
         """

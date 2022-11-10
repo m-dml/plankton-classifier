@@ -40,9 +40,9 @@ def create_unsupervised_dataset_from_folder_structure(
             image_id = os.path.splitext(file)[0].replace(".", "_")
             clss = os.path.basename(os.path.dirname(file))
             if unsupervised:
-                sample = {"__key__": image_id, "input.png": image}
+                sample = {"__key__": image_id, f"input.{extension}": image}
             else:
-                sample = {"__key__": image_id, "input.png": image, "label.txt": clss}
+                sample = {"__key__": image_id, f"input.{extension}": image, "label.txt": clss}
 
             sink.write(sample)
     sink.close()
