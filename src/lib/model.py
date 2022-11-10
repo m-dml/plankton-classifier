@@ -31,3 +31,10 @@ class Classifier:
     num_classes: Any = None
     normalize: bool = False
     bias_in_last_layer: bool = True
+
+
+@dataclass
+class TinyFeatureExtractor:
+    _target_: str = "src.models.base_models.TinyFeatureExtractor"
+    channels: int = 3
+    n_features: int = 1000

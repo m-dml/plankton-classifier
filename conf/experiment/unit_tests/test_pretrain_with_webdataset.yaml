@@ -1,0 +1,42 @@
+# @package _global_
+
+defaults:
+  - override /strategy: null
+  - override /datamodule: webdata_datamodule
+  - override /loss: nt_xent_loss
+  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: simclr_plankton
+  - override /model/feature_extractor: tiny_feature_extractor
+  - override /model/classifier: unittest_head
+  - override /trainer: unit_test
+  - override /hydra/launcher: local
+  - override /optimizer: MISSING
+  - override /lightning_module: unit_test
+
+  - _self_
+
+pretrain: true
+debug: false
+log_level: "ERROR"
+print_config: true
+
+datamodule:
+  num_workers: 0
+  batch_size: 5 # batch size per GPU
+  oversample_data: false
+  train_split: 0.66
+  validation_split: 0.33
+
+model:
+  classifier:
+    num_classes: 3 # size of the projection head
+    input_features: 5
+  feature_extractor:
+    n_features: ${model.classifier.input_features}
+
+hydra:
+  sweep:
+    dir: ${output_dir_base_path}/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  run:
+    dir: ${output_dir_base_path}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

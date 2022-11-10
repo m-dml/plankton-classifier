@@ -9,11 +9,14 @@ Functions:
 concat_feature_extractor_and_classifier: Concatenates a feature extractor and a classifier into a single model.
 """
 
+import warnings
 from collections.abc import Iterable
 
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+from src.utils import utils
 
 
 class Classifier(nn.Module):
@@ -109,6 +112,40 @@ class CustomResnet(nn.Module):
             image_tensor (torch.Tensor): Input tensor.
         """
         return self.model(image_tensor)
+
+
+class TinyFeatureExtractor(nn.Module):
+    """Feature extractor for unit tests."""
+
+    def __init__(self, channels: int = 3, n_features: int = 1000):
+        """
+        Initialize the feature extractor.
+
+        Args:
+            channels (int, optional): Number of channels of the input tensor. Defaults to 3.
+            n_features (int, optional): Number of output features. Defaults to 1000.
+        """
+
+        super().__init__()
+        self.console_logger = utils.get_logger(__name__)
+        self.console_logger.warning("Using tiny feature extractor. Make sure this is not used in production.")
+        warnings.warn("Using tiny feature extractor. Make sure this is not used in production.", UserWarning)
+
+        self.first_conv = nn.Conv2d(channels, 3, kernel_size=3, stride=2, padding=0, bias=False)
+        self.average_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fully_connected = nn.Linear(3 * (1 * 1), n_features)
+
+    def forward(self, image_tensor: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the feature extractor.
+
+        Args:
+            image_tensor (torch.Tensor): Input tensor.
+        """
+        features = F.relu(self.first_conv(image_tensor))
+        features = self.average_pool(features)
+        features = features.flatten(start_dim=1)
+        features = self.fully_connected(features)
+        return features
 
 
 def concat_feature_extractor_and_classifier(feature_extractor, classifier) -> nn.Sequential:

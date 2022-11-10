@@ -23,7 +23,7 @@ from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
 from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
 from src.lib.metrics import Accuracy, MultiLabelAccuracy
-from src.lib.model import Classifier, CustomResnet, ResNet
+from src.lib.model import Classifier, CustomResnet, ResNet, TinyFeatureExtractor
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
 from src.lib.pl_plugins import DDPPlugin, SingleDevicePlugin
 from src.lib.profiler import NoProfiler, PytorchProfiler
@@ -40,6 +40,7 @@ def register_configs() -> None:
     feature_extractor_group = "model/feature_extractor"
     cs.store(name="resnet_base", node=ResNet, group=feature_extractor_group)
     cs.store(name="custom_resnet_base", node=CustomResnet, group=feature_extractor_group)
+    cs.store(name="tiny_feature_extractor", node=TinyFeatureExtractor, group=feature_extractor_group)
 
     cs.store(name="classifier_base", node=Classifier, group="model/classifier")
 

@@ -1,0 +1,10 @@
+defaults:
+  - base_lightning_module
+  - _self_
+
+optimizer: ${optimizer}
+log_tsne_image: false
+freeze_feature_extractor: false
+temperature_scale: false
+log_confusion_matrices: false
+log_images: false

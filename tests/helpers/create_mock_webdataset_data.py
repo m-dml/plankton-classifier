@@ -1,11 +1,12 @@
 import os
+from typing import Union
 
 from tests.helpers.create_mock_classic_dataset import create_classic_dataset_data
 from wds_scripts.create_webdataset import create_unsupervised_dataset_from_folder_structure
 
 
 def create_webdataset_data(
-    path: str,
+    path: Union[str, os.PathLike],
     num_images_per_subdir: int = 100,
     num_channels: int = 3,
     max_width: int = 24,

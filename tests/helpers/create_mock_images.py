@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 import numpy as np
 from PIL import Image
@@ -20,7 +21,7 @@ def create_image(width: int, height: int, num_channels: int) -> np.ndarray:
     return image
 
 
-def create_image_with_random_size(max_width, max_height, num_channels) -> np.ndarray:
+def create_image_with_random_size(max_width: int, max_height: int, num_channels: int) -> np.ndarray:
     """
     Creates an image with random width, height and fixed number of channels. The intensity of each pixel is random.
 
@@ -37,7 +38,7 @@ def create_image_with_random_size(max_width, max_height, num_channels) -> np.nda
     return create_image(width, height, num_channels)
 
 
-def save_image(image: np.ndarray, path: str, name: str, extension="png"):
+def save_image(image: np.ndarray, path: Union[str, os.PathLike], name: str, extension="png"):
     """
     Saves a numpy array as an image to a given path with a given name and extension.
 
@@ -52,7 +53,13 @@ def save_image(image: np.ndarray, path: str, name: str, extension="png"):
 
 
 def create_and_save_n_images(
-    path, num_images, num_channels=3, max_width=24, max_height=24, random_sizes=True, extension="png"
+    path: Union[str, os.PathLike],
+    num_images: int,
+    num_channels: int = 3,
+    max_width: int = 24,
+    max_height: int = 24,
+    random_sizes: bool = True,
+    extension: str = "png",
 ) -> str:
     """
     Creates and saves n images to a given path.

@@ -1,0 +1,21 @@
+defaults:
+  - base_trainer
+  - _self_
+
+accelerator: "cpu"
+devices: 1
+deterministic: true
+precision: 32
+fast_dev_run: false
+num_sanity_val_steps: 5
+max_epochs: 2
+max_steps: 10
+limit_train_batches: 5
+limit_val_batches: 5
+sync_batchnorm: false
+
+# if plugins= "ddp_sharded" then model-parallel training is possible (accelerator has to be ddp then)
+plugins: null
+
+# interval for logging metrices:
+log_every_n_steps: 2

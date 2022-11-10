@@ -1,10 +1,11 @@
 import os
+from typing import Union
 
 from tests.helpers.create_mock_images import create_and_save_n_images
 
 
 def create_classic_dataset_data(
-    path: str,
+    path: Union[str, os.PathLike],
     num_images_per_subdir: int = 100,
     num_channels: int = 3,
     max_width: int = 24,
