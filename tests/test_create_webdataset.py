@@ -26,7 +26,7 @@ def test_create_webdataset(tmp_path, unsupervised, extension):
     )
     assert os.path.exists(webdataset_location)
     assert os.path.isdir(webdataset_location)
-    assert len(os.listdir(webdataset_location)) > 1
+    assert len(os.listdir(webdataset_location)) > 3
 
     tar_files = os.listdir(webdataset_location)
     # check the first and last tarfile:

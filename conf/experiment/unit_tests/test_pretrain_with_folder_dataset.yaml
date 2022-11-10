@@ -2,7 +2,8 @@
 
 defaults:
   - override /strategy: null
-  - override /datamodule: webdata_datamodule
+  - override /datamodule: plankton
+  - override /datamodule/dataset: simclr
   - override /loss: nt_xent_loss
   - override /datamodule/train_transforms: simclr_plankton
   - override /datamodule/valid_transforms: simclr_plankton
@@ -26,6 +27,8 @@ datamodule:
   oversample_data: false
   train_split: 0.66
   validation_split: 0.33
+  use_klas_data: false
+  find_names_from_folder_structure: true
 
 model:
   classifier:

@@ -34,6 +34,7 @@ dependencies:
   - onnx
   - pillow
   - pytest
+  - pytest-xdist
   - tqdm
   - webdataset
   - pip:

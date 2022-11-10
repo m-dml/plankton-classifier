@@ -92,6 +92,7 @@ class PlanktonDataLoader(ParentDataloader):
     random_seed: int = 0
     reduce_data: bool = False
     subsample_supervised: float = 1.0  # number of samples per class to use
+    find_names_from_folder_structure: bool = False
 
 
 @dataclass

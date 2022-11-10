@@ -150,6 +150,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         super_classes,
         oversample_data,
         data_base_path,
+        find_names_from_folder_structure,
         klas_data_path,
         planktonnet_data_path,
         canadian_data_path,
@@ -194,6 +195,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.preload_dataset = preload_dataset
 
         self.data_base_path = data_base_path
+        self.find_names_from_folder_structure = find_names_from_folder_structure
         self.klas_data_path = klas_data_path
         self.planktonnet_data_path = planktonnet_data_path
         self.canadian_data_path = canadian_data_path
@@ -346,6 +348,10 @@ class PlanktonDataLoader(pl.LightningDataModule):
         if self.use_klas_data:
             for folder in tqdm(glob.glob(os.path.join(self.klas_data_path, subset, "*")), desc="Load Klas data"):
                 files += self._add_data_from_folder(folder, file_ext="png")
+
+        if self.find_names_from_folder_structure:
+            for dirpath, _, _ in os.walk(self.data_base_path):
+                files += self._add_data_from_folder(dirpath, file_ext="png")
         return files
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):

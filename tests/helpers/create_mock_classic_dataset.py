@@ -6,10 +6,10 @@ from tests.helpers.create_mock_images import create_and_save_n_images
 
 def create_classic_dataset_data(
     path: Union[str, os.PathLike],
-    num_images_per_subdir: int = 100,
+    num_images_per_subdir: int = 13,
     num_channels: int = 3,
-    max_width: int = 24,
-    max_height: int = 24,
+    max_width: int = 12,
+    max_height: int = 12,
     random_sizes: bool = True,
     extension: str = "png",
 ) -> str:

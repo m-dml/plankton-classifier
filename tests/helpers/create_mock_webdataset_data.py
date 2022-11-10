@@ -7,13 +7,13 @@ from wds_scripts.create_webdataset import create_unsupervised_dataset_from_folde
 
 def create_webdataset_data(
     path: Union[str, os.PathLike],
-    num_images_per_subdir: int = 100,
+    num_images_per_subdir: int = 13,
     num_channels: int = 3,
-    max_width: int = 24,
-    max_height: int = 24,
+    max_width: int = 12,
+    max_height: int = 12,
     random_sizes: bool = True,
     unsupervised: bool = True,
-    shard_size: int = 1e4,
+    shard_size: int = 1e3,
     extension: str = "png",
 ) -> (str, str):
     """Creates a WebDataset with random noise filled images.

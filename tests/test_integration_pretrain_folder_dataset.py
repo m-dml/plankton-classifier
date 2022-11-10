@@ -7,11 +7,11 @@ from omegaconf import DictConfig
 from src.lib.config import register_configs
 from src.utils import utils
 from tests.helpers.create_and_run_model import create_and_run
-from tests.helpers.global_fixtures import get_webdataset, optimizer, profiler, scheduler  # noqa
+from tests.helpers.global_fixtures import get_image_data_dataset, optimizer, profiler, scheduler  # noqa
 
 
 def test_pretrain_with_webdataset(
-    tmp_path, get_webdataset, base_optimizer=None, base_scheduler=None, base_profiler=None
+    tmp_path, get_image_data_dataset, base_optimizer=None, base_scheduler=None, base_profiler=None
 ):
 
     base_optimizer = base_optimizer or "lars"
@@ -20,15 +20,15 @@ def test_pretrain_with_webdataset(
     accelerator = "cpu"
     devices = 1
 
-    webdataset_location, image_location = get_webdataset
+    image_location = get_image_data_dataset
 
     out_path = os.path.join(tmp_path, "output")
     os.makedirs(out_path, exist_ok=True)
     os.chdir(out_path)
 
     overrides = [
-        "+experiment=unit_tests/test_pretrain_with_webdataset",
-        f"datamodule.data_base_path={webdataset_location}",
+        "+experiment=unit_tests/test_pretrain_with_folder_dataset",
+        f"datamodule.data_base_path={image_location}",
         f"output_dir_base_path={out_path}",
         f"optimizer={base_optimizer}",
         f"+profiler={base_profiler}",
@@ -40,7 +40,7 @@ def test_pretrain_with_webdataset(
         overrides.append(f"+scheduler={base_scheduler}")
 
     register_configs()
-    with hydra.initialize(config_path="../conf", job_name="unit_test_pretrain_webdataset"):
+    with hydra.initialize(config_path="../conf", job_name="unit_test_pretrain_image_dataset"):
         cfg = hydra.compose(config_name="config", overrides=overrides)
 
         # Pretty print config using Rich library
@@ -62,13 +62,13 @@ def test_pretrain_with_webdataset(
 
 
 # the following functions make sure we train not every option with every other option, but only each choice once:
-def test_pretrain_with_webdataset_optimizers(tmp_path, get_webdataset, optimizer):
-    test_pretrain_with_webdataset(tmp_path, get_webdataset, base_optimizer=optimizer)
+def test_pretrain_with_webdataset_optimizers(tmp_path, get_image_data_dataset, optimizer):
+    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_optimizer=optimizer)
 
 
-def test_pretrain_with_webdataset_schedulers(tmp_path, get_webdataset, scheduler):
-    test_pretrain_with_webdataset(tmp_path, get_webdataset, base_scheduler=scheduler)
+def test_pretrain_with_webdataset_schedulers(tmp_path, get_image_data_dataset, scheduler):
+    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_scheduler=scheduler)
 
 
-def test_pretrain_with_webdataset_profilers(tmp_path, get_webdataset, profiler):
-    test_pretrain_with_webdataset(tmp_path, get_webdataset, base_profiler=profiler)
+def test_pretrain_with_webdataset_profilers(tmp_path, get_image_data_dataset, profiler):
+    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_profiler=profiler)

@@ -27,7 +27,7 @@ disable=[
     "missing-function-docstring",
 ]
 generated-members=["torch.*"]
-
+ignore = ["tests"]
 
 [tool.docformatter]
 recursive = true
