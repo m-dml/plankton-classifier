@@ -71,7 +71,7 @@ def generate_example_input_array(datamodule):
     return example_input
 
 
-def init_model(cfg, datamodule, stepping_batches, example_input):
+def init_model(cfg, datamodule, stepping_batches, example_input, pretrain):
     model = hydra.utils.instantiate(
         cfg.lightning_module,
         optimizer=cfg.optimizer,
@@ -80,7 +80,7 @@ def init_model(cfg, datamodule, stepping_batches, example_input):
         classifier=cfg.model.classifier,
         loss=cfg.loss,
         metric=cfg.metric,
-        is_in_simclr_mode=True,
+        is_in_simclr_mode=pretrain,
         batch_size=cfg.datamodule.batch_size,
         num_unique_labels=len(datamodule.unique_labels),
         num_steps_per_epoch=stepping_batches,
@@ -133,7 +133,7 @@ def create_and_run(cfg: DictConfig) -> None:
     stepping_batches = get_number_of_stepping_batches(cfg, datamodule)
     example_input = generate_example_input_array(datamodule)
 
-    model = init_model(cfg, datamodule, stepping_batches, example_input)
+    model = init_model(cfg, datamodule, stepping_batches, example_input, pretrain=cfg.pretrain)
     model = log_hparams(cfg, cfg_logger, model)
 
     trainer = init_trainer(cfg, cfg_logger, callbacks, stepping_batches)

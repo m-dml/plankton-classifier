@@ -20,6 +20,11 @@ def profiler(request):
     return request.param
 
 
+@pytest.fixture(params=[True, False], scope="module")
+def freeze_feature_extractor(request):
+    return request.param
+
+
 # only create the webdataset once:
 @pytest.fixture(scope="session")
 def get_webdataset(tmp_path_factory):

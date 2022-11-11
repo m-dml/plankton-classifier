@@ -1,0 +1,47 @@
+# @package _global_
+
+defaults:
+  - override /strategy: null
+  - override /datamodule: plankton
+  - override /datamodule/dataset: default
+  - override /loss: cross_entropy_loss
+  - override /datamodule/train_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: plankton_eval
+  - override /model/feature_extractor: tiny_feature_extractor
+  - override /model/classifier: unittest_head
+  - override /trainer: unit_test
+  - override /hydra/launcher: local
+  - override /optimizer: MISSING
+  - override /lightning_module: unit_test
+
+  - _self_
+
+pretrain: false
+debug: false
+load_state_dict: MISSING
+output_dir_base_path: MISSING
+log_level: "ERROR"
+print_config: true
+
+datamodule:
+  num_workers: 0
+  batch_size: 5
+  oversample_data: true
+  # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
+  # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
+  # downsample (For Klaas data 4000 samples mean 100% data):
+  subsample_supervised: 21
+  pin_memory: false
+  reduce_data: false # use max 10.000 images from each class
+  use_klas_data: false
+  use_canadian_data: false
+  use_planktonnet_data: false
+  data_base_path: "C:/Users/Tobias/PycharmProjects/plankton-classifier/data/"
+  find_names_from_folder_structure: true
+
+model:
+  classifier:
+    num_classes: 3 # size of the projection head
+    input_features: 5
+  feature_extractor:
+    n_features: ${model.classifier.input_features}

@@ -10,7 +10,7 @@ from tests.helpers.create_and_run_model import create_and_run
 from tests.helpers.global_fixtures import get_image_data_dataset, optimizer, profiler, scheduler  # noqa
 
 
-def test_pretrain_with_webdataset(
+def test_pretrain_with_folder_dataset(
     tmp_path, get_image_data_dataset, base_optimizer=None, base_scheduler=None, base_profiler=None
 ):
 
@@ -60,15 +60,17 @@ def test_pretrain_with_webdataset(
         assert len(glob.glob(os.path.join(out_path, "logs", "checkpoints", "*ckpt"))) > 0
         assert os.path.exists(os.path.join(out_path, "logs", "checkpoints", "last.ckpt"))
 
+    return out_path
+
 
 # the following functions make sure we train not every option with every other option, but only each choice once:
-def test_pretrain_with_webdataset_optimizers(tmp_path, get_image_data_dataset, optimizer):
-    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_optimizer=optimizer)
+def test_pretrain_with_image_folder_optimizers(tmp_path, get_image_data_dataset, optimizer):
+    test_pretrain_with_folder_dataset(tmp_path, get_image_data_dataset, base_optimizer=optimizer)
 
 
-def test_pretrain_with_webdataset_schedulers(tmp_path, get_image_data_dataset, scheduler):
-    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_scheduler=scheduler)
+def test_pretrain_with_image_folder_schedulers(tmp_path, get_image_data_dataset, scheduler):
+    test_pretrain_with_folder_dataset(tmp_path, get_image_data_dataset, base_scheduler=scheduler)
 
 
-def test_pretrain_with_webdataset_profilers(tmp_path, get_image_data_dataset, profiler):
-    test_pretrain_with_webdataset(tmp_path, get_image_data_dataset, base_profiler=profiler)
+def test_pretrain_with_image_folder_profilers(tmp_path, get_image_data_dataset, profiler):
+    test_pretrain_with_folder_dataset(tmp_path, get_image_data_dataset, base_profiler=profiler)

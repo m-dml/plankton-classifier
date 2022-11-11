@@ -60,6 +60,8 @@ def test_pretrain_with_webdataset(
         assert len(glob.glob(os.path.join(out_path, "logs", "checkpoints", "*ckpt"))) > 0
         assert os.path.exists(os.path.join(out_path, "logs", "checkpoints", "last.ckpt"))
 
+    return out_path
+
 
 # the following functions make sure we train not every option with every other option, but only each choice once:
 def test_pretrain_with_webdataset_optimizers(tmp_path, get_webdataset, optimizer):
