@@ -1,10 +1,12 @@
 import os
+from functools import cached_property
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torchvision
 import webdataset
+from sklearn.preprocessing import LabelEncoder
 
 from src.utils import utils
 
@@ -27,6 +29,7 @@ class WebDataLoader(pl.LightningDataModule):
         data_base_path,
         is_in_simclr_mode,
         label_list,
+        training_class_counts=None,
         subsample_supervised=100,
         shuffle_size=5000,
         *args,
@@ -55,6 +58,7 @@ class WebDataLoader(pl.LightningDataModule):
         self.is_in_simclr_mode = is_in_simclr_mode
         self.train_split = train_split
         self.validation_split = validation_split
+        self.training_class_counts = training_class_counts
 
         self.subsample_supervised = subsample_supervised  # TODO: implement subsampling
         self.unique_labels = label_list or []
@@ -66,7 +70,7 @@ class WebDataLoader(pl.LightningDataModule):
         if self.is_in_simclr_mode:
             self.training_class_counts = None
 
-    def prepare_data(self, *args, **kwargs):
+    def prepare_data(self, *_, **__):
         if not os.path.exists(self.data_base_path):
             raise NotADirectoryError(f"Data base path <{self.data_base_path}> does not exist")
         for dir_path, _, filenames in os.walk(self.data_base_path):
@@ -105,20 +109,44 @@ class WebDataLoader(pl.LightningDataModule):
                 .map_tuple(lambda x: self.transform(x, augmentations))
                 .batched(self.batch_size, partial=False)
                 .map(self.post_collate_unsupervised)
+                .map(self.inspect1)
             )
 
         else:
             dataset = (
                 webdataset.WebDataset(urls)
                 .shuffle(shuffle)
-                .decode("pil", "txt")
-                .tu_tuple("input.png", "label.txt")
-                .map_tuple(lambda x: self.transform(x, augmentations), lambda x: x)  # TODO: implement label encoding
-                .batched(self.batch_size, pagrtial=False)
+                .decode("pil")
+                .to_tuple("input.png", "label.txt")
+                .map_tuple(lambda x: self.transform(x, augmentations), lambda x: (self.encode_labels([x]), x))
+                .batched(self.batch_size, partial=False)
+                .map(self.post_collate_supervised)
+                .map(self.inspect)
             )
 
         loader = webdataset.WebLoader(dataset, batch_size=None, shuffle=False, num_workers=self.num_workers)
         return loader
+
+    def encode_labels(self, labels):
+        return self.label_encoder.transform(labels)
+
+    def post_collate_supervised(self, samples):
+        image_tensors, labels = samples
+        int_labels, label_names = zip(*labels)
+        int_labels = np.array(int_labels)
+        return image_tensors, (torch.from_numpy(int_labels), label_names)
+
+    def inspect1(self, inputs):
+        inputs = inputs
+        return inputs
+
+    def inspect(self, inputs):
+        inputs = inputs
+        return inputs
+
+    @cached_property
+    def label_encoder(cls) -> LabelEncoder:
+        return LabelEncoder().fit(cls.unique_labels)
 
     @staticmethod
     def post_collate_unsupervised(samples):

@@ -24,6 +24,7 @@ class WebdataLoader:
     subsample_supervised: float = 1
     shuffle_size: int = 5000
     label_list: Any = None
+    training_class_counts: Any = None
 
 
 @dataclass
@@ -93,6 +94,7 @@ class PlanktonDataLoader(ParentDataloader):
     reduce_data: bool = False
     subsample_supervised: float = 1.0  # number of samples per class to use
     find_names_from_folder_structure: bool = False
+    file_extension: str = "png"
 
 
 @dataclass

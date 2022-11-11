@@ -159,6 +159,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         valid_transforms,
         dataset,
         reduce_data,
+        file_extension,
         pin_memory=False,
         unlabeled_files_to_append=None,
         is_ddp=False,
@@ -217,6 +218,7 @@ class PlanktonDataLoader(pl.LightningDataModule):
         self.training_class_counts = None  # how often does each class exist in the training dataset
         self.max_label_value = 0
         self.len_train_data = None
+        self.file_extension = file_extension
 
         if self.use_canadian_data:
             raise ValueError("Usage of the Canadian data is not permitted for the paper.")
@@ -350,8 +352,15 @@ class PlanktonDataLoader(pl.LightningDataModule):
                 files += self._add_data_from_folder(folder, file_ext="png")
 
         if self.find_names_from_folder_structure:
-            for dirpath, _, _ in os.walk(self.data_base_path):
-                files += self._add_data_from_folder(dirpath, file_ext="png")
+            for dirpath, dirnames, filenames in os.walk(self.data_base_path):
+                for filename in filenames:
+                    if filename.endswith(self.file_extension):
+                        files.append(
+                            (
+                                self.load_image(os.path.join(dirpath, filename), self.preload_dataset),
+                                os.path.basename(dirpath),
+                            )
+                        )
         return files
 
     def add_all_images_from_all_subdirectories(self, folder, file_ext="png", recursion_depth=0):

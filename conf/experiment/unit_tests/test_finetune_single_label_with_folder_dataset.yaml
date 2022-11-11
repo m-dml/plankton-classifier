@@ -41,7 +41,7 @@ datamodule:
 
 model:
   classifier:
-    num_classes: 3 # size of the projection head
+    num_classes: null # will be inferred from the dataloader
     input_features: 5
   feature_extractor:
     n_features: ${model.classifier.input_features}

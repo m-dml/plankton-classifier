@@ -8,7 +8,13 @@ from omegaconf import DictConfig
 from src.lib.config import register_configs
 from src.utils import utils
 from tests.helpers.create_and_run_model import create_and_run
-from tests.helpers.global_fixtures import get_image_data_dataset, optimizer, profiler, scheduler, freeze_feature_extractor  # noqa
+from tests.helpers.global_fixtures import (  # noqa
+    freeze_feature_extractor,
+    get_image_data_dataset,
+    optimizer,
+    profiler,
+    scheduler,
+)
 from tests.test_integration_pretrain_folder_dataset import test_pretrain_with_folder_dataset
 
 
@@ -23,8 +29,13 @@ def pretrained_weights(tmp_path_factory, get_image_data_dataset):
 
 
 def test_finetune_single_label_with_folder_dataset(
-    tmp_path, pretrained_weights, get_image_data_dataset, base_optimizer=None, base_scheduler=None, base_profiler=None,
-        base_freeze_feature_extractor=None
+    tmp_path,
+    pretrained_weights,
+    get_image_data_dataset,
+    base_optimizer=None,
+    base_scheduler=None,
+    base_profiler=None,
+    base_freeze_feature_extractor=None,
 ):
 
     base_optimizer = base_optimizer or "lars"
@@ -56,7 +67,7 @@ def test_finetune_single_label_with_folder_dataset(
         overrides.append(f"+scheduler={base_scheduler}")
 
     register_configs()
-    with hydra.initialize(config_path="../conf", job_name="unit_test_pretrain_image_dataset"):
+    with hydra.initialize(config_path="../conf", job_name="test_finetune_single_label_with_folder_dataset"):
         cfg = hydra.compose(config_name="config", overrides=overrides)
 
         # Pretty print config using Rich library
@@ -77,16 +88,25 @@ def test_finetune_single_label_with_folder_dataset(
 
 
 # the following functions make sure we train not every option with every other option, but only each choice once:
-def test_finetune_with_image_folder_optimizers(tmp_path, get_pretrain_ckpt, get_image_data_dataset, optimizer):
-    test_finetune_single_label_with_folder_dataset(tmp_path, get_pretrain_ckpt, get_image_data_dataset, optimizer)
+def test_finetune_with_image_folder_optimizers(tmp_path, pretrained_weights, get_image_data_dataset, optimizer):
+    test_finetune_single_label_with_folder_dataset(tmp_path, pretrained_weights, get_image_data_dataset, optimizer)
 
 
-def test_finetune_with_image_folder_schedulers(tmp_path, get_pretrain_ckpt, get_image_data_dataset, scheduler):
-    test_finetune_single_label_with_folder_dataset(tmp_path, get_pretrain_ckpt, get_image_data_dataset, base_scheduler=scheduler)
+def test_finetune_with_image_folder_schedulers(tmp_path, pretrained_weights, get_image_data_dataset, scheduler):
+    test_finetune_single_label_with_folder_dataset(
+        tmp_path, pretrained_weights, get_image_data_dataset, base_scheduler=scheduler
+    )
 
 
-def test_finetune_with_image_folder_profilers(tmp_path, get_pretrain_ckpt, get_image_data_dataset, profiler):
-    test_finetune_single_label_with_folder_dataset(tmp_path, get_pretrain_ckpt, get_image_data_dataset, base_profiler=profiler)
+def test_finetune_with_image_folder_profilers(tmp_path, pretrained_weights, get_image_data_dataset, profiler):
+    test_finetune_single_label_with_folder_dataset(
+        tmp_path, pretrained_weights, get_image_data_dataset, base_profiler=profiler
+    )
 
-def test_finetune_with_image_folder_freeze_feature_extractor(tmp_path, get_pretrain_ckpt, get_image_data_dataset):
-    test_finetune_single_label_with_folder_dataset(tmp_path, get_pretrain_ckpt, get_image_data_dataset, base_freeze_feature_extractor=freeze_feature_extractor)
+
+def test_finetune_with_image_folder_freeze_feature_extractor(
+    tmp_path, pretrained_weights, get_image_data_dataset, freeze_feature_extractor
+):
+    test_finetune_single_label_with_folder_dataset(
+        tmp_path, pretrained_weights, get_image_data_dataset, base_freeze_feature_extractor=freeze_feature_extractor
+    )

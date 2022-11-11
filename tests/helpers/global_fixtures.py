@@ -29,7 +29,7 @@ def freeze_feature_extractor(request):
 @pytest.fixture(scope="session")
 def get_webdataset(tmp_path_factory):
     temp_directory = tmp_path_factory.mktemp("webdataset")
-    return create_webdataset_data(path=temp_directory, unsupervised=True, extension="png")
+    return create_webdataset_data(path=temp_directory, unsupervised=False, extension="png")
 
 
 @pytest.fixture(scope="session")

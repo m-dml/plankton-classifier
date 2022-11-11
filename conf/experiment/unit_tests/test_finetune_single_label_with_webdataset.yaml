@@ -3,9 +3,9 @@
 defaults:
   - override /strategy: null
   - override /datamodule: webdata_datamodule
-  - override /loss: nt_xent_loss
+  - override /loss: cross_entropy_loss
   - override /datamodule/train_transforms: simclr_plankton
-  - override /datamodule/valid_transforms: simclr_plankton
+  - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: tiny_feature_extractor
   - override /model/classifier: unittest_head
   - override /trainer: unit_test
@@ -15,8 +15,10 @@ defaults:
 
   - _self_
 
-pretrain: true
+pretrain: false
 debug: false
+load_state_dict: MISSING
+output_dir_base_path: MISSING
 log_level: "ERROR"
 print_config: true
 
@@ -29,7 +31,7 @@ datamodule:
 
 model:
   classifier:
-    num_classes: 3 # size of the projection head
+    num_classes: null # will be inferred from the dataloader
     input_features: 5
   feature_extractor:
     n_features: ${model.classifier.input_features}

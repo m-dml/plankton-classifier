@@ -25,7 +25,7 @@ def init_logger(cfg):
     return cfg_logger
 
 
-def init_datamodule(cfg):
+def init_datamodule(cfg, training_class_counts=None):
     train_transforms = hydra.utils.instantiate(cfg.datamodule.train_transforms)
     valid_transforms = hydra.utils.instantiate(cfg.datamodule.valid_transforms)
 
@@ -40,6 +40,8 @@ def init_datamodule(cfg):
         dataset=cfg.datamodule.dataset,
         is_ddp=False,
     )
+
+    datamodule.training_class_counts = training_class_counts
 
     datamodule.prepare_data()
     datamodule.setup(stage="fit")
@@ -125,10 +127,10 @@ def init_trainer(cfg, cfg_logger, callbacks, stepping_batches):
     return trainer
 
 
-def create_and_run(cfg: DictConfig) -> None:
+def create_and_run(cfg: DictConfig, training_class_counts=None) -> None:
     callbacks = init_callbacks(cfg)
     cfg_logger = init_logger(cfg)
-    datamodule = init_datamodule(cfg)
+    datamodule = init_datamodule(cfg, training_class_counts=training_class_counts)
 
     stepping_batches = get_number_of_stepping_batches(cfg, datamodule)
     example_input = generate_example_input_array(datamodule)

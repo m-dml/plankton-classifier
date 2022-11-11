@@ -53,6 +53,7 @@ class LightningModel(pl.LightningModule):
         metric: DictConfig,
         freeze_feature_extractor: bool,
         is_in_simclr_mode: bool,
+        training_class_counts: dict,
         batch_size: int,
         temperature_scale: bool,  # TODO: Implement / fix temperature scaling
         num_steps_per_epoch: int,
@@ -82,7 +83,7 @@ class LightningModel(pl.LightningModule):
         super().__init__()
 
         self.eval_wrapper = None
-        self.training_class_counts = None
+        self.training_class_counts = training_class_counts
         self.num_steps_per_epoch = num_steps_per_epoch
         self.learning_rate = optimizer.lr
         self.cfg_optimizer = optimizer

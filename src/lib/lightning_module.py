@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from omegaconf import MISSING
 
@@ -15,3 +16,4 @@ class LitModule:
     optimizer: Optimizer = MISSING
     freeze_feature_extractor: bool = False
     temperature_scale: bool = False
+    training_class_counts: Any = None
