@@ -35,3 +35,6 @@ wrap-summaries = 79
 wrap-descriptions = 72
 blank = true
 force-wrap = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
