@@ -50,13 +50,23 @@ repos:
     rev: v1.5.0
     hooks:
       - id: docformatter
-        args: [--config, "pyproject.toml"]
+        args:
+          [
+            --recursive,
+            --blank,
+            --in-place,
+            --wrap-summaries,
+            "120",
+            --wrap-descriptions,
+            "120",
+          ]
 
   # python import sorting
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
       - id: isort
+        args: [--profile, "black", --line-length, "120", --filter-files]
 
   # yaml formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -75,7 +85,15 @@ repos:
     rev: 1.5.0
     hooks:
       - id: interrogate
-        args: [--fail-under=100, --verbose]
+        args:
+          [
+            --exclude,
+            "setup.py,docs,build,tests,conf,logs,data,notebooks,output,src/external",
+            --color,
+            --verbose,
+            --fail-under,
+            "95",
+          ]
 
   - repo: local
     hooks:

@@ -1,10 +1,11 @@
 [tool.vulture]
-exclude = ["conf/", "data/", "docs/", "notebooks/", "output*/", "src/external/"]
+exclude = ["conf/", "data/", "docs/", "notebooks/", "output*/", "src/external/", "logs/", "tests/"]
 make_whitelist = false
-min_confidence = 100
+min_confidence = 80
 paths = ["main.py", "src/"]
 sort_by_size = true
 verbose = false
+ignore_names = ["args", "kwargs"]
 
 
 [tool.pylint]
@@ -25,16 +26,11 @@ disable=[
     "missing-module-docstring",  # docstrings are handled by interrogate, so we don't need pylint to check them again
     "missing-class-docstring",
     "missing-function-docstring",
+    "eval-used",
 ]
 generated-members=["torch.*"]
 ignore = ["tests"]
 
-[tool.docformatter]
-recursive = true
-wrap-summaries = 79
-wrap-descriptions = 72
-blank = true
-force-wrap = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
