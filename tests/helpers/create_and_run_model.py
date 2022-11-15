@@ -1,11 +1,11 @@
 import hydra
 import torch
 from omegaconf import DictConfig, open_dict
-
+import pytorch_lightning as pl
 from src.utils import utils
 
 
-def init_callbacks(cfg):
+def init_callbacks(cfg) -> list[pl.callbacks.base.Callback]:
     # Init Lightning callbacks
     callbacks = []
     if "callbacks" in cfg:
@@ -15,7 +15,7 @@ def init_callbacks(cfg):
     return callbacks
 
 
-def init_logger(cfg):
+def init_logger(cfg) -> list[pl.loggers.base.LightningLoggerBase]:
     # Init Lightning loggers
     cfg_logger = []
     if "logger" in cfg:
@@ -25,7 +25,7 @@ def init_logger(cfg):
     return cfg_logger
 
 
-def init_datamodule(cfg, training_class_counts=None):
+def init_datamodule(cfg, training_class_counts=None) -> pl.LightningDataModule:
     train_transforms = hydra.utils.instantiate(cfg.datamodule.train_transforms)
     valid_transforms = hydra.utils.instantiate(cfg.datamodule.valid_transforms)
 
@@ -49,7 +49,7 @@ def init_datamodule(cfg, training_class_counts=None):
     return datamodule
 
 
-def get_number_of_stepping_batches(cfg, datamodule):
+def get_number_of_stepping_batches(cfg, datamodule) -> int:
     # get number of training samples_per_device and epoch:
     datamodule.is_ddp = False
     try:
@@ -60,7 +60,7 @@ def get_number_of_stepping_batches(cfg, datamodule):
     return stepping_batches
 
 
-def generate_example_input_array(datamodule):
+def generate_example_input_array(datamodule) -> torch.Tensor:
     # generate example input array:
     example_input = None
     for batch in datamodule.val_dataloader():
@@ -73,7 +73,7 @@ def generate_example_input_array(datamodule):
     return example_input
 
 
-def init_model(cfg, datamodule, stepping_batches, example_input, pretrain):
+def init_model(cfg, datamodule, stepping_batches, example_input, pretrain) -> pl.LightningModule:
     model = hydra.utils.instantiate(
         cfg.lightning_module,
         optimizer=cfg.optimizer,
@@ -95,7 +95,7 @@ def init_model(cfg, datamodule, stepping_batches, example_input, pretrain):
     return model
 
 
-def log_hparams(cfg, cfg_logger, model):
+def log_hparams(cfg, cfg_logger, model) -> pl.LightningModule:
     # log hparam metrics to tensorboard:
     hydra_params = utils.log_hyperparameters(config=cfg, model=model)
     for this_logger in cfg_logger:
@@ -109,7 +109,7 @@ def log_hparams(cfg, cfg_logger, model):
     return model
 
 
-def init_trainer(cfg, cfg_logger, callbacks, stepping_batches):
+def init_trainer(cfg, cfg_logger, callbacks, stepping_batches) -> pl.Trainer:
     # Init Trainer:
     trainer = hydra.utils.instantiate(
         cfg.trainer,
@@ -127,7 +127,7 @@ def init_trainer(cfg, cfg_logger, callbacks, stepping_batches):
     return trainer
 
 
-def create_and_run(cfg: DictConfig, training_class_counts=None) -> None:
+def create_and_run(cfg: DictConfig, training_class_counts=None) -> float:
     callbacks = init_callbacks(cfg)
     cfg_logger = init_logger(cfg)
     datamodule = init_datamodule(cfg, training_class_counts=training_class_counts)
