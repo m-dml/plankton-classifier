@@ -1,7 +1,8 @@
-"""
-Module containing the implementation of the LightningModule.
-This is where the training, validation and testing steps are defined,
-which means it defines how the data flows through the model.
+"""Module containing the implementation of the LightningModule.
+
+This is where the training, validation and testing steps are defined, which means it defines how the data flows through
+the model.
+
 """
 
 import glob
@@ -30,15 +31,13 @@ from sklearn.metrics import balanced_accuracy_score
 from torch import nn
 
 from src.external.temperature_scaling.temperature_scaling import ModelWithTemperature
-from src.models.base_models import concat_feature_extractor_and_classifier
 from src.utils import utils
 from src.utils.EvalWrapper import EvalWrapper
+from src.utils.torch_utils import concat_feature_extractor_and_classifier
 
 
 class LightningModel(pl.LightningModule):
-    """
-    Class defining the methods as described in the pytorch-lightning documentation.
-    """
+    """Class defining the methods as described in the pytorch-lightning documentation."""
 
     def __init__(
         self,
@@ -59,8 +58,7 @@ class LightningModel(pl.LightningModule):
         num_steps_per_epoch: int,
         num_unique_labels: int = None,
     ):
-        """
-        Constructor of the LightningModule.
+        """Constructor of the LightningModule.
 
         Args:
             log_images (bool): Whether to log images to tensorboard.
@@ -78,6 +76,7 @@ class LightningModel(pl.LightningModule):
             temperature_scale (bool): Whether to use temperature scaling (deprecated at the moment).
             num_steps_per_epoch (int): Number of training steps per epoch.
             num_unique_labels (int, optional): Number of unique labels in the dataset. Defaults to None.
+
         """
 
         super().__init__()
@@ -121,14 +120,14 @@ class LightningModel(pl.LightningModule):
         self.temperature_scale = temperature_scale
 
     def set_external_data(self, class_labels: list, example_input_array: torch.Tensor):
-        """
-        Instead of adding large data during the init, it can be added here to speed up the initialization of the model
-        substantially. This is due to OmegaConf not being able to handle large data efficiently, so this method is
+        """Instead of adding large data during the init, it can be added here to speed up the initialization of the
+        model substantially. This is due to OmegaConf not being able to handle large data efficiently, so this method is
         called after hydras instantiation.
 
         Args:
             class_labels (list): List of class labels.
             example_input_array (torch.Tensor): Example input used to build the model graph.
+
         """
 
         self.example_input_array = example_input_array
@@ -164,9 +163,11 @@ class LightningModel(pl.LightningModule):
         return features, predictions
 
     def configure_optimizers(self):
-        """
-        Configures the optimizer and scheduler. If the scheduler is not None, it will be returned as well.
-        If the feature extractor is frozen, the optimizer will only be initialized with the classifier weights.
+        """Configures the optimizer and scheduler.
+
+        If the scheduler is not None, it will be returned as well. If the feature extractor is frozen, the optimizer
+        will only be initialized with the classifier weights.
+
         """
         if self.model.feature_extractor.training:
             optimizer = hydra.utils.instantiate(
@@ -214,8 +215,7 @@ class LightningModel(pl.LightningModule):
     def training_step(  # pylint: disable=arguments-differ
         self, batch: Union[torch.Tensor, tuple[torch.Tensor, ...], list[torch.Tensor]], *args, **kwargs
     ) -> STEP_OUTPUT:
-        """
-        Training step of the model. It will be called by the Lightning Trainer. It will forward the batch through the
+        """Training step of the model. It will be called by the Lightning Trainer. It will forward the batch through the
         model and calculate the loss. Everything in this method will be done on each GPU separately.
 
         Args:
@@ -227,6 +227,7 @@ class LightningModel(pl.LightningModule):
             labels (torch.Tensor): The encoded integer labels of the batch (in SimCLR will be all 0).
             label_names (torch.Tensor): The string labels of the batch (in SimCLR will be all 0).
             classifier_logits (torch.Tensor): See "predictions" in the forward method.
+
         """
         images, labels, label_names = self._pre_process_batch(batch)
         features, classifier_logits = self._do_gpu_parallel_step(images)
@@ -459,13 +460,13 @@ class LightningModel(pl.LightningModule):
     def _log_online_accuracy(  # TODO: check if this can actually still be used
         self, features: np.ndarray, labels: np.ndarray
     ):
-        """
-        Builds a simple SGD linear classifier on the fly and fits it to the SimCLR features using the provided labels to
-        get an estimate of the accuracy of a classifier when using the SimCLR features.
+        """Builds a simple SGD linear classifier on the fly and fits it to the SimCLR features using the provided labels
+        to get an estimate of the accuracy of a classifier when using the SimCLR features.
 
         Args:
             features (np.ndarray): The features extracted by the SimCLR model.
             labels (np.ndarray): The labels classes.
+
         """
         if len(np.unique(labels)) < 2:
             self.console_logger.warning("Not enough classes to evaluate classifier in online mode")

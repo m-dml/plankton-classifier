@@ -30,6 +30,7 @@ def create_classic_dataset_data(
 
     Returns:
         (str, str): Path to the webdataset and path to the images.
+
     """
     image_location = os.path.join(path, "images")
 

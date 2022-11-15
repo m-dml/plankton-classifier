@@ -13,6 +13,7 @@ from catalyst.data.sampler import BalanceClassSampler, DistributedSamplerWrapper
 from hydra.utils import instantiate
 from PIL import Image
 from sklearn import preprocessing
+from sklearn.utils import shuffle
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 from tqdm import tqdm
@@ -564,7 +565,7 @@ class PlanktonInferenceDataLoader(PlanktonDataLoader):
         self.is_set_up = True
 
 
-class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
+class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-dataset
     def __init__(
         self,
         csv_data_path,
@@ -575,6 +576,10 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             **kwargs,
         )
 
+        # TODO: add tests for this dataloader
+        self.train_df = None
+        self.val_df = None
+        self.test_df = None
         self.label_encoder = None
         self.csv_data_path = csv_data_path
         self.unique_labels = None
@@ -641,10 +646,9 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
         else:
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
-    def load_multilabel_dataset(self, data_path, csv_file):
-        df = pd.read_csv(csv_file)
+    def load_multilabel_dataset(self, data_path, df):
         df = df.drop(columns="Unnamed: 0")
-        repl_column_names = dict()
+        repl_column_names = {}
         self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
         nan_vals = df.isna().sum().sum()
         if nan_vals > 0:
@@ -674,12 +678,12 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             self.max_label_value = df.drop(labels="file", axis=1).max().max()
         if not set(np.unique(all_labels)).issubset(self.unique_labels):
             new_labels = set(np.unique(all_labels)).difference(set(self.unique_labels))
-            raise ValueError(f"The labels {new_labels} from <{csv_file}> are not in the list of training labels.")
+            raise ValueError(f"The labels {new_labels} are not in the list of training labels.")
         if (set(np.unique(all_labels)) != set(self.unique_labels)) and set(np.unique(all_labels)).issubset(
             self.unique_labels
         ):
             self.console_logger.warning(
-                f"There are labels in the training dataset that are not in <{csv_file}> dataset."
+                f"There are labels in the training dataset that are not in the validation dataset."
             )
 
         self.console_logger.debug(f"All unique labels from labelencoder are {self.unique_labels}")
@@ -697,23 +701,124 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):
             )
         return files
 
-    def prepare_data_setup(self, subset):
-        file_struct = os.path.join(self.csv_data_path, f"*{subset}*.csv")
-        self.console_logger.info(f"Trying to load csv file from <{file_struct}>")
-        csv_file = glob.glob(file_struct)[0]
-        if not os.path.isfile(csv_file):
-            raise FileNotFoundError(
-                f"Could not find csv file <{csv_file}> in " f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>"
+    def train_val_test_split(self, csv_file) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        df = pd.read_csv(csv_file).reset_index()
+        all_good = False
+        counter = 0
+        df_reformat_old = df
+        unique_labels = df["class"].unique()
+
+        while not all_good:
+            df_reformat = shuffle(df_reformat_old)
+            train_size = int(df_reformat.shape[0] * self.train_split)
+            val_size = int(df_reformat.shape[0] * self.validation_split)
+
+            train_df = df_reformat.iloc[:train_size]
+            val_df = df_reformat.iloc[train_size : train_size + val_size]
+            test_df = df_reformat.iloc[train_size + val_size :]
+
+            try:
+                assert len(set(train_df["class"].unique())) == len(
+                    set(unique_labels)
+                ), "Trainset set does not have all labels"
+                all_good = True
+            except AssertionError:
+                counter += 1
+
+            if df_reformat_old.equals(df_reformat):
+                raise ValueError
+
+            df_reformat_old = df_reformat.copy()
+            if counter > 100000:
+                raise ValueError(
+                    "Within 10.000 tries could not find a way to make a train/val/test split that "
+                    f"contains all labels in the train set. All labels are <{unique_labels}>, but "
+                    f"the train set only contains <{train_df['class'].unique()}>."
+                )
+
+            return train_df, val_df, test_df
+
+    def create_dataframes(self):
+        if os.path.isfile(self.csv_data_path):
+            self.console_logger.info(f"Found csv file at {self.csv_data_path}. I will create data splits from it.")
+            csv_file = self.csv_data_path
+            self.train_df, self.val_df, self.test_df = self.train_val_test_split(csv_file)
+
+        elif os.path.isdir(self.csv_data_path):
+            self.console_logger.info(
+                f"Found that <{self.csv_data_path}> is a directory. I will search for csv files "
+                f"containing 'train', 'val' and 'test' in its name."
             )
-        self.console_logger.info(f"Loading data from <{self.csv_data_path} ; {csv_file}>")
-        folder = os.path.join(self.csv_data_path, subset)
-        if not os.path.isdir(folder):
-            self.console_logger.warning(f"Could not find folder <{folder}>. Using <{self.data_base_path}> instead.")
+
+            for subset in ["train", "val", "test"]:
+                file_struct = os.path.join(self.csv_data_path, f"*{subset}*.csv")
+                self.console_logger.info(f"Trying to load csv file from <{file_struct}>")
+                csv_file = glob.glob(file_struct)[0]
+                if not os.path.isfile(csv_file):
+                    raise FileNotFoundError(
+                        f"Could not find csv file <{csv_file}> in "
+                        f"<{os.path.join(self.csv_data_path, f'*{subset}*.csv')}>"
+                    )
+
+                if subset == "train":
+                    self.train_df = pd.read_csv(csv_file).reset_index()
+                elif subset == "val":
+                    self.val_df = pd.read_csv(csv_file).reset_index()
+                elif subset == "test":
+                    self.test_df = pd.read_csv(csv_file).reset_index()
+
+        self.train_df = self.clean_and_check_dataframe(self.train_df)
+        self.val_df = self.clean_and_check_dataframe(self.val_df)
+        self.test_df = self.clean_and_check_dataframe(self.test_df)
+
+    @staticmethod
+    def clean_and_check_dataframe(dataframe):
+        if not "files" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
+            dataframe = dataframe.rename(columns={"image": "files"})
+
+        assert any([col in dataframe for col in ["files", "image"]]), (
+            f"The csv file does not contain a column "
+            f"named 'files' or 'images'. It contains "
+            f"<{dataframe.columns.tolist()}>"
+        )
+        assert "class" in dataframe, (
+            f"The csv file does not contain a column named 'class'. It contains " f"<{dataframe.columns.tolist()}>"
+        )
+
+        return dataframe[["files", "class"]]
+
+    def get_data_from_csv(self, subset: str) -> pd.DataFrame:
+        if self.train_df is None:
+            self.create_dataframes()
+
+        if subset == "train":
+            return self.train_df
+        elif subset == "val":
+            return self.val_df
+        elif subset == "test":
+            return self.test_df
+        else:
+            raise ValueError(f"Subset <{subset}> is not valid. Valid subsets are 'train', 'val' and 'test'.")
+
+    def prepare_data_setup(self, subset: str) -> list[tuple]:
+        df = self.get_data_from_csv(subset)
+
+        test_image_path = df["files"].iloc[0]
+        if os.path.isabs(test_image_path):
+            self.console_logger.info(f"Assuming that <{test_image_path}> is an absolute path.")
+            folder = ""
+            if not os.path.isfile(test_image_path):
+                raise FileNotFoundError(f"Could not find file <{test_image_path}>")
+            else:
+                self.console_logger.debug(f"Found file <{test_image_path}>")
+        else:
+            self.console_logger.info(f"Assuming that <{test_image_path}> is a relative path.")
             folder = self.data_base_path
-            if not os.path.isdir(folder):
-                raise FileNotFoundError(f"Could not find <{folder}>")
-        self.console_logger.info(f"Reading relative paths in csv file starting from <{folder}>")
-        files = self.load_multilabel_dataset(folder, csv_file)
+            if not os.path.isfile(os.path.join(self.data_base_path, test_image_path)):
+                raise FileNotFoundError(f"Could not find file <{os.path.join(self.data_base_path, test_image_path)}>")
+            else:
+                self.console_logger.debug(f"Found file <{os.path.join(self.data_base_path, test_image_path)}>")
+        files = self.load_multilabel_dataset(folder, df)
         return files
 
     def multi_labels_to_probabilities(self, labels):

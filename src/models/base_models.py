@@ -1,5 +1,4 @@
-"""Module containing pytorch models and functions only applied to pytorch
-models.
+"""Module containing pytorch models and functions only applied to pytorch models.
 
 Classes:
 1. Classifier: A simple classifier with a variable number of fully connected hidden layers.
@@ -7,6 +6,7 @@ Classes:
 
 Functions:
 concat_feature_extractor_and_classifier: Concatenates a feature extractor and a classifier into a single model.
+
 """
 
 import warnings
@@ -20,8 +20,7 @@ from src.utils import utils
 
 
 class Classifier(nn.Module):
-    """Classifier with a variable number of fully connected hidden layers and
-    batch normalization."""
+    """Classifier with a variable number of fully connected hidden layers and batch normalization."""
 
     def __init__(
         self,
@@ -48,6 +47,7 @@ class Classifier(nn.Module):
             normalize (bool): If True, the output of the classifier is normalized using torch.nn.functional.normalize().
             bias_in_last_layer (bool): If True, the last layer has a bias. If False, the last layer has no bias.
                 Default is True.
+
         """
         super().__init__()
         self.normalize = normalize
@@ -70,6 +70,7 @@ class Classifier(nn.Module):
 
         Args:
             input_tensor (torch.Tensor): Input tensor.
+
         """
         if self.normalize:
             input_tensor = self.model(input_tensor)
@@ -79,8 +80,8 @@ class Classifier(nn.Module):
 
 
 class CustomResnet(nn.Module):
-    """Custom implementation of a resnet where the kernel size of the first
-    convolutional layer can be changed and max-pooling can be disabled."""
+    """Custom implementation of a resnet where the kernel size of the first convolutional layer can be changed and max-
+    pooling can be disabled."""
 
     def __init__(
         self, model: torch.nn.Module, kernel_size: int = 7, stride: int = 2, channels: int = 3, maxpool1: bool = True
@@ -110,6 +111,7 @@ class CustomResnet(nn.Module):
 
         Args:
             image_tensor (torch.Tensor): Input tensor.
+
         """
         return self.model(image_tensor)
 
@@ -118,12 +120,12 @@ class TinyFeatureExtractor(nn.Module):
     """Feature extractor for unit tests."""
 
     def __init__(self, channels: int = 3, n_features: int = 1000):
-        """
-        Initialize the feature extractor.
+        """Initialize the feature extractor.
 
         Args:
             channels (int, optional): Number of channels of the input tensor. Defaults to 3.
             n_features (int, optional): Number of output features. Defaults to 1000.
+
         """
 
         super().__init__()
@@ -140,23 +142,10 @@ class TinyFeatureExtractor(nn.Module):
 
         Args:
             image_tensor (torch.Tensor): Input tensor.
+
         """
         features = F.relu(self.first_conv(image_tensor))
         features = self.average_pool(features)
         features = features.flatten(start_dim=1)
         features = self.fully_connected(features)
         return features
-
-
-def concat_feature_extractor_and_classifier(feature_extractor, classifier) -> nn.Sequential:
-    """Concatenates a feature extractor and a classifier into a single model.
-
-    Args:
-        feature_extractor (torch.nn.Module): A pytorch model that extracts features from an input.
-        classifier (torch.nn.Module): A pytorch model that takes the features extracted by the feature_extractor for
-            classification.
-    """
-    model = nn.Sequential()
-    model.add_module("feature_extractor", feature_extractor)
-    model.add_module("classifier", classifier)
-    return model

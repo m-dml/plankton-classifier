@@ -35,6 +35,7 @@ def create_webdataset_data(
 
     Returns:
         (str, str): Path to the webdataset and path to the images.
+
     """
     webdataset_location = os.path.join(path, "webdataset")
 

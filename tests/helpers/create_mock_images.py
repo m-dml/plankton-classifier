@@ -6,8 +6,7 @@ from PIL import Image
 
 
 def create_image(width: int, height: int, num_channels: int) -> np.ndarray:
-    """
-    Creates an image with fixed width, height and number of channels. The intensity of each pixel is random.
+    """Creates an image with fixed width, height and number of channels. The intensity of each pixel is random.
 
     Args:
         width (int): Width of the image.
@@ -16,14 +15,14 @@ def create_image(width: int, height: int, num_channels: int) -> np.ndarray:
 
     Returns:
         np.ndarray: Image with random intensity.
+
     """
     image = np.random.randint(0, 255, (width, height, num_channels), dtype=np.uint8)
     return image
 
 
 def create_image_with_random_size(max_width: int, max_height: int, num_channels: int) -> np.ndarray:
-    """
-    Creates an image with random width, height and fixed number of channels. The intensity of each pixel is random.
+    """Creates an image with random width, height and fixed number of channels. The intensity of each pixel is random.
 
     Args:
         max_width (int): Maximum width of the image.
@@ -32,6 +31,7 @@ def create_image_with_random_size(max_width: int, max_height: int, num_channels:
 
     Returns:
         np.ndarray: Image with random intensity.
+
     """
     width = np.random.randint(1, max_width)
     height = np.random.randint(1, max_height)
@@ -39,14 +39,14 @@ def create_image_with_random_size(max_width: int, max_height: int, num_channels:
 
 
 def save_image(image: np.ndarray, path: Union[str, os.PathLike], name: str, extension="png"):
-    """
-    Saves a numpy array as an image to a given path with a given name and extension.
+    """Saves a numpy array as an image to a given path with a given name and extension.
 
     Args:
         image (np.ndarray): Image to save. Should be a numpy array with shape (width, height, num_channels).
         path (str): Path where the image should be saved.
         name (str): Basename of the image.
         extension (str, optional): Extension of the image. Defaults to "png".
+
     """
     image = Image.fromarray(image)
     image.save(os.path.join(path, f"{name}.{extension}"))
@@ -61,8 +61,7 @@ def create_and_save_n_images(
     random_sizes: bool = True,
     extension: str = "png",
 ) -> str:
-    """
-    Creates and saves n images to a given path.
+    """Creates and saves n images to a given path.
 
     Args:
         path (str): Path where the images should be saved.
@@ -75,6 +74,7 @@ def create_and_save_n_images(
 
     Returns:
         str: Folder into which the images were saved.
+
     """
     for i in range(num_images):
         if random_sizes:

@@ -5,6 +5,7 @@ python main.py --help
 ```
 
 to see all available options.
+
 """
 
 import copy
@@ -27,8 +28,8 @@ from pytorch_lightning.loggers import LightningLoggerBase
 from torchvision.transforms import Compose
 
 from src.lib.config import register_configs
-from src.models.base_models import concat_feature_extractor_and_classifier
 from src.utils import utils
+from src.utils.torch_utils import concat_feature_extractor_and_classifier
 
 logger = utils.get_logger(__name__)
 handler = logging.StreamHandler(stream=sys.stdout)
@@ -64,6 +65,7 @@ def main(cfg: DictConfig):
 
     Args:
         cfg (DictConfig): Hydra created config object.
+
     """
 
     utils.extras(cfg)  # check if debug is activated and if so, change some trainer settings

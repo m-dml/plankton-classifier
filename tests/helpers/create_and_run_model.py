@@ -1,7 +1,8 @@
 import hydra
+import pytorch_lightning as pl
 import torch
 from omegaconf import DictConfig, open_dict
-import pytorch_lightning as pl
+
 from src.utils import utils
 
 

@@ -2,8 +2,7 @@ import torch
 
 
 class MultiLabelAccuracy:
-    """This is wrapped in a class, so it can be called the same way as torch
-    internal accuracies."""
+    """This is wrapped in a class, so it can be called the same way as torch internal accuracies."""
 
     def __init__(self, weighted=True):
         self.weighted = weighted

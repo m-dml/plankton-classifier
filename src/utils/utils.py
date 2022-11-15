@@ -50,6 +50,7 @@ def extras(config: DictConfig) -> None:
     Modifies DictConfig in place.
     Args:
         config (DictConfig): Configuration composed by Hydra.
+
     """
 
     log = get_logger()
@@ -106,6 +107,7 @@ def print_config(
         fields (Sequence[str], optional): Determines which main fields from config will
         be printed and in what order.
         resolve (bool, optional): Whether to resolve reference fields of DictConfig.
+
     """
 
     style = "dim"
@@ -129,10 +131,10 @@ def log_hyperparameters(
     config: DictConfig,
     model: pl.LightningModule,
 ) -> dict:
-    """This method controls which parameters from Hydra config are saved by
-    Lightning loggers. Additionaly saves:
+    """This method controls which parameters from Hydra config are saved by Lightning loggers. Additionaly saves:
 
     - number of trainable model parameters
+
     """
 
     hparams = {}

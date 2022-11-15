@@ -9,27 +9,26 @@ defaults:
   - override /datamodule/valid_transforms: plankton_eval
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: linear
-  - override /trainer: strand
-  - override /hydra/launcher: strand_single
+  - override /trainer: default
+  - override /hydra/launcher: local
   - override /optimizer: sgd
   - override /strategy: null
   - override /metric: accuracy
   - _self_
 
 debug: false
-load_state_dict: /gpfs/work/machnitz/plankton_dataset/pretrained_model/complete_model_799.weights
+load_state_dict: D:/PycharmProjects/plankton-classifier/data/complete_model_799.weights
 random_seed: 7
-log_level: "info"
-output_dir_base_path: /gpfs/work/machnitz/plankton_logs/finetune_sgd/phytodive/
+log_level: "debug"
+output_dir_base_path: D:/PycharmProjects/plankton-classifier/outputs/phytodive/
 
 trainer:
   fast_dev_run: false
   num_sanity_val_steps: 5
   max_epochs: 1000
-  accelerator: "gpu"
+  accelerator: "cpu"
   devices: 1
   precision: 32
-  num_nodes: 1
   sync_batchnorm: false # since just using 1 gpu
   replace_sampler_ddp: false
   log_every_n_steps: 1
@@ -44,6 +43,8 @@ datamodule:
   excluded_labels: []
   num_workers: 10
   batch_size: 64
+  train_split: 0.8
+  validation_split: 0.19
   oversample_data: true
   # if oversample is used you can set the following to specify if you want to use ["upsample", "downsample", int]
   # if you use an integer, that will set how many samples per class will be taken and therefore mixes upsample and
@@ -55,8 +56,8 @@ datamodule:
   use_canadian_data: false
   use_planktonnet_data: false
   preload_dataset: false
-  csv_data_path: /gpfs/work/machnitz/plankton_dataset/phytodive/Phytodive_CNN_eval-at-2022-11-15-08-58-2aa46a60_adjusted.csv
-  data_base_path: /gpfs/work/vaswani/LPcruises/rois
+  csv_data_path: D:/PycharmProjects/plankton-classifier/data/Phytodive_CNN_eval-at-2022-11-15-08-58-2aa46a60_adjusted.csv
+  data_base_path: D:/PycharmProjects/plankton-classifier/data/phytodive
   convert_probabilities_to_majority_vote: true
 
 lightning_module:
@@ -89,9 +90,6 @@ optimizer:
 callbacks:
   early_stopping:
     monitor: "loss/Validation"
-    patience: 50
+    patience: 20
     verbose: true
     mode: "min"
-
-scheduler:
-  patience: 5
