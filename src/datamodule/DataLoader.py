@@ -776,16 +776,20 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
         if not "files" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
             dataframe = dataframe.rename(columns={"image": "files"})
 
-        assert any([col in dataframe for col in ["files", "image"]]), (
+        dataframe_cols = dataframe.columns.tolist()
+        assert any([col in dataframe_cols for col in ["files", "image"]]), (
             f"The csv file does not contain a column "
             f"named 'files' or 'images'. It contains "
             f"<{dataframe.columns.tolist()}>"
         )
-        assert "class" in dataframe, (
+        assert "class" in dataframe_cols or any(["class_" in col for col in dataframe_cols]), (
             f"The csv file does not contain a column named 'class'. It contains " f"<{dataframe.columns.tolist()}>"
         )
 
-        return dataframe[["files", "class"]]
+        if "class" in dataframe_cols:
+            return dataframe[["files","class"]]
+        else:
+            return dataframe[["files"] + [col for col in dataframe_cols if "class_" in col]]
 
     def get_data_from_csv(self, subset: str) -> pd.DataFrame:
         if self.train_df is None:
