@@ -647,7 +647,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
     def load_multilabel_dataset(self, data_path, df):
-        df = df.drop(columns="Unnamed: 0")
+        df = df.drop(columns="Unnamed: 0") if "Unnamed: 0" in df.columns else df
         repl_column_names = {}
         self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
         nan_vals = df.isna().sum().sum()
@@ -668,7 +668,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
             self.label_encoder.fit(all_labels)
 
         for column in df.columns:
-            if column != "file":
+            if column.startswith("class"):
                 df[column] = self.label_encoder.transform(df[column].values)
 
         df = df.rename(columns=repl_column_names)
@@ -787,7 +787,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
         )
 
         if "class" in dataframe_cols:
-            return dataframe[["files","class"]]
+            return dataframe[["files", "class"]]
         else:
             return dataframe[["files"] + [col for col in dataframe_cols if "class_" in col]]
 
