@@ -773,13 +773,13 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
 
     @staticmethod
     def clean_and_check_dataframe(dataframe):
-        if not "files" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
-            dataframe = dataframe.rename(columns={"image": "files"})
+        if not "file" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
+            dataframe = dataframe.rename(columns={"image": "file"})
 
         dataframe_cols = dataframe.columns.tolist()
         assert any([col in dataframe_cols for col in ["files", "image"]]), (
             f"The csv file does not contain a column "
-            f"named 'files' or 'images'. It contains "
+            f"named 'file' or 'image'. It contains "
             f"<{dataframe.columns.tolist()}>"
         )
         assert "class" in dataframe_cols or any(["class_" in col for col in dataframe_cols]), (
@@ -807,7 +807,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
     def prepare_data_setup(self, subset: str) -> list[tuple]:
         df = self.get_data_from_csv(subset)
 
-        test_image_path = df["files"].iloc[0]
+        test_image_path = df["file"].iloc[0]
         if os.path.isabs(test_image_path):
             self.console_logger.info(f"Assuming that <{test_image_path}> is an absolute path.")
             folder = ""
