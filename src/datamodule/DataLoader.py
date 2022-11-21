@@ -647,7 +647,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
             raise ValueError(f'<stage> needs to be either "fit" or "test", but is {stage}')
 
     def load_multilabel_dataset(self, data_path, df):
-        df = df.drop(columns="Unnamed: 0")
+        df = df.drop(columns="Unnamed: 0") if "Unnamed: 0" in df.columns else df
         repl_column_names = {}
         self.console_logger.debug(f"Created dataframe with {len(df)} rows and columns: {df.columns}")
         nan_vals = df.isna().sum().sum()
@@ -668,7 +668,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
             self.label_encoder.fit(all_labels)
 
         for column in df.columns:
-            if column != "file":
+            if column.startswith("class"):
                 df[column] = self.label_encoder.transform(df[column].values)
 
         df = df.rename(columns=repl_column_names)
@@ -773,19 +773,20 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
 
     @staticmethod
     def clean_and_check_dataframe(dataframe):
-        if not "files" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
-            dataframe = dataframe.rename(columns={"image": "files"})
+        if not "file" in dataframe.columns.tolist() and "image" in dataframe.columns.tolist():
+            dataframe = dataframe.rename(columns={"image": "file"})
 
-        assert any([col in dataframe for col in ["files", "image"]]), (
+        dataframe_cols = dataframe.columns.tolist()
+        assert any([col in dataframe_cols for col in ["file", "image"]]), (
             f"The csv file does not contain a column "
-            f"named 'files' or 'images'. It contains "
+            f"named 'file' or 'image'. It contains "
             f"<{dataframe.columns.tolist()}>"
         )
-        assert "class" in dataframe, (
+        assert "class" in dataframe_cols or any(["class_" in col for col in dataframe_cols]), (
             f"The csv file does not contain a column named 'class'. It contains " f"<{dataframe.columns.tolist()}>"
         )
 
-        return dataframe[["files", "class"]]
+        return dataframe[["file"] + [col for col in dataframe_cols if col.startswith("class")]]
 
     def get_data_from_csv(self, subset: str) -> pd.DataFrame:
         if self.train_df is None:
@@ -803,7 +804,7 @@ class PlanktonMultiLabelDataLoader(PlanktonDataLoader):  # TODO: rename to csv-d
     def prepare_data_setup(self, subset: str) -> list[tuple]:
         df = self.get_data_from_csv(subset)
 
-        test_image_path = df["files"].iloc[0]
+        test_image_path = df["file"].iloc[0]
         if os.path.isabs(test_image_path):
             self.console_logger.info(f"Assuming that <{test_image_path}> is an absolute path.")
             folder = ""
