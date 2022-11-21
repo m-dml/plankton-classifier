@@ -124,7 +124,10 @@ class WebDataLoader(pl.LightningDataModule):
                 .map(self.inspect)
             )
 
+        dataset_size_estimate = len(urls) * 3500
+
         loader = webdataset.WebLoader(dataset, batch_size=None, shuffle=False, num_workers=self.num_workers)
+        loader = loader.ddp_equalize(dataset_size_estimate // self.batch_size)
         return loader
 
     def encode_labels(self, labels):
