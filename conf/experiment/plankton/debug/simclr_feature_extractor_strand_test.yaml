@@ -41,7 +41,7 @@ logger:
 
 datamodule:
   num_workers: 10
-  batch_size: 128
+  batch_size: 64
   oversample_data: false
   data_base_path: /gpfs/work/machnitz/plankton_dataset/webdataset/
   train_split: 0.997
