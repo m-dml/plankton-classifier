@@ -236,7 +236,7 @@ class LightningModel(pl.LightningModule):
 
     def training_step_end(self, training_step_outputs, *_, **__):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = training_step_outputs
-        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Training")
+        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, step="Training")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -260,7 +260,7 @@ class LightningModel(pl.LightningModule):
     def validation_step_end(self, validation_step_outputs, *args, **kwargs):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = validation_step_outputs
         self.console_logger.debug(f"Size of batch in validation_step_end: {len(labels)}")
-        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Validation")
+        loss, acc = self._do_gpu_accumulated_step(classifier_logits, labels, step="Validation")
         self.log("hp/loss", loss)
         self.log("hp/accuracy", acc)
         self.log("hp/epoch", torch.tensor(self.current_epoch).float())
@@ -280,7 +280,7 @@ class LightningModel(pl.LightningModule):
 
     def test_step_end(self, test_step_outputs, *args, **kwargs):  # pylint: disable=arguments-differ
         features, labels, label_names, classifier_logits = test_step_outputs
-        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, label_names, step="Testing")
+        loss, _ = self._do_gpu_accumulated_step(classifier_logits, labels, step="Testing")
         return {
             "loss": loss,
             "features": features.detach(),
@@ -313,15 +313,13 @@ class LightningModel(pl.LightningModule):
         features, classifier_outputs = self(images)
         return features, classifier_outputs
 
-    def _do_gpu_accumulated_step(self, classifier_outputs, labels, label_names, step):
+    def _do_gpu_accumulated_step(self, classifier_outputs, labels, step):
         accuracy = 0  # set initial value, for the case of multi-label training
-        predicted_labels = classifier_outputs.detach().argmax(dim=-1).unsqueeze(1)
         self.console_logger.debug(
             f"classifier_outputs.shape = {classifier_outputs.shape}, labels.shape = {labels.shape}"
         )
-        if isinstance(self.loss_func, torch.nn.KLDivLoss):
+        if self.is_in_simclr_mode:
             loss = self.loss_func(F.log_softmax(classifier_outputs.float(), dim=1), labels.float())
-            accuracy = self.accuracy_func(predicted_labels, label_names, n_labels=classifier_outputs.size(1))
         else:
             targets = labels.detach().view(-1).to(torch.int).cpu()
             loss = self.loss_func(classifier_outputs, labels.view(-1).long())

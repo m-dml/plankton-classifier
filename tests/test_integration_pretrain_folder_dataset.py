@@ -7,15 +7,21 @@ from omegaconf import DictConfig
 from src.lib.config import register_configs
 from src.utils import utils
 from tests.helpers.create_and_run_model import create_and_run
-from tests.helpers.global_fixtures import get_image_data_dataset, optimizer, profiler, scheduler  # noqa
+from tests.helpers.global_fixtures import get_image_data_dataset, loss, optimizer, profiler, scheduler  # noqa
 
 
 def test_pretrain_with_folder_dataset(
-    tmp_path, get_image_data_dataset, base_optimizer=None, base_scheduler=None, base_profiler=None
+    tmp_path,
+    get_image_data_dataset,
+    base_optimizer=None,
+    base_scheduler=None,
+    base_profiler=None,
+    base_loss=None,
 ):
 
     base_optimizer = base_optimizer or "lars"
     base_profiler = base_profiler or "NoProfiler"
+    base_loss = base_loss or "nt_xent_loss"
 
     accelerator = "cpu"
     devices = 1
@@ -34,6 +40,7 @@ def test_pretrain_with_folder_dataset(
         f"+profiler={base_profiler}",
         f"trainer.accelerator={accelerator}",
         f"trainer.devices={devices}",
+        f"loss={base_loss}",
     ]
 
     if base_scheduler:
@@ -74,3 +81,7 @@ def test_pretrain_with_image_folder_schedulers(tmp_path, get_image_data_dataset,
 
 def test_pretrain_with_image_folder_profilers(tmp_path, get_image_data_dataset, profiler):
     test_pretrain_with_folder_dataset(tmp_path, get_image_data_dataset, base_profiler=profiler)
+
+
+def test_pretrain_with_image_folder_losses(tmp_path, get_image_data_dataset, loss):
+    test_pretrain_with_folder_dataset(tmp_path, get_image_data_dataset, base_loss=loss)

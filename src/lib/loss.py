@@ -29,3 +29,16 @@ class KLDivLoss:
     _target_: str = "torch.nn.KLDivLoss"
     log_target: bool = False
     reduction: str = "batchmean"
+
+
+@dataclass
+class DecoupledContrastiveLoss:
+    _target_: str = "src.utils.decoupled_contrastive_loss.DCL"
+    temperature: float = 0.1
+
+
+@dataclass
+class WeightedDecoupledContrastiveLoss:
+    _target_: str = "src.utils.decoupled_contrastive_loss.DCLW"
+    sigma: float = 0.5
+    temperature: float = 0.1

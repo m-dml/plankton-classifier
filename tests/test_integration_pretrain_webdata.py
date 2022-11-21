@@ -7,15 +7,21 @@ from omegaconf import DictConfig
 from src.lib.config import register_configs
 from src.utils import utils
 from tests.helpers.create_and_run_model import create_and_run
-from tests.helpers.global_fixtures import get_webdataset, optimizer, profiler, scheduler  # noqa
+from tests.helpers.global_fixtures import get_webdataset, loss, optimizer, profiler, scheduler  # noqa
 
 
 def test_pretrain_with_webdataset(
-    tmp_path, get_webdataset, base_optimizer=None, base_scheduler=None, base_profiler=None
+    tmp_path,
+    get_webdataset,
+    base_optimizer=None,
+    base_scheduler=None,
+    base_profiler=None,
+    base_loss=None,
 ):
 
     base_optimizer = base_optimizer or "lars"
     base_profiler = base_profiler or "NoProfiler"
+    base_loss = base_loss or "nt_xent_loss"
 
     accelerator = "cpu"
     devices = 1
@@ -34,6 +40,7 @@ def test_pretrain_with_webdataset(
         f"+profiler={base_profiler}",
         f"trainer.accelerator={accelerator}",
         f"trainer.devices={devices}",
+        f"loss={base_loss}",
     ]
 
     if base_scheduler:
@@ -74,3 +81,7 @@ def test_pretrain_with_webdataset_schedulers(tmp_path, get_webdataset, scheduler
 
 def test_pretrain_with_webdataset_profilers(tmp_path, get_webdataset, profiler):
     test_pretrain_with_webdataset(tmp_path, get_webdataset, base_profiler=profiler)
+
+
+def test_pretrain_with_webdataset_losses(tmp_path, get_webdataset, loss):
+    test_pretrain_with_webdataset(tmp_path, get_webdataset, base_loss=loss)

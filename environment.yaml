@@ -47,3 +47,4 @@ dependencies:
       - test-tube
       - catalyst
       - git+https://github.com/ufoym/imbalanced-dataset-sampler.git # torchsampler
+      - git+https://github.com/raminnakhli/Decoupled-Contrastive-Learning.git

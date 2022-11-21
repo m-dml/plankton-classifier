@@ -25,6 +25,13 @@ def freeze_feature_extractor(request):
     return request.param
 
 
+@pytest.fixture(
+    params=["weighted_decoupled_contrastive_loss", "decoupled_contrastive_loss", "nt_xent_loss"], scope="module"
+)
+def loss(request):
+    return request.param
+
+
 # only create the webdataset once:
 @pytest.fixture(scope="session")
 def get_webdataset(tmp_path_factory):

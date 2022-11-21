@@ -21,7 +21,15 @@ from src.lib.datamodule import (
 )
 from src.lib.lightning_module import LitModule
 from src.lib.logger import MLFlowLogger, TensorBoardLogger, TestTubeLogger
-from src.lib.loss import CrossEntropyLoss, KLDivLoss, NLLLoss, NTXentLoss, SimCLRLoss
+from src.lib.loss import (
+    CrossEntropyLoss,
+    DecoupledContrastiveLoss,
+    KLDivLoss,
+    NLLLoss,
+    NTXentLoss,
+    SimCLRLoss,
+    WeightedDecoupledContrastiveLoss,
+)
 from src.lib.metrics import Accuracy, MultiLabelAccuracy
 from src.lib.model import Classifier, CustomResnet, ResNet, TinyFeatureExtractor
 from src.lib.optimizer import LARS, SGD, Adam, RMSprop
@@ -97,6 +105,8 @@ def register_configs() -> None:
     cs.store(name="nt_xent_loss", node=NTXentLoss, group="loss")
     cs.store(name="kl_div_loss", node=KLDivLoss, group="loss")
     cs.store(name="cross_entropy_loss", node=CrossEntropyLoss, group="loss")
+    cs.store(name="decoupled_contrastive_loss", node=DecoupledContrastiveLoss, group="loss")
+    cs.store(name="weighted_decoupled_contrastive_loss", node=WeightedDecoupledContrastiveLoss, group="loss")
 
     # metrics:
     cs.store(name="accuracy", node=Accuracy, group="metric")
