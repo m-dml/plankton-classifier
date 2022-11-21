@@ -10,9 +10,10 @@ defaults:
   - override /datamodule/valid_transforms: simclr_plankton
   - override /model/feature_extractor: simclr_resnet
   - override /model/classifier: simclr_v2_head
-  - override /trainer: juwels
+  - override /trainer: strand
   - override /optimizer: lars
   - override /strategy: DDP
+  - override /hydra/launcher: strand_A100
   - _self_
 
 pretrain: true
@@ -42,11 +43,6 @@ datamodule:
   num_workers: 10
   batch_size: 200
   oversample_data: false
-  pin_memory: false
-  reduce_data: false # use max 10.000 images from each class
-  use_klas_data: true
-  use_canadian_data: false
-  use_planktonnet_data: false
   data_base_path: /gpfs/work/machnitz/plankton_dataset/webdataset/
   train_split: 0.997
   validation_split: 0.001
